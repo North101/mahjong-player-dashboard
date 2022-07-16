@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import select
 import socket
 import sys
@@ -14,7 +15,7 @@ class Client:
   def __init__(self, poll: Poll, address: Tuple[str, int]):
     self.poll = poll
     self.address = address
-    self.state = ClientLobbyState(self)
+    self.state = LobbyClientState(self)
 
   def start(self):
     (host, port) = self.address
@@ -41,6 +42,14 @@ class ClientState:
   def poll(self):
     return self.client.poll
 
+  @property
+  def state(self):
+    return self.client.state
+
+  @state.setter
+  def state(self, state: Type['ClientState']):
+    self.client.state = state
+
   def on_server_data(self, server: socket.socket, event: int):
     if event & select.POLLHUP:
       self.poll.unregister(server)
@@ -49,7 +58,7 @@ class ClientState:
       self.on_server_packet(server, read_packet(server))
 
   def on_server_disconnect(self, server: socket.socket):
-    pass
+    raise ValueError()
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
     raise NotImplementedError()
@@ -58,61 +67,74 @@ class ClientState:
     raise NotImplementedError()
 
 
-class ClientLobbyState(ClientState):
+class LobbyClientState(ClientState):
   def __init__(self, client: Client):
     self.client = client
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStatePacket:
-      self.client.state = ClientGameState(self.client, packet)
+    if type(packet) is PlayerGameStateServerPacket:
+      self.state = GameClientState(self.client, packet)
 
   def on_input(self, input: str):
     pass
 
 
-class ClientGameState(ClientState):
-  def __init__(self, client: Client, packet: PlayerGameStatePacket):
+class GameClientState(ClientState):
+  def __init__(self, client: Client, packet: PlayerGameStateServerPacket):
     self.client = client
 
+    self.update_game(packet)
+    self.print_info()
+  
+  def update_game(self, packet: PlayerGameStateServerPacket):
     self.hand = packet.hand
     self.repeat = packet.repeat
     self.player_index = packet.player_index
     self.players = packet.players
 
-    self.print_info()
-
   def on_server_packet(self, fd: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStatePacket:
-      self.hand = packet.hand
-      self.repeat = packet.repeat
-      self.player_index = packet.player_index
-      self.players = packet.players
-
+    if type(packet) is PlayerGameStateServerPacket:
+      self.update_game(packet)
       self.print_info()
+
+    elif type(packet) is DrawServerPacket:
+      self.state = GameDrawClientState(self.client, self)
 
   def on_input(self, input: str):
     value = input.split()
     if not value:
       return
     elif value[0].lower() == 'riichi':
-      send_msg(self.client.socket, RiichiPacket().pack())
+      send_msg(self.client.socket, RiichiClientPacket().pack())
     elif value[0].lower() == 'tsumo':
       dealer_points = int(value[1])
       points = int(value[2])
-      send_msg(self.client.socket, TsumoPacket(dealer_points, points).pack())
+      send_msg(self.client.socket, TsumoClientPacket(
+          dealer_points, points).pack())
     elif value[0].lower() == 'ron':
       wind = {
           wind.name.lower(): wind
           for wind in Wind
       }[value[1].lower()]
       points = int(value[2])
-      send_msg(self.client.socket, RonPacket(wind, points).pack())
+      send_msg(self.client.socket, RonClientPacket(wind, points).pack())
     elif value[0].lower() == 'draw':
-      send_msg(self.client.socket, DrawPacket(wind, points).pack())
+      tenpai = {
+        'tenpai': True,
+        'yes': True,
+        'y': True,
+        'true': True,
+
+        'noten': False,
+        'no': False,
+        'n': False,
+        'false': False,
+      }.get(value[0].lower())
+      send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
 
   @property
   def round(self):
-    return self.hand % 4
+    return self.hand // 4
 
   @property
   def me(self):
@@ -124,25 +146,70 @@ class ClientGameState(ClientState):
   def print_info(self):
     sys.stdout.writelines([
         '----------------\n',
-        f'Round: {self.round}\n',
-        f'Hand: {self.hand % 4}\n',
+        f'Round: {self.round + 1}\n',
+        f'Hand: {(self.hand % 4) + 1}\n',
         f'Repeat: {self.repeat}\n',
         '----------------\n',
     ])
 
     for wind in Wind:
       player = self.player_for_wind(wind)
-      sys.stdout.write(f'{wind.name}: {player}{" (Me)" if player == self.me else ""}\n',)
+      sys.stdout.write(
+          f'{wind.name}: {player}{" (Me)" if player == self.me else ""}\n',)
     sys.stdout.write('> ')
     sys.stdout.flush()
 
 
+class GameDrawClientState(ClientState):
+  def __init__(self, client: Client, game_state: GameClientState):
+    self.client = client
+    self.game_state = game_state
+    self.print()
+  
+  def print(self):
+    sys.stdout.write('Tenpai? [Yes/No]\n')
+    sys.stdout.write('> ')
+    sys.stdout.flush()
+
+  def on_server_packet(self, fd: socket.socket, packet: Packet):
+    if type(packet) is PlayerGameStateServerPacket:
+      self.state = self.game_state
+      self.state.on_server_packet(fd, packet)
+
+  def on_input(self, input: str):
+    value = input.split()
+    if not value:
+      return
+    
+    tenpai = {
+      'tenpai': True,
+      'yes': True,
+      'y': True,
+      'true': True,
+
+      'noten': False,
+      'no': False,
+      'n': False,
+      'false': False,
+    }.get(value[0].lower())
+    if tenpai is not None:
+      send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
+    else:
+      self.print()
+
+
 def main():
-  poll = Poll()
-  client = Client(poll, ('127.0.0.1', 1246))
-  client.start()
-  while True:
-    poll.poll()
+  try:
+    poll = Poll()
+    client = Client(poll, ('127.0.0.1', 1246))
+    client.start()
+    while True:
+      poll.poll()
+  finally:
+    lookup = list(poll.lookup.values())
+    for event_callback in lookup:
+      fd = event_callback.fd
+      poll.unregister(fd)
 
 
 if __name__ == '__main__':

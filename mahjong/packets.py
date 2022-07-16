@@ -10,44 +10,44 @@ def unpack_id(data) -> int:
 
 
 class Struct:
-  _fmt: str
+  fmt: struct.Struct
 
   def pack(self) -> bytes:
     raise NotImplementedError()
 
   @classmethod
-  def unpack(self, data):
+  def unpack(self, data: bytes):
     raise NotImplementedError()
 
   @classmethod
   def size(self):
-    return struct.calcsize(self._fmt)
+    return self.fmt.size
 
 
 class Packet(Struct):
   id: int
 
 
-class RiichiPacket(Packet):
-  _fmt = 'I'
+class RiichiClientPacket(Packet):
+  fmt = struct.Struct('I')
   id = 2
 
   def pack(self) -> bytes:
-    return struct.pack(self._fmt, self.id)
+    return self.fmt.pack(self.id)
 
   @classmethod
-  def unpack(self, data):
-    id,  = struct.unpack(self._fmt, data)
+  def unpack(self, data: bytes):
+    id,  = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return RiichiPacket()
+    return RiichiClientPacket()
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}()'
 
 
-class TsumoPacket(Packet):
-  _fmt = 'III'
+class TsumoClientPacket(Packet):
+  fmt = struct.Struct('III')
   id = 3
 
   def __init__(self, dealer_points, points):
@@ -55,21 +55,21 @@ class TsumoPacket(Packet):
     self.points = points
 
   def pack(self) -> bytes:
-    return struct.pack(self._fmt, self.id, self.dealer_points, self.points)
+    return self.fmt.pack(self.id, self.dealer_points, self.points)
 
   @classmethod
-  def unpack(self, data):
-    id, dealer_points, points = struct.unpack(self._fmt, data)
+  def unpack(self, data: bytes):
+    id, dealer_points, points = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return TsumoPacket(dealer_points, points)
+    return TsumoClientPacket(dealer_points, points)
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.dealer_points}, {self.points})'
 
 
-class RonPacket(Packet):
-  _fmt = 'III'
+class RonClientPacket(Packet):
+  fmt = struct.Struct('III')
   id = 4
 
   def __init__(self, from_wind: Wind, points: int):
@@ -77,66 +77,62 @@ class RonPacket(Packet):
     self.points = points
 
   def pack(self) -> bytes:
-    return struct.pack(self._fmt, self.id, self.from_wind, self.points)
+    return self.fmt.pack(self.id, self.from_wind, self.points)
 
   @classmethod
-  def unpack(self, data):
-    id, from_wind, points = struct.unpack(self._fmt, data)
+  def unpack(self, data: bytes):
+    id, from_wind, points = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return RonPacket(list(Wind)[from_wind], points)
+    return RonClientPacket(list(Wind)[from_wind], points)
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.from_wind, self.points})'
 
 
-class DrawPacket(Packet):
-  _fmt = 'I?'
+class DrawClientPacket(Packet):
+  fmt = struct.Struct('I?')
   id = 5
 
-  def __init__(self, draw: bool):
-    self.draw = draw
+  def __init__(self, tenpai: bool):
+    self.tenpai = tenpai
 
   def pack(self) -> bytes:
-    return struct.pack(self._fmt, self.id, self.draw)
+    return self.fmt.pack(self.id, self.tenpai)
 
   @classmethod
-  def unpack(self, data):
-    id, draw = struct.unpack(self._fmt, data)
+  def unpack(self, data: bytes):
+    id, tenpai = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return DrawPacket(draw)
+    return DrawClientPacket(tenpai)
 
   def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.draw})'
+    return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
 
 
 class PlayerStruct(Struct):
-  _fmt = 'i?'
+  fmt = struct.Struct('i?')
 
   def __init__(self, points: int, riichi: bool) -> None:
     self.points = points
     self.riichi = riichi
 
   def pack(self):
-    return struct.pack(self._fmt, self.points, self.riichi)
+    return self.fmt.pack(self.points, self.riichi)
 
   @classmethod
-  def unpack(self, data, offset=0):
-    points, riichi = struct.unpack_from(self._fmt, data, offset)
+  def unpack(self, data: bytes, offset=0):
+    points, riichi = self.fmt.unpack_from(data, offset)
     return PlayerStruct(points, riichi)
-
-  @classmethod
-  def size(self):
-    return struct.calcsize(self._fmt)
 
   def __repr__(self) -> str:
     return f'{self.__class__.__name__}({self.points}, {self.riichi})'
 
 
-class PlayerGameStatePacket(Packet):
-  _fmt = 'IIII'
-  id = 0
+class PlayerGameStateServerPacket(Packet):
+  fmt = struct.Struct('IIII')
+  id = 6
 
   def __init__(self, hand: int, repeat: int, player_index: int, players: List[PlayerStruct]):
     self.hand = hand
@@ -145,17 +141,16 @@ class PlayerGameStatePacket(Packet):
     self.players = players
 
   def pack(self) -> bytes:
-    data = struct.pack(self._fmt, self.id, self.hand,
-                       self.repeat, self.player_index)
+    data = self.fmt.pack(self.id, self.hand,
+                         self.repeat, self.player_index)
     for player in self.players:
       data += PlayerStruct(player.points, player.riichi).pack()
     return data
 
   @classmethod
-  def unpack(self, data, offset=0):
-    id, hand, repeat, player_index = struct.unpack_from(
-        self._fmt, data, offset)
-    offset += struct.calcsize(self._fmt)
+  def unpack(self, data: bytes, offset=0):
+    id, hand, repeat, player_index = self.fmt.unpack_from(data, offset)
+    offset += self.fmt.size
 
     players: List[PlayerStruct] = []
     for _ in range(len(Wind)):
@@ -164,26 +159,44 @@ class PlayerGameStatePacket(Packet):
 
     if id != self.id:
       raise ValueError(id)
-    return PlayerGameStatePacket(hand, repeat, player_index, players)
+    return PlayerGameStateServerPacket(hand, repeat, player_index, players)
 
   @classmethod
   def size(self):
-    return struct.calcsize(self._fmt) + (PlayerStruct.size() * len(Wind))
+    return self.fmt.size + (PlayerStruct.size() * len(Wind))
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.hand, self.repeat, self.player_index, self.players})'
 
 
+class DrawServerPacket(Packet):
+  fmt = struct.Struct('I')
+  id = 8
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return DrawServerPacket()
+
+
 packets: List[Packet] = [
-    PlayerGameStatePacket,
-    RiichiPacket,
-    TsumoPacket,
-    RonPacket,
-    DrawPacket,
+    RiichiClientPacket,
+    TsumoClientPacket,
+    RonClientPacket,
+    DrawClientPacket,
+
+    PlayerGameStateServerPacket,
+    DrawServerPacket,
 ]
 
 
-def find_packet(id):
+def find_packet(id) -> Packet:
   for packet in packets:
     if packet.id == id:
       return packet
@@ -193,11 +206,7 @@ def find_packet(id):
 
 def unpack_packet(data) -> Packet:
   id = unpack_id(data)
-  for packet in packets:
-    if packet.id == id:
-      return packet.unpack(data)
-
-  raise ValueError(id)
+  return find_packet(id).unpack(data)
 
 
 def read_packet(_socket: socket.socket) -> Packet:
@@ -211,23 +220,26 @@ def read_packet(_socket: socket.socket) -> Packet:
   return unpack_packet(data)
 
 
-def send_msg(sock: socket.socket, msg: bytes):
-  msg = struct.pack('>I', len(msg)) + msg
-  sock.sendall(msg)
+msg_length = struct.Struct('>I')
 
 
-def recv_msg(sock: socket.socket):
-  raw_msglen = recvall(sock, 4)
-  if not raw_msglen:
+def send_msg(socket: socket.socket, msg: bytes):
+  msg = msg_length.pack(len(msg)) + msg
+  socket.sendall(msg)
+
+
+def recv_msg(socket: socket.socket):
+  data = recvall(socket, 4)
+  if not data:
     return None
-  msglen = struct.unpack('>I', raw_msglen)[0]
-  return recvall(sock, msglen)
+  length = msg_length.unpack(data)[0]
+  return recvall(socket, length)
 
 
-def recvall(sock: socket.socket, n: int):
+def recvall(socket: socket.socket, length: int):
   data = bytearray()
-  while len(data) < n:
-    packet = sock.recv(n - len(data))
+  while len(data) < length:
+    packet = socket.recv(length - len(data))
     if not packet:
       return None
     data.extend(packet)
