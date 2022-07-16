@@ -1,11 +1,23 @@
-from multiprocessing.sharedctypes import Value
 import select
 import socket
 import sys
 from typing import TextIO, Tuple
 
 from mahjong.packets import *
-from mahjong.poll import Poll
+from mahjong.poll import *
+from mahjong.shared import *
+
+TENPAI_VALUES = {
+    'tenpai': True,
+    'yes': True,
+    'y': True,
+    'true': True,
+
+    'noten': False,
+    'no': False,
+    'n': False,
+    'false': False,
+}
 
 
 class Client:
@@ -79,16 +91,18 @@ class LobbyClientState(ClientState):
     pass
 
 
-class GameClientState(ClientState):
+class GameClientState(ClientState, GameStateMixin):
   def __init__(self, client: Client, packet: PlayerGameStateServerPacket):
     self.client = client
 
     self.update_game(packet)
     self.print_info()
-  
+
   def update_game(self, packet: PlayerGameStateServerPacket):
     self.hand = packet.hand
     self.repeat = packet.repeat
+    self.bonus_honba = packet.bonus_honba
+    self.bonus_riichi = packet.bonus_riichi
     self.player_index = packet.player_index
     self.players = packet.players
 
@@ -119,36 +133,21 @@ class GameClientState(ClientState):
       points = int(value[2])
       send_msg(self.client.socket, RonClientPacket(wind, points).pack())
     elif value[0].lower() == 'draw':
-      tenpai = {
-        'tenpai': True,
-        'yes': True,
-        'y': True,
-        'true': True,
-
-        'noten': False,
-        'no': False,
-        'n': False,
-        'false': False,
-      }.get(value[0].lower())
+      tenpai = TENPAI_VALUES.get(value[0].lower())
       send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
-
-  @property
-  def round(self):
-    return self.hand // 4
 
   @property
   def me(self):
     return self.players[self.player_index]
 
-  def player_for_wind(self, wind: Wind):
-    return self.players[(self.hand + wind) % len(Wind)]
-
   def print_info(self):
     sys.stdout.writelines([
         '----------------\n',
         f'Round: {self.round + 1}\n',
-        f'Hand: {(self.hand % 4) + 1}\n',
+        f'Hand: {(self.hand % len(Wind)) + 1}\n',
         f'Repeat: {self.repeat}\n',
+        f'Honba: {self.total_honba}\n',
+        f'Riichi: {self.total_riichi}\n',
         '----------------\n',
     ])
 
@@ -165,7 +164,7 @@ class GameDrawClientState(ClientState):
     self.client = client
     self.game_state = game_state
     self.print()
-  
+
   def print(self):
     sys.stdout.write('Tenpai? [Yes/No]\n')
     sys.stdout.write('> ')
@@ -180,18 +179,8 @@ class GameDrawClientState(ClientState):
     value = input.split()
     if not value:
       return
-    
-    tenpai = {
-      'tenpai': True,
-      'yes': True,
-      'y': True,
-      'true': True,
 
-      'noten': False,
-      'no': False,
-      'n': False,
-      'false': False,
-    }.get(value[0].lower())
+    tenpai = TENPAI_VALUES.get(value[0].lower())
     if tenpai is not None:
       send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
     else:

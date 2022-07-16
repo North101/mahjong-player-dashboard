@@ -2,6 +2,7 @@ import socket
 import struct
 from typing import *
 
+from mahjong.shared import *
 from mahjong.wind import Wind
 
 
@@ -91,27 +92,37 @@ class RonClientPacket(Packet):
 
 
 class DrawClientPacket(Packet):
-  fmt = struct.Struct('I?')
+  fmt = struct.Struct('IB')
   id = 5
+
+  to_int = {
+      False: 0,
+      True: 1,
+  }
+
+  to_bool = {
+      v: k
+      for k, v in to_int.items()
+  }
 
   def __init__(self, tenpai: bool):
     self.tenpai = tenpai
 
   def pack(self) -> bytes:
-    return self.fmt.pack(self.id, self.tenpai)
+    return self.fmt.pack(self.id, self.to_int.get(self.tenpai, 2))
 
   @classmethod
   def unpack(self, data: bytes):
     id, tenpai = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return DrawClientPacket(tenpai)
+    return DrawClientPacket(self.to_bool.get(tenpai))
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
 
 
-class PlayerStruct(Struct):
+class PlayerStruct(Struct, GamePlayerMixin):
   fmt = struct.Struct('i?')
 
   def __init__(self, points: int, riichi: bool) -> None:
@@ -131,25 +142,31 @@ class PlayerStruct(Struct):
 
 
 class PlayerGameStateServerPacket(Packet):
-  fmt = struct.Struct('IIII')
+  fmt = struct.Struct('IIIIII')
   id = 6
 
-  def __init__(self, hand: int, repeat: int, player_index: int, players: List[PlayerStruct]):
+  def __init__(
+      self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int,
+      player_index: int, players: List[PlayerStruct],
+  ):
     self.hand = hand
     self.repeat = repeat
+    self.bonus_honba = bonus_honba
+    self.bonus_riichi = bonus_riichi
     self.player_index = player_index
     self.players = players
 
   def pack(self) -> bytes:
-    data = self.fmt.pack(self.id, self.hand,
-                         self.repeat, self.player_index)
+    data = self.fmt.pack(self.id, self.hand, self.repeat,
+                         self.bonus_honba, self.bonus_riichi, self.player_index)
     for player in self.players:
       data += PlayerStruct(player.points, player.riichi).pack()
     return data
 
   @classmethod
   def unpack(self, data: bytes, offset=0):
-    id, hand, repeat, player_index = self.fmt.unpack_from(data, offset)
+    id, hand, repeat, bonus_honba, bonus_riichi, player_index = self.fmt.unpack_from(
+        data, offset)
     offset += self.fmt.size
 
     players: List[PlayerStruct] = []
@@ -159,14 +176,14 @@ class PlayerGameStateServerPacket(Packet):
 
     if id != self.id:
       raise ValueError(id)
-    return PlayerGameStateServerPacket(hand, repeat, player_index, players)
+    return PlayerGameStateServerPacket(hand, repeat, bonus_honba, bonus_riichi, player_index, players)
 
   @classmethod
   def size(self):
     return self.fmt.size + (PlayerStruct.size() * len(Wind))
 
   def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.hand, self.repeat, self.player_index, self.players})'
+    return f'[{self.id}]: {self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi}, {self.player_index}, {self.players})'
 
 
 class DrawServerPacket(Packet):

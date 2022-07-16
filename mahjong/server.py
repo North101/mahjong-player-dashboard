@@ -2,16 +2,16 @@ import select
 import socket
 from typing import Tuple
 
-from mahjong.client import Client
+from mahjong.client import *
 from mahjong.packets import *
-from mahjong.poll import Poll
-
+from mahjong.poll import *
+from mahjong.shared import *
 
 Players = tuple[
-    Type['GamePlayer'],
-    Type['GamePlayer'],
-    Type['GamePlayer'],
-    Type['GamePlayer'],
+    Type['ServerGamePlayer'],
+    Type['ServerGamePlayer'],
+    Type['ServerGamePlayer'],
+    Type['ServerGamePlayer'],
 ]
 
 
@@ -89,19 +89,19 @@ class ServerState:
     raise NotImplementedError()
 
 
-class LobbyPlayer:
+class ServerLobbyPlayer(ClientMixin):
   def __init__(self, client: socket.socket):
     self.client = client
 
 
 class LobbyServerState(ServerState):
-  clients: Mapping[socket.socket, LobbyPlayer] = {}
+  clients: Mapping[socket.socket, ServerLobbyPlayer] = {}
 
   def __init__(self, server: Server):
     self.server = server
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    self.clients[client] = LobbyPlayer(client)
+    self.clients[client] = ServerLobbyPlayer(client)
 
     if len(self.clients) == len(Wind):
       self.state = GameServerState(self.server, self.clients.values())
@@ -113,29 +113,36 @@ class LobbyServerState(ServerState):
     pass
 
 
-class GamePlayer:
+class ServerGamePlayer(ClientMixin, GamePlayerMixin):
   def __init__(self, client: socket.socket, points: int, riichi: bool = False):
     self.client = client
     self.points = points
     self.riichi = riichi
 
-  def take_points(self, other: Type['GamePlayer'], points: int):
+  def declare_riichi(self):
+    if not self.riichi:
+      self.riichi = True
+      self.points -= RIICHI_POINTS
+
+  def take_points(self, other: Type['ServerGamePlayer'], points: int):
     self.points += points
     other.points -= points
 
 
-class GameServerState(ServerState):
+class GameServerState(ServerState, GameStateMixin):
   def __init__(
-      self, server: Server, players: List[LobbyPlayer],
-      starting_points: int = 25000, hand: int = 0, repeat: int = 0, max_rounds: int = 1
+      self, server: Server, players: List[ServerLobbyPlayer], starting_points: int = 25000,
+      hand: int = 0, repeat: int = 0, bonus_honba=0, bonus_riichi=0, max_rounds: int = 1
   ):
     self.server = server
 
     self.hand = hand
     self.repeat = repeat
+    self.bonus_honba = bonus_honba
+    self.bonus_riichi = bonus_riichi
     self.max_rounds = max_rounds
-    self.players = tuple(
-        GamePlayer(player.client, starting_points)
+    self.players: Players = tuple(
+        ServerGamePlayer(player.client, starting_points)
         for player in players
     )
     self.update_player_states()
@@ -157,14 +164,12 @@ class GameServerState(ServerState):
     elif type(packet) is DrawClientPacket:
       self.on_player_draw(player, packet)
 
-  def on_player_riichi(self, player: GamePlayer, packet: RiichiClientPacket):
-    if not player.riichi:
-      player.points -= 1000
-      player.riichi = True
+  def on_player_riichi(self, player: ServerGamePlayer, packet: RiichiClientPacket):
+    player.declare_riichi()
     self.update_player_states()
 
-  def on_player_tsumo(self, player: GamePlayer, packet: TsumoClientPacket):
-    self.declare_riichi()
+  def on_player_tsumo(self, player: ServerGamePlayer, packet: TsumoClientPacket):
+    self.take_riichi_points([player])
 
     for other_player in self.players:
       if other_player == player:
@@ -182,8 +187,8 @@ class GameServerState(ServerState):
     else:
       self.next_hand()
 
-  def on_player_ron(self, player: GamePlayer, packet: RonClientPacket):
-    self.declare_riichi()
+  def on_player_ron(self, player: ServerGamePlayer, packet: RonClientPacket):
+    self.take_riichi_points([player])
 
     other_player = self.player_for_wind(packet.from_wind)
     player.take_points(other_player, packet.points)
@@ -193,12 +198,12 @@ class GameServerState(ServerState):
     else:
       self.next_hand()
 
-  def on_player_draw(self, player: GamePlayer, packet: DrawClientPacket):
+  def on_player_draw(self, player: ServerGamePlayer, packet: DrawClientPacket):
     players = tuple((
         GameDrawPlayer(other_player.client, (
-          packet.tenpai
-          if player == other_player else
-          None
+            packet.tenpai
+            if player == other_player else
+            None
         ))
         for other_player in self.players
     ))
@@ -214,34 +219,47 @@ class GameServerState(ServerState):
         if player == other_player:
           continue
 
-        player.take_points(other_player, 1000)
+        player.take_points(other_player, DRAW_POINTS)
 
     east_index = self.player_index_for_wind(Wind.EAST)
     if players[east_index].tenpai:
-      self.repeat_hand()
+      self.repeat_hand(draw=True)
     else:
-      self.next_hand()
+      self.next_hand(draw=True)
 
-  @property
-  def round(self):
-    return self.hand // 4
+  def take_riichi_points(self, winners: List[ServerGamePlayer]):
+    winner = next((
+        player
+        for player in self.players_by_wind
+        if player in winners
+    ))
 
-  def declare_riichi(self, player: GamePlayer):
-    for player in self.players:
-      if player.riichi:
-        player.points += 1000
+    winner.points += (RIICHI_POINTS * self.total_riichi)
+    self.bonus_riichi = 0
 
-  def reset_riichi(self):
+  def reset_player_riichi(self):
     for player in self.players:
       player.riichi = False
 
-  def repeat_hand(self):
-    self.reset_riichi()
+  def repeat_hand(self, draw=False):
+    if draw:
+      self.bonus_riichi = self.total_riichi
+    else:
+      self.bonus_riichi = 0
+
+    self.reset_player_riichi()
     self.repeat += 1
     self.update_player_states()
 
-  def next_hand(self):
-    self.reset_riichi()
+  def next_hand(self, draw=False):
+    if draw:
+      self.bonus_honba = self.repeat + 1
+      self.bonus_riichi = self.total_riichi
+    else:
+      self.bonus_honba = 0
+      self.bonus_riichi = 0
+
+    self.reset_player_riichi()
     self.hand += 1
     self.repeat = 0
     self.update_player_states()
@@ -253,20 +271,13 @@ class GameServerState(ServerState):
         if player.client == client
     ))
 
-  def player_wind(self, player: GamePlayer):
-    return list(Wind)[(self.players.index(player) + self.hand) % len(Wind)]
-
-  def player_index_for_wind(self, wind: Wind):
-    return (self.hand + wind) % len(Wind)
-
-  def player_for_wind(self, wind: Wind):
-    return self.players[self.player_index_for_wind(wind)]
-
   def update_player_states(self):
     for index, player in enumerate(self.players):
       send_msg(player.client, PlayerGameStateServerPacket(
           self.hand,
           self.repeat,
+          self.bonus_honba,
+          self.bonus_riichi,
           index,
           self.players,
       ).pack())
@@ -285,7 +296,8 @@ class GameDrawServerState(ServerState):
 
     self.players = players
     for player in players:
-      if player.tenpai is not None: continue
+      if player.tenpai is not None:
+        continue
       send_msg(player.client, DrawServerPacket().pack())
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
