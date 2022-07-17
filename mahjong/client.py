@@ -20,6 +20,13 @@ TENPAI_VALUES = {
 }
 
 
+def tryParseInt(value):
+  try:
+    return int(value)
+  except:
+    return None
+
+
 class Client:
   socket: Type['socket.socket']
   state: Type['ClientState']
@@ -114,27 +121,75 @@ class GameClientState(ClientState, GameStateMixin):
     elif type(packet) is DrawServerPacket:
       self.state = GameDrawClientState(self.client, self)
 
+    elif type(packet) is RonServerPacket:
+      self.state = GameRonClientState(self.client, self, packet.from_wind)
+
   def on_input(self, input: str):
-    value = input.split()
-    if not value:
+    values = input.split()
+    if not values:
       return
-    elif value[0].lower() == 'riichi':
-      send_msg(self.client.socket, RiichiClientPacket().pack())
-    elif value[0].lower() == 'tsumo':
-      dealer_points = int(value[1])
-      points = int(value[2])
-      send_msg(self.client.socket, TsumoClientPacket(
-          dealer_points, points).pack())
-    elif value[0].lower() == 'ron':
-      wind = {
-          wind.name.lower(): wind
-          for wind in Wind
-      }[value[1].lower()]
-      points = int(value[2])
-      send_msg(self.client.socket, RonClientPacket(wind, points).pack())
-    elif value[0].lower() == 'draw':
-      tenpai = TENPAI_VALUES.get(value[0].lower())
-      send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
+
+    elif values[0].lower() == 'riichi':
+      self.on_input_riichi()
+
+    elif values[0].lower() == 'tsumo':
+      self.on_input_tsumo(values[1:])
+
+    elif values[0].lower() == 'ron':
+      self.on_input_ron(values[1:])
+
+    elif values[0].lower() == 'draw':
+      self.on_input_draw(values[1:])
+
+  def on_input_riichi(self):
+    send_msg(self.client.socket, RiichiClientPacket().pack())
+
+  def on_input_tsumo(self, values: list[str]):
+    if len(values) < 2:
+      print('tsumo dealer_points points')
+      return
+
+    dealer_points = tryParseInt(values[0])
+    if dealer_points is None:
+      print('tsumo dealer_points points')
+      return
+    points = tryParseInt(values[1])
+    if points is None:
+      print('tsumo dealer_points points')
+      return
+
+    packet = TsumoClientPacket(dealer_points, points).pack()
+    send_msg(self.client.socket, packet)
+
+  def on_input_ron(self, values: list[str]):
+    if len(values) < 2:
+      print('ron wind points')
+      return
+
+    player_wind = self.player_wind(self.me)
+    wind = {
+        wind.name.lower(): wind
+        for wind in Wind
+        if wind != player_wind
+    }.get(values[0].lower())
+    if wind is None:
+      print('ron wind points')
+      return
+    points = tryParseInt(values[1])
+    if points is None:
+      print('ron wind points')
+      return
+
+    send_msg(self.client.socket, RonClientPacket(wind, points).pack())
+
+  def on_input_draw(self, values: list[str]):
+    if len(values) >= 1:
+      tenpai = TENPAI_VALUES.get(values[0].lower())
+      if tenpai is None:
+        print('draw [tenpai]')
+    else:
+      tenpai = None
+    send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
 
   @property
   def me(self):
@@ -185,6 +240,31 @@ class GameDrawClientState(ClientState):
       send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
     else:
       self.print()
+
+
+class GameRonClientState(ClientState):
+  def __init__(self, client: Client, game_state: GameClientState, from_wind: Wind):
+    self.client = client
+    self.game_state = game_state
+    self.from_wind = from_wind
+    self.print()
+
+  def print(self):
+    sys.stdout.write('Ron?\n')
+    sys.stdout.write('> ')
+    sys.stdout.flush()
+
+  def on_server_packet(self, fd: socket.socket, packet: Packet):
+    if type(packet) is PlayerGameStateServerPacket:
+      self.state = self.game_state
+      self.state.on_server_packet(fd, packet)
+
+  def on_input(self, input: str):
+    value = input.split()
+    points = tryParseInt(value[0]) or 0
+
+    packet = RonClientPacket(self.from_wind, points).pack()
+    send_msg(self.client.socket, packet)
 
 
 def main():

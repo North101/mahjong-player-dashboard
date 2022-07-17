@@ -23,6 +23,14 @@ DrawPlayers = tuple[
 ]
 
 
+RonPlayers = tuple[
+    Type['GameRonPlayer'],
+    Type['GameRonPlayer'],
+    Type['GameRonPlayer'],
+    Type['GameRonPlayer'],
+]
+
+
 class Server:
   socket: Type['socket.socket']
   state: Type['ServerState']
@@ -154,7 +162,7 @@ class GameServerState(ServerState, GameStateMixin):
     pass
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
-    player = self.player_by_client(client)
+    player = self.player_for_client(client)
     if type(packet) is RiichiClientPacket:
       self.on_player_riichi(player, packet)
     elif type(packet) is TsumoClientPacket:
@@ -180,6 +188,7 @@ class GameServerState(ServerState, GameStateMixin):
         points = packet.dealer_points
       else:
         points = packet.points
+      points += self.total_honba * TSUMO_HONBA_POINTS
       player.take_points(other_player, points)
 
     if self.player_wind(player) == Wind.EAST:
@@ -188,12 +197,42 @@ class GameServerState(ServerState, GameStateMixin):
       self.next_hand()
 
   def on_player_ron(self, player: ServerGamePlayer, packet: RonClientPacket):
-    self.take_riichi_points([player])
+    if self.player_wind(player) == packet.from_wind:
+      return
 
-    other_player = self.player_for_wind(packet.from_wind)
-    player.take_points(other_player, packet.points)
+    ron_players = []
+    for wind, other_player in self.players_by_wind:
+      if wind == packet.from_wind:
+        continue
+      elif player == other_player:
+        points = packet.points
+      else:
+        points = None
+      ron_players.append(GameRonPlayer(other_player.client, points))
 
-    if self.player_wind(player) == Wind.EAST:
+    self.state = GameRonServerState(
+        self.server, self, packet.from_wind, ron_players)
+
+  def on_player_ron_complete(self, from_wind: Wind, ron_players: RonPlayers):
+    winners = [
+        (self.player_for_client(player.client), player.points)
+        for player in ron_players
+    ]
+    self.take_riichi_points([
+        player
+        for (player, _) in winners
+    ])
+
+    discarder: ServerGamePlayer = self.player_for_wind(from_wind)
+    for (player, points) in winners:
+      points = points + (self.total_honba * RON_HONBA_POINTS)
+      player.take_points(discarder, points)
+
+    repeat = any((
+        self.player_wind(player) == Wind.EAST
+        for (player, _) in winners
+    ))
+    if repeat:
       self.repeat_hand()
     else:
       self.next_hand()
@@ -214,7 +253,7 @@ class GameServerState(ServerState, GameStateMixin):
       if not draw_player.tenpai:
         continue
 
-      player = self.player_by_client(draw_player.client)
+      player = self.player_for_client(draw_player.client)
       for other_player in self.players:
         if player == other_player:
           continue
@@ -230,7 +269,7 @@ class GameServerState(ServerState, GameStateMixin):
   def take_riichi_points(self, winners: List[ServerGamePlayer]):
     winner = next((
         player
-        for player in self.players_by_wind
+        for _, player in self.players_by_wind
         if player in winners
     ))
 
@@ -264,7 +303,7 @@ class GameServerState(ServerState, GameStateMixin):
     self.repeat = 0
     self.update_player_states()
 
-  def player_by_client(self, client: socket.socket):
+  def player_for_client(self, client: socket.socket):
     return next((
         player
         for player in self.players
@@ -273,17 +312,18 @@ class GameServerState(ServerState, GameStateMixin):
 
   def update_player_states(self):
     for index, player in enumerate(self.players):
-      send_msg(player.client, PlayerGameStateServerPacket(
+      packet = PlayerGameStateServerPacket(
           self.hand,
           self.repeat,
           self.bonus_honba,
           self.bonus_riichi,
           index,
           self.players,
-      ).pack())
+      ).pack()
+      send_msg(player.client, packet)
 
 
-class GameDrawPlayer:
+class GameDrawPlayer(ClientMixin):
   def __init__(self, client: socket.socket, tenpai: bool):
     self.client = client
     self.tenpai = tenpai
@@ -301,7 +341,7 @@ class GameDrawServerState(ServerState):
       send_msg(player.client, DrawServerPacket().pack())
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
-    player = self.player_by_client(client)
+    player = self.player_for_client(client)
     if type(packet) is DrawClientPacket:
       self.on_player_draw(player, packet)
 
@@ -312,7 +352,49 @@ class GameDrawServerState(ServerState):
       self.state = self.game_state
       self.state.on_player_draw_complete(self.players)
 
-  def player_by_client(self, client: socket.socket):
+  def player_for_client(self, client: socket.socket):
+    return next((
+        player
+        for player in self.players
+        if player.client == client
+    ))
+
+
+class GameRonPlayer(ClientMixin):
+  def __init__(self, client: socket.socket, points: int):
+    self.client = client
+    self.points = points
+
+
+class GameRonServerState(ServerState):
+  def __init__(self, server: Server, game_state: GameServerState, from_wind: Wind, players: RonPlayers):
+    self.server = server
+    self.game_state = game_state
+
+    self.from_wind = from_wind
+    self.players = players
+    for player in players:
+      if player.points is not None:
+        continue
+      send_msg(player.client, RonServerPacket(from_wind).pack())
+
+  def on_client_packet(self, client: socket.socket, packet: Packet):
+    player = self.player_for_client(client)
+    if type(packet) is RonClientPacket:
+      self.on_player_ron(player, packet)
+
+  def on_player_ron(self, player: GameRonPlayer, packet: RonClientPacket):
+    player.points = packet.points
+
+    if all((player.points is not None for player in self.players)):
+      self.state = self.game_state
+      self.state.on_player_ron_complete(self.from_wind, [
+          player
+          for player in self.players
+          if player.points > 0
+      ])
+
+  def player_for_client(self, client: socket.socket):
     return next((
         player
         for player in self.players

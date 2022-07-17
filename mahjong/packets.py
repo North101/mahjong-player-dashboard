@@ -7,7 +7,7 @@ from mahjong.wind import Wind
 
 
 def unpack_id(data) -> int:
-  return struct.unpack_from('I', data)[0]
+  return struct.unpack_from('B', data)[0]
 
 
 class Struct:
@@ -30,7 +30,7 @@ class Packet(Struct):
 
 
 class RiichiClientPacket(Packet):
-  fmt = struct.Struct('I')
+  fmt = struct.Struct('H')
   id = 2
 
   def pack(self) -> bytes:
@@ -48,7 +48,7 @@ class RiichiClientPacket(Packet):
 
 
 class TsumoClientPacket(Packet):
-  fmt = struct.Struct('III')
+  fmt = struct.Struct('HHH')
   id = 3
 
   def __init__(self, dealer_points, points):
@@ -70,7 +70,7 @@ class TsumoClientPacket(Packet):
 
 
 class RonClientPacket(Packet):
-  fmt = struct.Struct('III')
+  fmt = struct.Struct('HBH')
   id = 4
 
   def __init__(self, from_wind: Wind, points: int):
@@ -92,7 +92,7 @@ class RonClientPacket(Packet):
 
 
 class DrawClientPacket(Packet):
-  fmt = struct.Struct('IB')
+  fmt = struct.Struct('HB')
   id = 5
 
   to_int = {
@@ -123,7 +123,7 @@ class DrawClientPacket(Packet):
 
 
 class PlayerStruct(Struct, GamePlayerMixin):
-  fmt = struct.Struct('i?')
+  fmt = struct.Struct('H?')
 
   def __init__(self, points: int, riichi: bool) -> None:
     self.points = points
@@ -142,7 +142,7 @@ class PlayerStruct(Struct, GamePlayerMixin):
 
 
 class PlayerGameStateServerPacket(Packet):
-  fmt = struct.Struct('IIIIII')
+  fmt = struct.Struct('HHHHHB')
   id = 6
 
   def __init__(
@@ -187,7 +187,7 @@ class PlayerGameStateServerPacket(Packet):
 
 
 class DrawServerPacket(Packet):
-  fmt = struct.Struct('I')
+  fmt = struct.Struct('H')
   id = 8
 
   def pack(self) -> bytes:
@@ -202,6 +202,25 @@ class DrawServerPacket(Packet):
     return DrawServerPacket()
 
 
+class RonServerPacket(Packet):
+  fmt = struct.Struct('HB')
+  id = 9
+
+  def __init__(self, from_wind: Wind):
+    self.from_wind = from_wind
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id, self.from_wind)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, from_wind = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return RonServerPacket(list(Wind)[from_wind])
+
+
 packets: List[Packet] = [
     RiichiClientPacket,
     TsumoClientPacket,
@@ -210,6 +229,7 @@ packets: List[Packet] = [
 
     PlayerGameStateServerPacket,
     DrawServerPacket,
+    RonServerPacket,
 ]
 
 

@@ -5,7 +5,8 @@ from mahjong.wind import Wind
 
 DRAW_POINTS = 1000
 RIICHI_POINTS = 1000
-HONBA_POINTS = 300
+TSUMO_HONBA_POINTS = 100
+RON_HONBA_POINTS = 300
 
 GamePlayers = tuple[
     Type['GamePlayerMixin'],
@@ -38,7 +39,7 @@ class GameStateMixin:
   @property
   def players_by_wind(self):
     for wind in Wind:
-      yield self.player_for_wind(wind)
+      yield wind, self.player_for_wind(wind)
 
   @property
   def total_honba(self):
