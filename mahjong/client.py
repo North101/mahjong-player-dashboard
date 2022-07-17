@@ -28,13 +28,11 @@ def tryParseInt(value):
 
 
 class Client:
-  socket: Type['socket.socket']
-  state: Type['ClientState']
-
   def __init__(self, poll: Poll, address: Tuple[str, int]):
     self.poll = poll
     self.address = address
-    self.state = LobbyClientState(self)
+    self.socket: socket.socket
+    self.state: ClientState = LobbyClientState(self)
 
   def start(self):
     (host, port) = self.address
@@ -66,7 +64,7 @@ class ClientState:
     return self.client.state
 
   @state.setter
-  def state(self, state: Type['ClientState']):
+  def state(self, state: 'ClientState'):
     self.client.state = state
 
   def on_server_data(self, server: socket.socket, event: int):
@@ -84,10 +82,10 @@ class ClientState:
 
   def on_input(self, input: str):
     raise NotImplementedError()
-  
+
   def read_packet(self):
     return read_packet(self.client.socket)
-  
+
   def send_packet(self, packet: Packet):
     send_packet(self.client.socket, packet)
 
@@ -150,7 +148,7 @@ class GameClientState(ClientState, GameStateMixin):
   def on_input_riichi(self):
     self.send_packet(RiichiClientPacket())
 
-  def on_input_tsumo(self, values: list[str]):
+  def on_input_tsumo(self, values: List[str]):
     if len(values) < 2:
       print('tsumo dealer_points points')
       return
@@ -166,7 +164,7 @@ class GameClientState(ClientState, GameStateMixin):
 
     self.send_packet(TsumoClientPacket(dealer_points, points))
 
-  def on_input_ron(self, values: list[str]):
+  def on_input_ron(self, values: List[str]):
     if len(values) < 2:
       print('ron wind points')
       return
@@ -187,7 +185,7 @@ class GameClientState(ClientState, GameStateMixin):
 
     self.send_packet(RonClientPacket(wind, points))
 
-  def on_input_draw(self, values: list[str]):
+  def on_input_draw(self, values: List[str]):
     if len(values) >= 1:
       tenpai = TENPAI_VALUES.get(values[0].lower())
       if tenpai is None:
@@ -280,7 +278,7 @@ def main():
     while True:
       poll.poll()
   finally:
-    lookup = list(poll.lookup.values())
+    lookup = List(poll.lookup.values())
     for event_callback in lookup:
       fd = event_callback.fd
       poll.unregister(fd)

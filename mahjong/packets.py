@@ -95,7 +95,7 @@ class DrawClientPacket(Packet):
   fmt = struct.Struct('HB')
   id = 5
 
-  to_int = {
+  to_int: Mapping[Optional[bool], int] = {
       False: 0,
       True: 1,
   }
@@ -105,7 +105,7 @@ class DrawClientPacket(Packet):
       for k, v in to_int.items()
   }
 
-  def __init__(self, tenpai: bool):
+  def __init__(self, tenpai: Optional[bool]):
     self.tenpai = tenpai
 
   def pack(self) -> bytes:
@@ -147,7 +147,7 @@ class PlayerGameStateServerPacket(Packet):
 
   def __init__(
       self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int,
-      player_index: int, players: List[PlayerStruct],
+      player_index: int, players: GamePlayers,
   ):
     self.hand = hand
     self.repeat = repeat
@@ -169,10 +169,12 @@ class PlayerGameStateServerPacket(Packet):
         data, offset)
     offset += self.fmt.size
 
-    players: List[PlayerStruct] = []
-    for _ in range(len(Wind)):
-      players.append(PlayerStruct.unpack(data, offset))
-      offset += PlayerStruct.size()
+    players = (
+        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 0)),
+        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 1)),
+        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 2)),
+        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 3)),
+    )
 
     if id != self.id:
       raise ValueError(id)
@@ -221,7 +223,7 @@ class RonServerPacket(Packet):
     return RonServerPacket(list(Wind)[from_wind])
 
 
-packets: List[Packet] = [
+packets: List[Type[Packet]] = [
     RiichiClientPacket,
     TsumoClientPacket,
     RonClientPacket,
@@ -233,7 +235,7 @@ packets: List[Packet] = [
 ]
 
 
-def find_packet(id) -> Packet:
+def find_packet(id):
   for packet in packets:
     if packet.id == id:
       return packet
@@ -246,7 +248,7 @@ def unpack_packet(data) -> Packet:
   return find_packet(id).unpack(data)
 
 
-def read_packet(_socket: socket.socket) -> Packet:
+def read_packet(_socket: socket.socket) -> Union[Packet, None]:
   try:
     data = recv_msg(_socket)
     if not data:

@@ -1,5 +1,5 @@
 import socket
-from typing import Type
+from typing import Tuple
 
 from mahjong.wind import Wind
 
@@ -8,11 +8,11 @@ RIICHI_POINTS = 1000
 TSUMO_HONBA_POINTS = 100
 RON_HONBA_POINTS = 300
 
-GamePlayers = tuple[
-    Type['GamePlayerMixin'],
-    Type['GamePlayerMixin'],
-    Type['GamePlayerMixin'],
-    Type['GamePlayerMixin'],
+GamePlayers = Tuple[
+    'GamePlayerMixin',
+    'GamePlayerMixin',
+    'GamePlayerMixin',
+    'GamePlayerMixin',
 ]
 
 

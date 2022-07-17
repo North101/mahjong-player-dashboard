@@ -1,6 +1,5 @@
 import select
-from ast import Tuple
-from typing import Callable, Mapping
+from typing import Callable
 
 from mahjong.packets import *
 
@@ -14,13 +13,13 @@ class EventCallback:
   def __init__(self, fd: FileDescriptorLike, callback: Callable):
     self.fd = fd
     self.callback = callback
-  
+
   def __call__(self, event: int):
     self.callback(self.fd, event)
 
 
 class Poll:
-  lookup: Mapping[int, EventCallback] = {}
+  lookup: Dict[int, EventCallback] = {}
 
   def __init__(self):
     self._poll = select.poll()
@@ -36,5 +35,6 @@ class Poll:
   def poll(self):
     for (fileno, event) in self._poll.poll():
       event_callback = self.lookup.get(fileno)
-      if not event_callback: continue
+      if not event_callback:
+        continue
       event_callback(event)
