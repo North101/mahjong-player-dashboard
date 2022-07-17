@@ -257,6 +257,10 @@ def read_packet(_socket: socket.socket) -> Packet:
   return unpack_packet(data)
 
 
+def send_packet(_socket: socket.socket, packet: Packet):
+  send_msg(_socket, packet.pack())
+
+
 msg_length = struct.Struct('>I')
 
 

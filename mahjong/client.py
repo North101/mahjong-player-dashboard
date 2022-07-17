@@ -74,7 +74,7 @@ class ClientState:
       self.poll.unregister(server)
       self.on_server_disconnect(server)
     elif event & select.POLLIN:
-      self.on_server_packet(server, read_packet(server))
+      self.on_server_packet(server, self.read_packet())
 
   def on_server_disconnect(self, server: socket.socket):
     raise ValueError()
@@ -84,6 +84,12 @@ class ClientState:
 
   def on_input(self, input: str):
     raise NotImplementedError()
+  
+  def read_packet(self):
+    return read_packet(self.client.socket)
+  
+  def send_packet(self, packet: Packet):
+    send_packet(self.client.socket, packet)
 
 
 class LobbyClientState(ClientState):
@@ -142,7 +148,7 @@ class GameClientState(ClientState, GameStateMixin):
       self.on_input_draw(values[1:])
 
   def on_input_riichi(self):
-    send_msg(self.client.socket, RiichiClientPacket().pack())
+    self.send_packet(RiichiClientPacket())
 
   def on_input_tsumo(self, values: list[str]):
     if len(values) < 2:
@@ -158,8 +164,7 @@ class GameClientState(ClientState, GameStateMixin):
       print('tsumo dealer_points points')
       return
 
-    packet = TsumoClientPacket(dealer_points, points).pack()
-    send_msg(self.client.socket, packet)
+    self.send_packet(TsumoClientPacket(dealer_points, points))
 
   def on_input_ron(self, values: list[str]):
     if len(values) < 2:
@@ -180,7 +185,7 @@ class GameClientState(ClientState, GameStateMixin):
       print('ron wind points')
       return
 
-    send_msg(self.client.socket, RonClientPacket(wind, points).pack())
+    self.send_packet(RonClientPacket(wind, points))
 
   def on_input_draw(self, values: list[str]):
     if len(values) >= 1:
@@ -189,7 +194,8 @@ class GameClientState(ClientState, GameStateMixin):
         print('draw [tenpai]')
     else:
       tenpai = None
-    send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
+
+    self.send_packet(DrawClientPacket(tenpai))
 
   @property
   def me(self):
@@ -237,7 +243,7 @@ class GameDrawClientState(ClientState):
 
     tenpai = TENPAI_VALUES.get(value[0].lower())
     if tenpai is not None:
-      send_msg(self.client.socket, DrawClientPacket(tenpai).pack())
+      self.send_packet(DrawClientPacket(tenpai))
     else:
       self.print()
 
@@ -263,8 +269,7 @@ class GameRonClientState(ClientState):
     value = input.split()
     points = tryParseInt(value[0]) or 0
 
-    packet = RonClientPacket(self.from_wind, points).pack()
-    send_msg(self.client.socket, packet)
+    self.send_packet(RonClientPacket(self.from_wind, points))
 
 
 def main():
