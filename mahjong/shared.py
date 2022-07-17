@@ -1,4 +1,3 @@
-import socket
 from typing import Tuple
 
 from mahjong.wind import Wind
@@ -8,16 +7,13 @@ RIICHI_POINTS = 1000
 TSUMO_HONBA_POINTS = 100
 RON_HONBA_POINTS = 300
 
+
 GamePlayers = Tuple[
     'GamePlayerMixin',
     'GamePlayerMixin',
     'GamePlayerMixin',
     'GamePlayerMixin',
 ]
-
-
-class ClientMixin:
-  client: socket.socket
 
 
 class GamePlayerMixin:
@@ -50,7 +46,7 @@ class GameStateMixin:
     return self.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
   def player_wind(self, player: GamePlayerMixin):
-    return list(Wind)[(self.players.index(player) + self.hand) % len(Wind)]
+    return Wind((self.players.index(player) + self.hand) % len(Wind))
 
   def player_index_for_wind(self, wind: Wind):
     return (self.hand + wind) % len(Wind)

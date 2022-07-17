@@ -1,6 +1,6 @@
 import select
 import socket
-from typing import Dict, Tuple
+from typing import Tuple
 
 from mahjong.client import Client
 from mahjong.packets import *
@@ -21,6 +21,13 @@ DrawPlayerTuple = Tuple[
     'GameDrawPlayer',
     'GameDrawPlayer',
 ]
+
+
+class ClientMixin:
+  client: socket.socket
+
+  def send_packet(self, packet: Packet):
+    send_msg(self.client, packet.pack())
 
 
 class Server:
@@ -90,31 +97,93 @@ class ServerState:
     pass
 
 
-class ServerLobbyPlayer(ClientMixin):
-  def __init__(self, client: socket.socket):
-    self.client = client
-
-
 class LobbyServerState(ServerState):
-  def __init__(self, server: Server):
+  def __init__(self, server: Server, clients=None):
     self.server = server
-    self.clients: Dict[socket.socket, ServerLobbyPlayer] = {}
+    self.clients: List[socket.socket] = clients or []
+    self.send_lobby_count()
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    self.clients[client] = ServerLobbyPlayer(client)
+    self.clients.append(client)
+    self.send_lobby_count()
 
     if len(self.clients) == len(Wind):
-      player1, player2, player3, player4 = self.clients.values()
-      self.state = GameServerState(self.server, (
-          player1,
-          player2,
-          player3,
-          player4,
-      ))
+      self.state = SetupGameServerState(self.server, self.clients)
 
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)
-    del self.clients[client]
+
+    self.clients.remove(client)
+    self.send_lobby_count()
+
+  def send_lobby_count(self):
+    packet = LobbyCountServerPacket(len(self.clients), len(Wind)).pack()
+    for client in self.clients:
+      send_msg(client, packet)
+
+
+class SetupGameServerState(ServerState):
+  def __init__(self, server: Server, clients: List[socket.socket]):
+    super().__init__(server)
+    self.clients = list(clients)
+    self.players: List[socket.socket] = []
+    self.ask_next_wind()
+
+  def ask_next_wind(self):
+    if len(Wind) == len(self.players):
+      self.state = PlayGameServerState(self.server, (
+          self.players[0],
+          self.players[1],
+          self.players[2],
+          self.players[3],
+      ))
+      return
+
+    wind = Wind(len(self.players))
+    packet = SetupSelectWindServerPacket(wind).pack()
+    for client in self.clients:
+      if client not in self.players:
+        send_msg(client, packet)
+
+  def on_client_disconnect(self, client: socket.socket):
+    super().on_client_disconnect(client)
+
+    if client in self.clients:
+      self.clients.remove(client)
+      if not self.enough_players():
+        return self.to_lobby()
+    elif client in self.players:
+      player_index = self.players.index(client)
+      self.players.remove(client)
+      if not self.enough_players():
+        return self.to_lobby()
+
+      if player_index < len(self.players):
+        self.clients += self.players
+        self.players = []
+
+      self.ask_next_wind()
+
+  def on_client_packet(self, client: socket.socket, packet: Packet):
+    if isinstance(packet, SelectWindClientPacket):
+      if packet.wind != len(self.players) and client not in self.players:
+        return
+
+      self.clients.remove(client)
+      self.players.append(client)
+      send_msg(client, SetupConfirmWindServerPacket(packet.wind).pack())
+
+      self.ask_next_wind()
+
+  def enough_players(self):
+    return (len(self.clients) + len(self.players)) >= len(Wind)
+
+  def to_lobby(self):
+    packet = SetupNotEnoughServerPacket().pack()
+    clients = self.clients + self.players
+    for client in clients:
+      send_msg(client, packet)
+    self.state = LobbyServerState(self.server, clients=clients)
 
 
 class ServerGamePlayer(ClientMixin, GamePlayerMixin):
@@ -133,9 +202,9 @@ class ServerGamePlayer(ClientMixin, GamePlayerMixin):
     other.points -= points
 
 
-class GameServerState(ServerState, GameStateMixin):
+class PlayGameServerState(ServerState, GameStateMixin):
   def __init__(
-      self, server: Server, players: Tuple[ServerLobbyPlayer, ServerLobbyPlayer, ServerLobbyPlayer, ServerLobbyPlayer], starting_points: int = 25000,
+      self, server: Server, players: Tuple[socket.socket, socket.socket, socket.socket, socket.socket], starting_points: int = 25000,
       hand: int = 0, repeat: int = 0, bonus_honba=0, bonus_riichi=0, max_rounds: int = 1
   ):
     self.server = server
@@ -147,10 +216,10 @@ class GameServerState(ServerState, GameStateMixin):
     self.max_rounds = max_rounds
 
     self.players: GamePlayerTuple = (
-        ServerGamePlayer(players[0].client, starting_points),
-        ServerGamePlayer(players[1].client, starting_points),
-        ServerGamePlayer(players[2].client, starting_points),
-        ServerGamePlayer(players[3].client, starting_points),
+        ServerGamePlayer(players[0], starting_points),
+        ServerGamePlayer(players[1], starting_points),
+        ServerGamePlayer(players[2], starting_points),
+        ServerGamePlayer(players[3], starting_points),
     )
     self.update_player_states()
 
@@ -310,15 +379,14 @@ class GameServerState(ServerState, GameStateMixin):
 
   def update_player_states(self):
     for index, player in enumerate(self.players):
-      packet = PlayerGameStateServerPacket(
+      player.send_packet(PlayerGameStateServerPacket(
           self.hand,
           self.repeat,
           self.bonus_honba,
           self.bonus_riichi,
           index,
           self.players,
-      ).pack()
-      send_msg(player.client, packet)
+      ))
 
 
 class GameDrawPlayer(ClientMixin):
@@ -328,7 +396,7 @@ class GameDrawPlayer(ClientMixin):
 
 
 class GameDrawServerState(ServerState):
-  def __init__(self, server: Server, game_state: GameServerState, players: DrawPlayerTuple):
+  def __init__(self, server: Server, game_state: PlayGameServerState, players: DrawPlayerTuple):
     self.server = server
     self.game_state = game_state
 
@@ -336,7 +404,7 @@ class GameDrawServerState(ServerState):
     for player in players:
       if player.tenpai is not None:
         continue
-      send_msg(player.client, DrawServerPacket().pack())
+      player.send_packet(DrawServerPacket())
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
@@ -365,7 +433,7 @@ class GameRonPlayer(ClientMixin):
 
 
 class GameRonServerState(ServerState):
-  def __init__(self, server: Server, game_state: GameServerState, from_wind: Wind, players: List[GameRonPlayer]):
+  def __init__(self, server: Server, game_state: PlayGameServerState, from_wind: Wind, players: List[GameRonPlayer]):
     self.server = server
     self.game_state = game_state
 
@@ -374,7 +442,7 @@ class GameRonServerState(ServerState):
     for player in players:
       if player.points is not None:
         continue
-      send_msg(player.client, RonServerPacket(from_wind).pack())
+      player.send_packet(RonServerPacket(from_wind))
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)

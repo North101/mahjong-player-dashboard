@@ -95,11 +95,45 @@ class LobbyClientState(ClientState):
     self.client = client
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
-    if isinstance(packet, PlayerGameStateServerPacket):
-      self.state = GameClientState(self.client, packet)
+    if isinstance(packet, LobbyCountServerPacket):
+      print(f'Players: {packet.count} / {packet.max_players}')
+    if isinstance(packet, SetupSelectWindServerPacket):
+      self.state = SetupGameClientState(self.client, packet.wind)
 
 
-class GameClientState(ClientState, GameStateMixin):
+class SetupGameClientState(ClientState):
+  def __init__(self, client: Client, wind: Wind):
+    self.client = client
+    self.wind = wind
+    
+    print('')
+    print('Assigning Winds:')
+    self.print_wind()
+
+  def on_server_packet(self, server: socket.socket, packet: Packet):
+    if isinstance(packet, SetupSelectWindServerPacket):
+      self.wind = packet.wind
+      self.print_wind()
+    elif isinstance(packet, SetupConfirmWindServerPacket):
+      print(f'You are: {packet.wind.name}')
+    elif isinstance(packet, SetupNotEnoughServerPacket):
+      print('')
+      print('Not enough players')
+      self.state = LobbyClientState(self.client)
+    elif isinstance(packet, PlayerGameStateServerPacket):
+      self.state = PlayGameClientState(self.client, packet)
+
+  def print_wind(self):
+    sys.stdout.write('\n')
+    sys.stdout.write(f'{self.wind.name}? [Yes]\n')
+    sys.stdout.write('> ')
+    sys.stdout.flush()
+
+  def on_input(self, input: str):
+    self.send_packet(SelectWindClientPacket(self.wind))
+
+
+class PlayGameClientState(ClientState, GameStateMixin):
   def __init__(self, client: Client, packet: PlayerGameStateServerPacket):
     self.client = client
 
@@ -197,15 +231,14 @@ class GameClientState(ClientState, GameStateMixin):
     return self.players[self.player_index]
 
   def print_info(self):
-    sys.stdout.writelines([
-        '----------------\n',
-        f'Round: {self.round + 1}\n',
-        f'Hand: {(self.hand % len(Wind)) + 1}\n',
-        f'Repeat: {self.repeat}\n',
-        f'Honba: {self.total_honba}\n',
-        f'Riichi: {self.total_riichi}\n',
-        '----------------\n',
-    ])
+    sys.stdout.write('\n')
+    sys.stdout.write('----------------\n')
+    sys.stdout.write(f'Round: {self.round + 1}\n')
+    sys.stdout.write(f'Hand: {(self.hand % len(Wind)) + 1}\n')
+    sys.stdout.write(f'Repeat: {self.repeat}\n')
+    sys.stdout.write(f'Honba: {self.total_honba}\n')
+    sys.stdout.write(f'Riichi: {self.total_riichi}\n')
+    sys.stdout.write('----------------\n')
 
     for wind in Wind:
       player = self.player_for_wind(wind)
@@ -216,12 +249,13 @@ class GameClientState(ClientState, GameStateMixin):
 
 
 class GameDrawClientState(ClientState):
-  def __init__(self, client: Client, game_state: GameClientState):
+  def __init__(self, client: Client, game_state: PlayGameClientState):
     self.client = client
     self.game_state = game_state
     self.print()
 
   def print(self):
+    sys.stdout.write('\n')
     sys.stdout.write('Tenpai? [Yes/No]\n')
     sys.stdout.write('> ')
     sys.stdout.flush()
@@ -244,14 +278,15 @@ class GameDrawClientState(ClientState):
 
 
 class GameRonClientState(ClientState):
-  def __init__(self, client: Client, game_state: GameClientState, from_wind: Wind):
+  def __init__(self, client: Client, game_state: PlayGameClientState, from_wind: Wind):
     self.client = client
     self.game_state = game_state
     self.from_wind = from_wind
     self.print()
 
   def print(self):
-    sys.stdout.write('Ron?\n')
+    sys.stdout.write('\n')
+    sys.stdout.write('Ron? [points]\n')
     sys.stdout.write('> ')
     sys.stdout.flush()
 

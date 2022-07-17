@@ -85,7 +85,7 @@ class RonClientPacket(Packet):
     id, from_wind, points = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return RonClientPacket(list(Wind)[from_wind], points)
+    return RonClientPacket(Wind(from_wind), points)
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.from_wind, self.points})'
@@ -122,6 +122,25 @@ class DrawClientPacket(Packet):
     return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
 
 
+class SelectWindClientPacket(Packet):
+  fmt = struct.Struct('HB')
+  id = 6
+
+  def __init__(self, wind: Wind):
+    self.wind = wind
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id, self.wind)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, wind = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return SelectWindClientPacket(Wind(wind))
+
+
 class PlayerStruct(Struct, GamePlayerMixin):
   fmt = struct.Struct('H?')
 
@@ -143,7 +162,7 @@ class PlayerStruct(Struct, GamePlayerMixin):
 
 class PlayerGameStateServerPacket(Packet):
   fmt = struct.Struct('HHHHHB')
-  id = 6
+  id = 7
 
   def __init__(
       self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int,
@@ -167,13 +186,12 @@ class PlayerGameStateServerPacket(Packet):
   def unpack(self, data: bytes, offset=0):
     id, hand, repeat, bonus_honba, bonus_riichi, player_index = self.fmt.unpack_from(
         data, offset)
-    offset += self.fmt.size
 
     players = (
-        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 0)),
-        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 1)),
-        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 2)),
-        PlayerStruct.unpack(data, offset + (PlayerStruct.size() * 3)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 0)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 1)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 2)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 3)),
     )
 
     if id != self.id:
@@ -220,7 +238,81 @@ class RonServerPacket(Packet):
 
     if id != self.id:
       raise ValueError(id)
-    return RonServerPacket(list(Wind)[from_wind])
+    return RonServerPacket(Wind(from_wind))
+
+
+class SetupSelectWindServerPacket(Packet):
+  fmt = struct.Struct('HB')
+  id = 10
+
+  def __init__(self, wind: Wind):
+    self.wind = wind
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id, self.wind)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, wind = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return SetupSelectWindServerPacket(Wind(wind))
+
+
+class SetupConfirmWindServerPacket(Packet):
+  fmt = struct.Struct('HB')
+  id = 11
+
+  def __init__(self, wind: Wind):
+    self.wind = wind
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id, self.wind)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, wind = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return SetupConfirmWindServerPacket(Wind(wind))
+
+
+class SetupNotEnoughServerPacket(Packet):
+  fmt = struct.Struct('H')
+  id = 12
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return SetupNotEnoughServerPacket()
+
+
+class LobbyCountServerPacket(Packet):
+  fmt = struct.Struct('HHH')
+  id = 13
+
+  def __init__(self, count: int, max_players: int):
+    self.count = count
+    self.max_players = max_players
+
+  def pack(self) -> bytes:
+    return self.fmt.pack(self.id, self.count, self.max_players)
+
+  @classmethod
+  def unpack(self, data: bytes):
+    id, count, max_players = self.fmt.unpack(data)
+
+    if id != self.id:
+      raise ValueError(id)
+    return LobbyCountServerPacket(count, max_players)
 
 
 packets: List[Type[Packet]] = [
@@ -228,10 +320,15 @@ packets: List[Type[Packet]] = [
     TsumoClientPacket,
     RonClientPacket,
     DrawClientPacket,
+    SelectWindClientPacket,
 
     PlayerGameStateServerPacket,
     DrawServerPacket,
     RonServerPacket,
+    SetupSelectWindServerPacket,
+    SetupConfirmWindServerPacket,
+    SetupNotEnoughServerPacket,
+    LobbyCountServerPacket,
 ]
 
 
