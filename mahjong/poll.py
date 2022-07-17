@@ -38,3 +38,7 @@ class Poll:
       if not event_callback:
         continue
       event_callback(event)
+
+  def close(self):
+    for event_callback in list(self.lookup.values()):
+      self.unregister(event_callback.fd)

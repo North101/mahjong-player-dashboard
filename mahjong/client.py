@@ -69,19 +69,19 @@ class ClientState:
 
   def on_server_data(self, server: socket.socket, event: int):
     if event & select.POLLHUP:
-      self.poll.unregister(server)
       self.on_server_disconnect(server)
     elif event & select.POLLIN:
       self.on_server_packet(server, self.read_packet())
 
   def on_server_disconnect(self, server: socket.socket):
-    raise ValueError()
+    self.poll.unregister(server)
+    server.close()
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
-    raise NotImplementedError()
+    pass
 
   def on_input(self, input: str):
-    raise NotImplementedError()
+    pass
 
   def read_packet(self):
     return read_packet(self.client.socket)
@@ -95,11 +95,8 @@ class LobbyClientState(ClientState):
     self.client = client
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStateServerPacket:
+    if isinstance(packet, PlayerGameStateServerPacket):
       self.state = GameClientState(self.client, packet)
-
-  def on_input(self, input: str):
-    pass
 
 
 class GameClientState(ClientState, GameStateMixin):
@@ -118,14 +115,14 @@ class GameClientState(ClientState, GameStateMixin):
     self.players = packet.players
 
   def on_server_packet(self, fd: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStateServerPacket:
+    if isinstance(packet, PlayerGameStateServerPacket):
       self.update_game(packet)
       self.print_info()
 
-    elif type(packet) is DrawServerPacket:
+    elif isinstance(packet, DrawServerPacket):
       self.state = GameDrawClientState(self.client, self)
 
-    elif type(packet) is RonServerPacket:
+    elif isinstance(packet, RonServerPacket):
       self.state = GameRonClientState(self.client, self, packet.from_wind)
 
   def on_input(self, input: str):
@@ -230,7 +227,7 @@ class GameDrawClientState(ClientState):
     sys.stdout.flush()
 
   def on_server_packet(self, fd: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStateServerPacket:
+    if isinstance(packet, PlayerGameStateServerPacket):
       self.state = self.game_state
       self.state.on_server_packet(fd, packet)
 
@@ -259,7 +256,7 @@ class GameRonClientState(ClientState):
     sys.stdout.flush()
 
   def on_server_packet(self, fd: socket.socket, packet: Packet):
-    if type(packet) is PlayerGameStateServerPacket:
+    if isinstance(packet, PlayerGameStateServerPacket):
       self.state = self.game_state
       self.state.on_server_packet(fd, packet)
 
@@ -278,10 +275,7 @@ def main():
     while True:
       poll.poll()
   finally:
-    lookup = List(poll.lookup.values())
-    for event_callback in lookup:
-      fd = event_callback.fd
-      poll.unregister(fd)
+    poll.close()
 
 
 if __name__ == '__main__':

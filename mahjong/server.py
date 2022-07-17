@@ -34,6 +34,7 @@ class Server:
     host, port = self.address
 
     self.socket = socket.socket()
+    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     self.socket.bind((host, port))
 
     print(f'Server is listing on the port {port}...')
@@ -72,7 +73,6 @@ class ServerState:
 
   def on_client_data(self, client: socket.socket, event: int):
     if event & select.POLLHUP:
-      self.poll.unregister(client)
       self.on_client_disconnect(client)
     elif event & select.POLLIN:
       packet = read_packet(client)
@@ -80,13 +80,14 @@ class ServerState:
         self.on_client_packet(client, packet)
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    raise NotImplementedError()
+    pass
 
   def on_client_disconnect(self, client: socket.socket):
-    raise NotImplementedError()
+    self.poll.unregister(client)
+    client.close()
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
-    raise NotImplementedError()
+    pass
 
 
 class ServerLobbyPlayer(ClientMixin):
@@ -105,17 +106,15 @@ class LobbyServerState(ServerState):
     if len(self.clients) == len(Wind):
       player1, player2, player3, player4 = self.clients.values()
       self.state = GameServerState(self.server, (
-        player1,
-        player2,
-        player3,
-        player4,
+          player1,
+          player2,
+          player3,
+          player4,
       ))
 
   def on_client_disconnect(self, client: socket.socket):
+    super().on_client_disconnect(client)
     del self.clients[client]
-
-  def on_client_packet(self, client: socket.socket, packet: Packet):
-    pass
 
 
 class ServerGamePlayer(ClientMixin, GamePlayerMixin):
@@ -155,21 +154,15 @@ class GameServerState(ServerState, GameStateMixin):
     )
     self.update_player_states()
 
-  def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    pass
-
-  def on_client_disconnect(self, client: socket.socket):
-    pass
-
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
-    if type(packet) is RiichiClientPacket:
+    if isinstance(packet, RiichiClientPacket):
       self.on_player_riichi(player, packet)
-    elif type(packet) is TsumoClientPacket:
+    elif isinstance(packet, TsumoClientPacket):
       self.on_player_tsumo(player, packet)
-    elif type(packet) is RonClientPacket:
+    elif isinstance(packet, RonClientPacket):
       self.on_player_ron(player, packet)
-    elif type(packet) is DrawClientPacket:
+    elif isinstance(packet, DrawClientPacket):
       self.on_player_draw(player, packet)
 
   def on_player_riichi(self, player: ServerGamePlayer, packet: RiichiClientPacket):
@@ -242,10 +235,14 @@ class GameServerState(ServerState, GameStateMixin):
   def on_player_draw(self, player: ServerGamePlayer, packet: DrawClientPacket):
     player1, player2, player3, player4 = self.players
     players = (
-        GameDrawPlayer(player1.client, packet.tenpai if player == player1 else None),
-        GameDrawPlayer(player2.client, packet.tenpai if player == player2 else None),
-        GameDrawPlayer(player3.client, packet.tenpai if player == player3 else None),
-        GameDrawPlayer(player4.client, packet.tenpai if player == player4 else None),
+        GameDrawPlayer(player1.client, packet.tenpai if player ==
+                       player1 else None),
+        GameDrawPlayer(player2.client, packet.tenpai if player ==
+                       player2 else None),
+        GameDrawPlayer(player3.client, packet.tenpai if player ==
+                       player3 else None),
+        GameDrawPlayer(player4.client, packet.tenpai if player ==
+                       player4 else None),
     )
     self.state = GameDrawServerState(self.server, self, players)
 
@@ -343,7 +340,7 @@ class GameDrawServerState(ServerState):
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
-    if type(packet) is DrawClientPacket:
+    if isinstance(packet, DrawClientPacket):
       self.on_player_draw(player, packet)
 
   def on_player_draw(self, player: GameDrawPlayer, packet: DrawClientPacket):
@@ -381,7 +378,7 @@ class GameRonServerState(ServerState):
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
-    if type(packet) is RonClientPacket:
+    if isinstance(packet, RonClientPacket):
       self.on_player_ron(player, packet)
 
   def on_player_ron(self, player: GameRonPlayer, packet: RonClientPacket):
@@ -413,9 +410,7 @@ def main():
     while True:
       poll.poll()
   finally:
-    lookup = list(poll.lookup.values())
-    for event_callback in lookup:
-      poll.unregister(event_callback.fd)
+    poll.close()
 
 
 if __name__ == '__main__':
