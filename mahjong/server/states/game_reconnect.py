@@ -1,50 +1,38 @@
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+import socket
+from typing import Callable, Tuple
 
-from .base import *
+from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
+                             SetupSelectWindClientPacket,
+                             SetupSelectWindServerPacket, send_msg, send_packet)
+from mahjong.shared import GameStateMixin
+from mahjong.wind import Wind
 
-if TYPE_CHECKING:
-  from .game import GameServerState
-
-
-class ReconnectPlayer(ClientMixin):
-  def __init__(self, client: socket.socket, points: int, riichi: bool):
-    self.client = client
-    self.points = points
-    self.riichi = riichi
+from .base import ServerState
+from .shared import ClientTuple, ReconnectableGameStateMixin
 
 
-ReconnectPlayers = Tuple[
-    ReconnectPlayer,
-    ReconnectPlayer,
-    ReconnectPlayer,
-    ReconnectPlayer,
-]
+class GameReconnectServerState(ServerState, GameStateMixin):
+  def __init__(self, reconnectable_state: 'ReconnectableGameStateMixin', callback: Callable[[ClientTuple], None]):
+    self.reconnectable_state = reconnectable_state
 
-
-class GameReconnectServerState(ServerState):
-  def __init__(self, game_state: 'GameServerState', callback: Callable[[ReconnectPlayers], None]):
-    self.game_state = game_state
-
-    player1, player2, player3, player4 = game_state.players
-    self.players = (
-        ReconnectPlayer(player1.client, player1.points, player1.riichi),
-        ReconnectPlayer(player2.client, player2.points, player2.riichi),
-        ReconnectPlayer(player3.client, player4.points, player3.riichi),
-        ReconnectPlayer(player4.client, player4.points, player4.riichi),
-    )
+    player1, player2, player3, player4 = reconnectable_state.players
+    self.player_clients = [
+        player1.client,
+        player2.client,
+        player3.client,
+        player4.client,
+    ]
     self.callback = callback
 
     self.ask_wind()
 
   @property
   def server(self):
-    return self.game_state.server
-  
+    return self.reconnectable_state.server
+
   @property
-  def hand(self):
-    return self.game_state.hand
+  def game_state(self):
+    return self.reconnectable_state.game_state
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
     super().on_client_connect(client, address)
@@ -54,62 +42,34 @@ class GameReconnectServerState(ServerState):
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)
 
-    player = self.player_for_client(client)
-    if not player:
+    if client not in self.player_clients:
       return
 
     self.ask_wind()
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     if isinstance(packet, SetupSelectWindClientPacket):
-      player = self.player_for_client(client)
-      if player:
-        return
+      if self.wind == packet.wind:
+        self.player_clients[self.player_index_for_wind(self.wind)] = client
+        send_packet(client, SetupConfirmWindServerPacket(packet.wind))
 
-      elif self.wind == packet.wind:
-        player = self.players[(self.wind + self.hand) % len(Wind)]
-        player.client = client
-        player.send_packet(SetupConfirmWindServerPacket(packet.wind))
-      
       self.ask_wind()
-
-  def player_for_client(self, client: socket.socket):
-    try:
-      return next((
-          player
-          for player in self.players
-          if player.client == client
-      ))
-    except StopIteration:
-      return None
 
   def missing_winds(self):
     for wind in Wind:
-      player = self.players[(wind + self.hand) % len(Wind)]
-      if player.client not in self.clients:
+      player_client = self.player_clients[self.player_index_for_wind(wind)]
+      if player_client not in self.clients:
         yield wind
 
   def ask_wind(self):
-    from mahjong.server.states.game import GamePlayer
-
     try:
       self.wind = next(self.missing_winds())
     except StopIteration:
-      player1, player2, player3, player4 = self.players
-      self.callback((
-        GamePlayer(player1.client, player1.points, player1.riichi),
-        GamePlayer(player2.client, player2.points, player2.riichi),
-        GamePlayer(player3.client, player3.points, player3.riichi),
-        GamePlayer(player4.client, player4.points, player4.riichi),
-      ))
+      self.callback(self.player_clients)
       return
 
-    player_clients = [
-        player.client
-        for player in self.players
-    ]
     for client in self.clients:
-      if client in player_clients:
+      if client in self.player_clients:
         continue
       self.send_client_wind_packet(client, self.wind)
 

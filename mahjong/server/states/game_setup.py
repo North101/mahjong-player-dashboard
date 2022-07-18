@@ -1,11 +1,16 @@
 import socket
+from typing import TYPE_CHECKING, List
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
+                             SetupNotEnoughServerPacket,
+                             SetupSelectWindClientPacket,
+                             SetupSelectWindServerPacket, send_msg)
+from mahjong.shared import GameState
+from mahjong.wind import Wind
 
-from .base import *
-from .game import *
+from .base import ServerState
+from .game import GameServerState
+from .shared import GamePlayer
 
 if TYPE_CHECKING:
   from mahjong.server import Server
@@ -51,12 +56,16 @@ class GameSetupServerState(ServerState):
       send_msg(client, SetupConfirmWindServerPacket(packet.wind).pack())
 
       if len(self.players) == len(Wind):
-        self.state = GameServerState(self.server, (
-            self.players[0],
-            self.players[1],
-            self.players[2],
-            self.players[3],
-        ))
+        self.state = GameServerState(
+            server=self.server,
+            game_state=GameState(),
+            players=(
+                GamePlayer(self.players[0], 25000),
+                GamePlayer(self.players[1], 25000),
+                GamePlayer(self.players[2], 25000),
+                GamePlayer(self.players[3], 25000),
+            ),
+        )
       else:
         self.ask_next_wind()
 
@@ -64,7 +73,7 @@ class GameSetupServerState(ServerState):
     return len(self.clients) >= len(Wind)
 
   def to_lobby(self):
-    from mahjong.server.states.lobby import LobbyServerState
+    from .lobby import LobbyServerState
 
     packet = SetupNotEnoughServerPacket().pack()
     for client in self.clients:

@@ -1,13 +1,11 @@
 import select
 import socket
-from typing import Tuple
+from typing import List, Tuple
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.poll import Poll
 
-from .states.base import *
-from .states.lobby import *
+from .states.base import ServerState
+from .states.lobby import LobbyServerState
 
 
 class Server:

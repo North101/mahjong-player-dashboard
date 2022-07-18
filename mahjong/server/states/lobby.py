@@ -1,12 +1,11 @@
 import socket
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import LobbyPlayersServerPacket, send_msg
+from mahjong.wind import Wind
 
-from .base import *
-from .game_setup import *
+from .base import ServerState
+from .game_setup import GameSetupServerState
 
 if TYPE_CHECKING:
   from mahjong.server import Server

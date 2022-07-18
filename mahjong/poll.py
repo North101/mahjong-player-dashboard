@@ -1,7 +1,5 @@
 import select
-from typing import Callable
-
-from mahjong.packets import *
+from typing import Callable, Dict
 
 
 class FileDescriptorLike:

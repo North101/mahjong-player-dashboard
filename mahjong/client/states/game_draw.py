@@ -1,11 +1,11 @@
 import socket
 import sys
+from typing import TYPE_CHECKING
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import GameDrawClientPacket, GameStateServerPacket, Packet
+from mahjong.shared import TENPAI_VALUES
 
-from .base import *
+from .base import ClientState
 
 if TYPE_CHECKING:
   from mahjong.client import Client

@@ -1,11 +1,9 @@
 import select
 import socket
 import sys
-from typing import TextIO, Tuple
+from typing import TYPE_CHECKING, TextIO, Tuple
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.poll import Poll
 
 if TYPE_CHECKING:
   from mahjong.client.states.base import ClientState

@@ -1,19 +1,20 @@
 import socket
-from typing import Tuple
+from typing import TYPE_CHECKING, Callable, Optional, Tuple
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import GameDrawClientPacket, GameDrawServerPacket, GameStateServerPacket, Packet
+from mahjong.shared import GamePlayers, GameState
 
-from .base import *
+from .shared import ClientTuple, GamePlayer, ReconnectableGameStateMixin
 
 if TYPE_CHECKING:
-  from .game import GameServerState
+  from mahjong.server import Server
 
 
-class GameDrawPlayer(ClientMixin):
-  def __init__(self, client: socket.socket, tenpai: Optional[bool]):
+class GameDrawPlayer(GamePlayer):
+  def __init__(self, client: socket.socket, points: int, riichi: bool, tenpai: Optional[bool]):
     self.client = client
+    self.points = points
+    self.riichi = riichi
     self.tenpai = tenpai
 
 
@@ -25,20 +26,27 @@ DrawPlayerTuple = Tuple[
 ]
 
 
-class GameDrawServerState(ServerState):
-  def __init__(self, game_state: 'GameServerState', players: DrawPlayerTuple, callback: Callable[[DrawPlayerTuple], None]):
+class GameDrawServerState(ReconnectableGameStateMixin):
+  def __init__(self, server: 'Server', game_state: GameState, players: DrawPlayerTuple,
+               callback: Callable[[DrawPlayerTuple], None]):
+    self.server = server
     self.game_state = game_state
-    self.players = players
+    self.players: DrawPlayerTuple = players
     self.callback = callback
 
     for player in players:
       if player.tenpai is not None:
         continue
       player.send_packet(GameDrawServerPacket())
+  
+  def on_game_reconnect(self, clients: ClientTuple):
+    super().on_game_reconnect(clients)
 
-  @property
-  def server(self):
-    return self.game_state.server
+    for index, player in enumerate(self.players):
+      player.send_packet(GameStateServerPacket(self.game_state, index, self.players))
+      if player.tenpai is not None:
+        continue
+      player.send_packet(GameDrawServerPacket())
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
@@ -52,13 +60,3 @@ class GameDrawServerState(ServerState):
 
     if all((player.tenpai is not None for player in self.players)):
       self.callback(self.players)
-
-  def player_for_client(self, client: socket.socket):
-    try:
-      return next((
-          player
-          for player in self.players
-          if player.client == client
-      ))
-    except StopIteration:
-      return None

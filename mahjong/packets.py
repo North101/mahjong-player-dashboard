@@ -1,8 +1,8 @@
 import socket
 import struct
-from typing import *
+from typing import List, Mapping, Optional, Type
 
-from mahjong.shared import *
+from mahjong.shared import GamePlayerMixin, GamePlayers, GameState
 from mahjong.wind import Wind
 
 
@@ -160,20 +160,14 @@ class GameStateServerPacket(Packet):
   fmt = struct.Struct('BHHHHB')
   id = 7
 
-  def __init__(
-      self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int,
-      player_index: int, players: GamePlayers,
-  ):
-    self.hand = hand
-    self.repeat = repeat
-    self.bonus_honba = bonus_honba
-    self.bonus_riichi = bonus_riichi
+  def __init__(self, game_state: GameState, player_index: int, players: GamePlayers):
+    self.game_state = game_state
     self.player_index = player_index
     self.players = players
 
   def pack(self) -> bytes:
-    data = self.fmt.pack(self.id, self.hand, self.repeat,
-                         self.bonus_honba, self.bonus_riichi, self.player_index)
+    data = self.fmt.pack(self.id, self.game_state.hand, self.game_state.repeat,
+                         self.game_state.bonus_honba, self.game_state.bonus_riichi, self.player_index)
     for player in self.players:
       data += PlayerStruct(player.points, player.riichi).pack()
     return data
@@ -182,6 +176,7 @@ class GameStateServerPacket(Packet):
   def unpack(self, data: bytes, offset=0):
     id, hand, repeat, bonus_honba, bonus_riichi, player_index = self.fmt.unpack_from(
         data, offset)
+    game_state = GameState(hand, repeat, bonus_honba, bonus_riichi)
 
     players = (
         PlayerStruct.unpack(data, self.fmt.size +
@@ -196,14 +191,14 @@ class GameStateServerPacket(Packet):
 
     if id != self.id:
       raise ValueError(id)
-    return GameStateServerPacket(hand, repeat, bonus_honba, bonus_riichi, player_index, players)
+    return GameStateServerPacket(game_state, player_index, players)
 
   @classmethod
   def size(self):
     return self.fmt.size + (PlayerStruct.size() * len(Wind))
 
   def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi}, {self.player_index}, {self.players})'
+    return f'[{self.id}]: {self.__class__.__name__}({self.game_state}, {self.player_index}, {self.players})'
 
 
 class GameDrawServerPacket(Packet):

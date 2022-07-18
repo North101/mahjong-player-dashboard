@@ -1,13 +1,16 @@
 import socket
 import sys
+from typing import TYPE_CHECKING, List
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
-
-from .base import *
-from .game_draw import *
-from .game_ron import *
+from mahjong.client.states.base import ClientState
+from mahjong.client.states.game_draw import GameDrawClientState
+from mahjong.client.states.game_ron import GameRonClientState
+from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
+                             GameRiichiClientPacket, GameRonClientPacket,
+                             GameRonServerPacket, GameStateServerPacket,
+                             GameTsumoClientPacket, Packet)
+from mahjong.shared import TENPAI_VALUES, GameStateMixin, tryParseInt
+from mahjong.wind import Wind
 
 if TYPE_CHECKING:
   from mahjong.client import Client
@@ -21,10 +24,7 @@ class GameClientState(ClientState, GameStateMixin):
     self.print_info()
 
   def update_game(self, packet: GameStateServerPacket):
-    self.hand = packet.hand
-    self.repeat = packet.repeat
-    self.bonus_honba = packet.bonus_honba
-    self.bonus_riichi = packet.bonus_riichi
+    self.game_state = packet.game_state
     self.player_index = packet.player_index
     self.players = packet.players
 
@@ -115,8 +115,8 @@ class GameClientState(ClientState, GameStateMixin):
     sys.stdout.write('\n')
     sys.stdout.write('----------------\n')
     sys.stdout.write(f'Round: {self.round + 1}\n')
-    sys.stdout.write(f'Hand: {(self.hand % len(Wind)) + 1}\n')
-    sys.stdout.write(f'Repeat: {self.repeat}\n')
+    sys.stdout.write(f'Hand: {(self.game_state.hand % len(Wind)) + 1}\n')
+    sys.stdout.write(f'Repeat: {self.game_state.repeat}\n')
     sys.stdout.write(f'Honba: {self.total_honba}\n')
     sys.stdout.write(f'Riichi: {self.total_riichi}\n')
     sys.stdout.write('----------------\n')

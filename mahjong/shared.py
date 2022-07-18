@@ -36,12 +36,14 @@ GamePlayers = Tuple[
 
 
 class GameState:
-  def __init__(self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int, max_rounds: int):
+  def __init__(self, hand: int = 0, repeat: int = 0, bonus_honba: int = 0, bonus_riichi: int = 0):
     self.hand = hand
     self.repeat = repeat
     self.bonus_honba = bonus_honba
     self.bonus_riichi = bonus_riichi
-    self.max_rounds = max_rounds
+
+  def __repr__(self):
+    return f'{self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
 
 
 class GamePlayerMixin:
@@ -50,15 +52,12 @@ class GamePlayerMixin:
 
 
 class GameStateMixin:
-  hand: int
-  repeat: int
-  bonus_honba: int
-  bonus_riichi: int
+  game_state: GameState
   players: GamePlayers
 
   @property
   def round(self):
-    return self.hand // len(Wind)
+    return self.game_state.hand // len(Wind)
 
   @property
   def players_by_wind(self):
@@ -67,17 +66,17 @@ class GameStateMixin:
 
   @property
   def total_honba(self):
-    return self.repeat + self.bonus_honba
+    return self.game_state.repeat + self.game_state.bonus_honba
 
   @property
   def total_riichi(self):
-    return self.bonus_riichi + sum(1 for player in self.players if player.riichi)
+    return self.game_state.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
   def player_wind(self, player: GamePlayerMixin):
-    return Wind((self.players.index(player) + self.hand) % len(Wind))
+    return Wind((self.players.index(player) + self.game_state.hand) % len(Wind))
 
   def player_index_for_wind(self, wind: Wind):
-    return (self.hand + wind) % len(Wind)
+    return (wind + self.game_state.hand) % len(Wind)
 
   def player_for_wind(self, wind: Wind):
     return self.players[self.player_index_for_wind(wind)]

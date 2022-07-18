@@ -1,9 +1,8 @@
 import select
 import socket
+from typing import TYPE_CHECKING
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import Packet, read_packet, send_packet
 
 if TYPE_CHECKING:
   from mahjong.client import Client

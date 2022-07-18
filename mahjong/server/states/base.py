@@ -1,10 +1,8 @@
 import select
 import socket
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
-from mahjong.packets import *
-from mahjong.poll import *
-from mahjong.shared import *
+from mahjong.packets import Packet, read_packet, send_msg
 
 if TYPE_CHECKING:
   from mahjong.server import Server
@@ -20,7 +18,7 @@ class ClientMixin:
 class ServerState:
   def __init__(self, server: 'Server'):
     self.server = server
-  
+
   @property
   def clients(self):
     return self.server.clients
