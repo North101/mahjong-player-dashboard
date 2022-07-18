@@ -1,7 +1,7 @@
 import socket
-from typing import TYPE_CHECKING, Callable, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Set, Tuple, TypeVar
 
-from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
+from mahjong.packets import (GameReconnectStatusServerPacket, GameStateServerPacket, Packet, SetupConfirmWindServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket, send_msg, send_packet)
 from mahjong.shared import GamePlayerTuple, GameState, GameStateMixin
@@ -22,6 +22,7 @@ class GameReconnectServerState(ServerState, GameStateMixin[T]):
                players: GamePlayerTuple[T], callback: Callable[[ClientTuple], None]):
     self.server = server
     self.game_state = game_state
+    self.players = players
 
     player1, player2, player3, player4 = players
     self.player_clients = [
@@ -37,7 +38,7 @@ class GameReconnectServerState(ServerState, GameStateMixin[T]):
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
     super().on_client_connect(client, address)
 
-    self.send_client_wind_packet(client, self.wind)
+    self.send_client_select_wind_packet(client, self.wind)
 
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)
@@ -52,6 +53,8 @@ class GameReconnectServerState(ServerState, GameStateMixin[T]):
       if self.wind == packet.wind:
         self.player_clients[self.player_index_for_wind(self.wind)] = client
         send_packet(client, SetupConfirmWindServerPacket(packet.wind))
+        index = self.player_index_for_wind(self.wind)
+        send_packet(client, GameStateServerPacket(self.game_state, index, self.players))
 
       self.ask_wind()
 
@@ -70,8 +73,12 @@ class GameReconnectServerState(ServerState, GameStateMixin[T]):
 
     for client in self.clients:
       if client in self.player_clients:
-        continue
-      self.send_client_wind_packet(client, self.wind)
+        self.send_client_reconnect_status_packet(client, set(self.missing_winds()))
+      else:
+        self.send_client_select_wind_packet(client, self.wind)
 
-  def send_client_wind_packet(self, client: socket.socket, wind: Wind):
+  def send_client_reconnect_status_packet(self, client: socket.socket, missing_winds: Set[Wind]):
+    send_msg(client, GameReconnectStatusServerPacket(missing_winds).pack())
+
+  def send_client_select_wind_packet(self, client: socket.socket, wind: Wind):
     send_msg(client, SetupSelectWindServerPacket(wind).pack())

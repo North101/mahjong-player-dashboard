@@ -1,34 +1,27 @@
 import socket
-import sys
 from typing import TYPE_CHECKING
 
 from mahjong.packets import GameDrawClientPacket, GameStateServerPacket, Packet
 from mahjong.shared import parseTenpai
 
-from .base import ClientState
+from .shared import GameReconnectClientState
 
 if TYPE_CHECKING:
   from mahjong.client import Client
 
-  from .game import GameClientState
 
-
-class GameDrawClientState(ClientState):
-  def __init__(self, client: 'Client', game_state: 'GameClientState'):
+class GameDrawClientState(GameReconnectClientState):
+  def __init__(self, client: 'Client'):
     self.client = client
-    self.game_state = game_state
+
     self.print()
 
-  def print(self):
-    sys.stdout.write('\n')
-    sys.stdout.write('Tenpai? [Yes/No]\n')
-    sys.stdout.write('> ')
-    sys.stdout.flush()
+  def on_server_packet(self, server: socket.socket, packet: Packet):
+    from .game import GameClientState
 
-  def on_server_packet(self, fd: socket.socket, packet: Packet):
+    super().on_server_packet(server, packet)
     if isinstance(packet, GameStateServerPacket):
-      self.state = self.game_state
-      self.state.on_server_packet(fd, packet)
+      self.state = GameClientState(self.client, packet)
 
   def on_input(self, input: str):
     value = input.split()
@@ -40,3 +33,8 @@ class GameDrawClientState(ClientState):
       self.send_packet(GameDrawClientPacket(tenpai))
     else:
       self.print()
+
+  def print(self):
+    print('\r', end='')
+    print('Tenpai? [Yes/No]')
+    print('>', end=' ', flush=True)

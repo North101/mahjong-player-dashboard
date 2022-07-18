@@ -1,45 +1,40 @@
 import socket
-import sys
 from typing import TYPE_CHECKING, List
 
-from mahjong.client.states.base import ClientState
 from mahjong.client.states.game_draw import GameDrawClientState
 from mahjong.client.states.game_ron import GameRonClientState
+from mahjong.client.states.shared import GameReconnectClientState
 from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
                              GameRonServerPacket, GameStateServerPacket,
                              GameTsumoClientPacket, Packet)
-from mahjong.shared import (GamePlayerMixin, GameStateMixin, TenpaiState, parseTenpai,
-                            tryParseInt)
+from mahjong.shared import (GamePlayerMixin, GameStateMixin, TenpaiState,
+                            parseTenpai, tryParseInt)
 from mahjong.wind import Wind
 
 if TYPE_CHECKING:
   from mahjong.client import Client
 
 
-class GameClientState(ClientState, GameStateMixin[GamePlayerMixin]):
+class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin]):
   def __init__(self, client: 'Client', packet: GameStateServerPacket):
     self.client = client
 
     self.update_game(packet)
-    self.print_info()
+    self.print()
 
-  def update_game(self, packet: GameStateServerPacket):
-    self.game_state = packet.game_state
-    self.player_index = packet.player_index
-    self.players = packet.players
+  def on_server_packet(self, server: socket.socket, packet: Packet):
+    super().on_server_packet(server, packet)
 
-  def on_server_packet(self, fd: socket.socket, packet: Packet):
     if isinstance(packet, GameStateServerPacket):
       self.update_game(packet)
-      self.print_info()
+      self.print()
 
     elif isinstance(packet, GameDrawServerPacket):
-      self.state = GameDrawClientState(self.client, self)
+      self.state = GameDrawClientState(self.client)
 
     elif isinstance(packet, GameRonServerPacket):
-      self.state = GameRonClientState(
-          self.client, self, packet.from_wind)
+      self.state = GameRonClientState(self.client, packet.from_wind)
 
   def on_input(self, input: str):
     values = input.split()
@@ -63,23 +58,31 @@ class GameClientState(ClientState, GameStateMixin[GamePlayerMixin]):
 
   def on_input_tsumo(self, values: List[str]):
     if len(values) < 2:
+      print('\r', end='')
       print('tsumo dealer_points points')
+      print('>', end=' ', flush=True)
       return
 
     dealer_points = tryParseInt(values[0])
     if dealer_points is None:
+      print('\r', end='')
       print('tsumo dealer_points points')
+      print('>', end=' ', flush=True)
       return
     points = tryParseInt(values[1])
     if points is None:
+      print('\r', end='')
       print('tsumo dealer_points points')
+      print('>', end=' ', flush=True)
       return
 
     self.send_packet(GameTsumoClientPacket(dealer_points, points))
 
   def on_input_ron(self, values: List[str]):
     if len(values) < 2:
+      print('\r', end='')
       print('ron wind points')
+      print('>', end=' ', flush=True)
       return
 
     player_wind = self.player_wind(self.me)
@@ -89,11 +92,15 @@ class GameClientState(ClientState, GameStateMixin[GamePlayerMixin]):
         if wind != player_wind
     }.get(values[0].lower())
     if wind is None:
+      print('\r', end='')
       print('ron wind points')
+      print('>', end=' ', flush=True)
       return
     points = tryParseInt(values[1])
     if points is None:
+      print('\r', end='')
       print('ron wind points')
+      print('>', end=' ', flush=True)
       return
 
     self.send_packet(GameRonClientPacket(wind, points))
@@ -106,23 +113,26 @@ class GameClientState(ClientState, GameStateMixin[GamePlayerMixin]):
 
     self.send_packet(GameDrawClientPacket(tenpai))
 
+  def update_game(self, packet: GameStateServerPacket):
+    self.game_state = packet.game_state
+    self.player_index = packet.player_index
+    self.players = packet.players
+
   @property
   def me(self):
     return self.players[self.player_index]
 
-  def print_info(self):
-    sys.stdout.write('\n')
-    sys.stdout.write('----------------\n')
-    sys.stdout.write(f'Round: {self.round + 1}\n')
-    sys.stdout.write(f'Hand: {(self.game_state.hand % len(Wind)) + 1}\n')
-    sys.stdout.write(f'Repeat: {self.game_state.repeat}\n')
-    sys.stdout.write(f'Honba: {self.total_honba}\n')
-    sys.stdout.write(f'Riichi: {self.total_riichi}\n')
-    sys.stdout.write('----------------\n')
+  def print(self):
+    print('\r', end='')
+    print('----------------')
+    print(f'Round: {self.round + 1}')
+    print(f'Hand: {(self.game_state.hand % len(Wind)) + 1}')
+    print(f'Repeat: {self.game_state.repeat}')
+    print(f'Honba: {self.total_honba}')
+    print(f'Riichi: {self.total_riichi}')
+    print('----------------')
 
     for wind in Wind:
       player = self.player_for_wind(wind)
-      sys.stdout.write(
-          f'{wind.name}: {player}{" (Me)" if player == self.me else ""}\n',)
-    sys.stdout.write('> ')
-    sys.stdout.flush()
+      print(f'{wind.name}: {player}{" (Me)" if player == self.me else ""}')
+    print('>', end=' ', flush=True)
