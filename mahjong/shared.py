@@ -7,6 +7,25 @@ RIICHI_POINTS = 1000
 TSUMO_HONBA_POINTS = 100
 RON_HONBA_POINTS = 300
 
+TENPAI_VALUES = {
+    'tenpai': True,
+    'yes': True,
+    'y': True,
+    'true': True,
+
+    'noten': False,
+    'no': False,
+    'n': False,
+    'false': False,
+}
+
+
+def tryParseInt(value):
+  try:
+    return int(value)
+  except BaseException:
+    return None
+
 
 GamePlayers = Tuple[
     'GamePlayerMixin',
