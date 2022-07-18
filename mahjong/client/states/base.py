@@ -2,6 +2,7 @@ import select
 import socket
 from typing import TYPE_CHECKING
 
+from mahjong.client import ServerDisconnectedError
 from mahjong.packets import Packet, read_packet, send_packet
 
 if TYPE_CHECKING:
@@ -31,8 +32,11 @@ class ClientState:
       self.on_server_packet(server, self.read_packet())
 
   def on_server_disconnect(self, server: socket.socket):
+    address = server.getpeername()
     self.poll.unregister(server)
     server.close()
+
+    raise ServerDisconnectedError(address)
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
     pass

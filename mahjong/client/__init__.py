@@ -9,8 +9,16 @@ if TYPE_CHECKING:
   from mahjong.client.states.base import ClientState
 
 
+Address = Tuple[str, int]
+
+
+class ServerDisconnectedError(Exception):
+  def __init__(self, address: Address):
+    self.address = address
+
+
 class Client:
-  def __init__(self, poll: Poll, address: Tuple[str, int]):
+  def __init__(self, poll: Poll, address: Address):
     from mahjong.client.states.lobby import LobbyClientState
 
     self.poll = poll
