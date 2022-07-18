@@ -1,7 +1,7 @@
 import socket
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Generic, Iterable, List, Tuple, TypeVar
 
-from mahjong.shared import (RIICHI_POINTS, GamePlayerMixin, GameState,
+from mahjong.shared import (RIICHI_POINTS, GamePlayerMixin, GamePlayerTuple, GameState,
                             GameStateMixin)
 
 from .base import ClientMixin, ServerState
@@ -26,34 +26,33 @@ class GamePlayer(ClientMixin, GamePlayerMixin):
     other.points -= points
 
 
-GamePlayerTuple = Tuple[
-    GamePlayer,
-    GamePlayer,
-    GamePlayer,
-    GamePlayer,
-]
-
 ClientTuple = List[socket.socket]
 
 
-class ReconnectableGameStateMixin(ServerState, GameStateMixin):
-  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple):
+T = TypeVar('T', bound=GamePlayer)
+
+
+class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
+  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple[T]):
     self.server = server
     self.game_state = game_state
-    self.players: GamePlayerTuple = players
+    self.players = players
 
   def on_client_disconnect(self, client: socket.socket):
-    from .game_reconnect import GameReconnectServerState
-
     super().on_client_disconnect(client)
 
     player = self.player_for_client(client)
     if not player:
       return
 
-    self.state = GameReconnectServerState(self, self.on_game_reconnect)
+    self.on_player_disconnect(player)
 
-  def on_game_reconnect(self, clients: ClientTuple):
+  def on_player_disconnect(self, player: T):
+    from .game_reconnect import GameReconnectServerState
+
+    self.state = GameReconnectServerState(self.server, self.game_state, self.players, self.on_players_reconnect)
+
+  def on_players_reconnect(self, clients: ClientTuple):
     self.state = self
     for index, player in enumerate(self.players):
       player.client = clients[index]
@@ -67,3 +66,40 @@ class ReconnectableGameStateMixin(ServerState, GameStateMixin):
       ))
     except StopIteration:
       return None
+
+  def take_riichi_points(self, winners: Iterable[T]):
+    winner = next((
+        player
+        for _, player in self.players_by_wind
+        if player in winners
+    ))
+
+    winner.points += (RIICHI_POINTS * self.total_riichi)
+    self.game_state.bonus_riichi = 0
+
+  def reset_player_riichi(self):
+    for player in self.players:
+      player.riichi = False
+
+  def repeat_hand(self, draw=False):
+    if draw:
+      self.game_state.bonus_riichi = self.total_riichi
+    else:
+      self.game_state.bonus_riichi = 0
+
+    self.reset_player_riichi()
+    self.game_state.repeat += 1
+    self.update_player_states()
+
+  def next_hand(self, draw=False):
+    if draw:
+      self.game_state.bonus_honba = self.game_state.repeat + 1
+      self.game_state.bonus_riichi = self.total_riichi
+    else:
+      self.game_state.bonus_honba = 0
+      self.game_state.bonus_riichi = 0
+
+    self.reset_player_riichi()
+    self.game_state.hand += 1
+    self.game_state.repeat = 0
+    self.update_player_states()

@@ -1,21 +1,29 @@
 import socket
-from typing import Callable, Tuple
+from typing import TYPE_CHECKING, Callable, Tuple, TypeVar
 
 from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket, send_msg, send_packet)
-from mahjong.shared import GameStateMixin
+from mahjong.shared import GamePlayerTuple, GameState, GameStateMixin
 from mahjong.wind import Wind
 
 from .base import ServerState
-from .shared import ClientTuple, ReconnectableGameStateMixin
+from .shared import ClientTuple, GamePlayer
+
+if TYPE_CHECKING:
+  from mahjong.server import Server
 
 
-class GameReconnectServerState(ServerState, GameStateMixin):
-  def __init__(self, reconnectable_state: 'ReconnectableGameStateMixin', callback: Callable[[ClientTuple], None]):
-    self.reconnectable_state = reconnectable_state
+T = TypeVar('T', bound=GamePlayer)
 
-    player1, player2, player3, player4 = reconnectable_state.players
+
+class GameReconnectServerState(ServerState, GameStateMixin[T]):
+  def __init__(self, server: 'Server', game_state: GameState,
+               players: GamePlayerTuple[T], callback: Callable[[ClientTuple], None]):
+    self.server = server
+    self.game_state = game_state
+
+    player1, player2, player3, player4 = players
     self.player_clients = [
         player1.client,
         player2.client,
@@ -25,14 +33,6 @@ class GameReconnectServerState(ServerState, GameStateMixin):
     self.callback = callback
 
     self.ask_wind()
-
-  @property
-  def server(self):
-    return self.reconnectable_state.server
-
-  @property
-  def game_state(self):
-    return self.reconnectable_state.game_state
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
     super().on_client_connect(client, address)

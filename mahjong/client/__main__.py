@@ -3,9 +3,10 @@ from mahjong.poll import Poll
 
 
 def main():
+  address = ('127.0.0.1', 1246)
   try:
     poll = Poll()
-    client = Client(poll, ('127.0.0.1', 1246))
+    client = Client(poll, address)
     client.start()
     while True:
       poll.poll()

@@ -4,11 +4,12 @@ from mahjong.client import Client
 
 
 def main():
+  address = ('127.0.0.1', 1246)
   try:
     poll = Poll()
-    server = Server(poll, ('127.0.0.1', 1246))
+    server = Server(poll, address)
     server.start()
-    client = Client(poll, ('127.0.0.1', 1246))
+    client = Client(poll, address)
     client.start()
     while True:
       poll.poll()

@@ -1,4 +1,5 @@
-from typing import Tuple
+from enum import IntEnum
+from typing import Generic, Protocol, TypeVar
 
 from mahjong.wind import Wind
 
@@ -7,17 +8,28 @@ RIICHI_POINTS = 1000
 TSUMO_HONBA_POINTS = 100
 RON_HONBA_POINTS = 300
 
-TENPAI_VALUES = {
-    'tenpai': True,
-    'yes': True,
-    'y': True,
-    'true': True,
 
-    'noten': False,
-    'no': False,
-    'n': False,
-    'false': False,
+class TenpaiState(IntEnum):
+  tenpai = 0
+  noten = 1
+  unknown = 2
+
+
+TENPAI_VALUES = {
+    'tenpai': TenpaiState.tenpai,
+    'yes': TenpaiState.tenpai,
+    'y': TenpaiState.tenpai,
+    'true': TenpaiState.tenpai,
+
+    'noten': TenpaiState.noten,
+    'no': TenpaiState.noten,
+    'n': TenpaiState.noten,
+    'false': TenpaiState.noten,
 }
+
+
+def parseTenpai(value: str):
+  return TENPAI_VALUES.get(value.lower(), TenpaiState.unknown)
 
 
 def tryParseInt(value):
@@ -25,14 +37,6 @@ def tryParseInt(value):
     return int(value)
   except BaseException:
     return None
-
-
-GamePlayers = Tuple[
-    'GamePlayerMixin',
-    'GamePlayerMixin',
-    'GamePlayerMixin',
-    'GamePlayerMixin',
-]
 
 
 class GameState:
@@ -46,14 +50,53 @@ class GameState:
     return f'{self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
 
 
-class GamePlayerMixin:
+class GamePlayerMixin(Protocol):
   points: int
   riichi: bool
 
 
-class GameStateMixin:
+T = TypeVar('T', bound=GamePlayerMixin)
+
+
+class GamePlayerTuple(Generic[T]):
+  def __init__(self, player1: T, player2: T, player3: T, player4: T):
+    self.player1 = player1
+    self.player2 = player2
+    self.player3 = player3
+    self.player4 = player4
+
+  def __iter__(self):
+    yield self.player1
+    yield self.player2
+    yield self.player3
+    yield self.player4
+
+  def __getitem__(self, index: int):
+    if index == 0:
+      return self.player1
+    elif index == 1:
+      return self.player2
+    elif index == 2:
+      return self.player3
+    elif index == 3:
+      return self.player4
+    raise IndexError(index)
+
+  def index(self, item: T):
+    if item == self.player1:
+      return 0
+    elif item == self.player2:
+      return 1
+    elif item == self.player3:
+      return 2
+    elif item == self.player4:
+      return 3
+    return -1
+
+
+class GameStateMixin(Generic[T]):
   game_state: GameState
-  players: GamePlayers
+  players: GamePlayerTuple[T]
 
   @property
   def round(self):
@@ -72,7 +115,7 @@ class GameStateMixin:
   def total_riichi(self):
     return self.game_state.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
-  def player_wind(self, player: GamePlayerMixin):
+  def player_wind(self, player: T):
     return Wind((self.players.index(player) + self.game_state.hand) % len(Wind))
 
   def player_index_for_wind(self, wind: Wind):

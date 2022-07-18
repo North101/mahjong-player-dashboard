@@ -3,7 +3,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from mahjong.packets import GameDrawClientPacket, GameStateServerPacket, Packet
-from mahjong.shared import TENPAI_VALUES
+from mahjong.shared import parseTenpai
 
 from .base import ClientState
 
@@ -35,7 +35,7 @@ class GameDrawClientState(ClientState):
     if not value:
       return
 
-    tenpai = TENPAI_VALUES.get(value[0].lower())
+    tenpai = parseTenpai(value[0].lower())
     if tenpai is not None:
       self.send_packet(GameDrawClientPacket(tenpai))
     else:

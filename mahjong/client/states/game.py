@@ -9,14 +9,15 @@ from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
                              GameRonServerPacket, GameStateServerPacket,
                              GameTsumoClientPacket, Packet)
-from mahjong.shared import TENPAI_VALUES, GameStateMixin, tryParseInt
+from mahjong.shared import (GamePlayerMixin, GameStateMixin, TenpaiState, parseTenpai,
+                            tryParseInt)
 from mahjong.wind import Wind
 
 if TYPE_CHECKING:
   from mahjong.client import Client
 
 
-class GameClientState(ClientState, GameStateMixin):
+class GameClientState(ClientState, GameStateMixin[GamePlayerMixin]):
   def __init__(self, client: 'Client', packet: GameStateServerPacket):
     self.client = client
 
@@ -99,11 +100,9 @@ class GameClientState(ClientState, GameStateMixin):
 
   def on_input_draw(self, values: List[str]):
     if len(values) >= 1:
-      tenpai = TENPAI_VALUES.get(values[0].lower())
-      if tenpai is None:
-        print('draw [tenpai]')
+      tenpai = parseTenpai(values[0].lower())
     else:
-      tenpai = None
+      tenpai = TenpaiState.unknown
 
     self.send_packet(GameDrawClientPacket(tenpai))
 

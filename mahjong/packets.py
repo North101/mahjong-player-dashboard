@@ -1,8 +1,8 @@
 import socket
 import struct
-from typing import List, Mapping, Optional, Type
+from typing import Generic, List, Type, TypeVar
 
-from mahjong.shared import GamePlayerMixin, GamePlayers, GameState
+from mahjong.shared import GamePlayerMixin, GamePlayerTuple, GameState, TenpaiState
 from mahjong.wind import Wind
 
 
@@ -91,28 +91,18 @@ class GameDrawClientPacket(Packet):
   fmt = struct.Struct('BB')
   id = 5
 
-  to_int: Mapping[Optional[bool], int] = {
-      False: 0,
-      True: 1,
-  }
-
-  to_bool = {
-      v: k
-      for k, v in to_int.items()
-  }
-
-  def __init__(self, tenpai: Optional[bool]):
+  def __init__(self, tenpai: TenpaiState):
     self.tenpai = tenpai
 
   def pack(self) -> bytes:
-    return self.fmt.pack(self.id, self.to_int.get(self.tenpai, 2))
+    return self.fmt.pack(self.id, self.tenpai.value)
 
   @classmethod
   def unpack(self, data: bytes):
     id, tenpai = self.fmt.unpack(data)
     if id != self.id:
       raise ValueError(id)
-    return GameDrawClientPacket(self.to_bool.get(tenpai))
+    return GameDrawClientPacket(TenpaiState(tenpai))
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
@@ -156,18 +146,27 @@ class PlayerStruct(Struct, GamePlayerMixin):
     return f'{self.__class__.__name__}({self.points}, {self.riichi})'
 
 
-class GameStateServerPacket(Packet):
+T = TypeVar('T', bound=GamePlayerMixin)
+
+
+class GameStateServerPacket(Packet, Generic[T]):
   fmt = struct.Struct('BHHHHB')
   id = 7
 
-  def __init__(self, game_state: GameState, player_index: int, players: GamePlayers):
+  def __init__(self, game_state: GameState, player_index: int, players: GamePlayerTuple[T]):
     self.game_state = game_state
     self.player_index = player_index
     self.players = players
 
   def pack(self) -> bytes:
-    data = self.fmt.pack(self.id, self.game_state.hand, self.game_state.repeat,
-                         self.game_state.bonus_honba, self.game_state.bonus_riichi, self.player_index)
+    data = self.fmt.pack(
+        self.id,
+        self.game_state.hand,
+        self.game_state.repeat,
+        self.game_state.bonus_honba,
+        self.game_state.bonus_riichi,
+        self.player_index,
+    )
     for player in self.players:
       data += PlayerStruct(player.points, player.riichi).pack()
     return data
@@ -178,15 +177,11 @@ class GameStateServerPacket(Packet):
         data, offset)
     game_state = GameState(hand, repeat, bonus_honba, bonus_riichi)
 
-    players = (
-        PlayerStruct.unpack(data, self.fmt.size +
-                            (PlayerStruct.size() * 0)),
-        PlayerStruct.unpack(data, self.fmt.size +
-                            (PlayerStruct.size() * 1)),
-        PlayerStruct.unpack(data, self.fmt.size +
-                            (PlayerStruct.size() * 2)),
-        PlayerStruct.unpack(data, self.fmt.size +
-                            (PlayerStruct.size() * 3)),
+    players = GamePlayerTuple(
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 0)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 1)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 2)),
+        PlayerStruct.unpack(data, self.fmt.size + (PlayerStruct.size() * 3)),
     )
 
     if id != self.id:

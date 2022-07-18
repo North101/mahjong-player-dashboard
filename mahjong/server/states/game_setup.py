@@ -5,7 +5,7 @@ from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
                              SetupNotEnoughServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket, send_msg)
-from mahjong.shared import GameState
+from mahjong.shared import GamePlayerTuple, GameState
 from mahjong.wind import Wind
 
 from .base import ServerState
@@ -59,7 +59,7 @@ class GameSetupServerState(ServerState):
         self.state = GameServerState(
             server=self.server,
             game_state=GameState(),
-            players=(
+            players=GamePlayerTuple(
                 GamePlayer(self.players[0], 25000),
                 GamePlayer(self.players[1], 25000),
                 GamePlayer(self.players[2], 25000),
