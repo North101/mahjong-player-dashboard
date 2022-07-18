@@ -13,17 +13,17 @@ if TYPE_CHECKING:
 
 
 class LobbyServerState(ServerState):
-  def __init__(self, server: 'Server', clients=None):
+  def __init__(self, server: 'Server'):
     self.server = server
-    self.clients: List[socket.socket] = clients or []
     self.send_lobby_count()
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    self.clients.append(client)
+    super().on_client_connect(client, address)
+
     self.send_lobby_count()
 
     if len(self.clients) == len(Wind):
-      self.state = GameSetupServerState(self.server, self.clients)
+      self.state = GameSetupServerState(self.server)
 
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)

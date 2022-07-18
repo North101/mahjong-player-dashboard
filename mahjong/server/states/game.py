@@ -7,6 +7,7 @@ from mahjong.shared import *
 
 from .base import *
 from .game_draw import *
+from .game_reconnect import *
 from .game_ron import *
 
 if TYPE_CHECKING:
@@ -40,7 +41,7 @@ GamePlayerTuple = Tuple[
 class GameServerState(ServerState, GameStateMixin):
   def __init__(
       self, server: 'Server', players: Tuple[socket.socket, socket.socket, socket.socket, socket.socket], starting_points: int = 25000,
-      hand: int = 0, repeat: int = 0, bonus_honba=0, bonus_riichi=0, max_rounds: int = 1
+      hand: int = 0, repeat: int = 0, bonus_honba=0, bonus_riichi=0, max_rounds: int = 1,
   ):
     self.server = server
 
@@ -58,9 +59,25 @@ class GameServerState(ServerState, GameStateMixin):
     )
     self.update_player_states()
 
+  def on_client_disconnect(self, client: socket.socket):
+    super().on_client_disconnect(client)
+
+    player = self.player_for_client(client)
+    if not player:
+      return
+
+    self.state = GameReconnectServerState(self, self.on_reconnect)
+  
+  def on_reconnect(self, players):
+    self.state = self
+    self.players = players
+    self.update_player_states()
+
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
-    if isinstance(packet, GameRiichiClientPacket):
+    if not player:
+      return
+    elif isinstance(packet, GameRiichiClientPacket):
       self.on_player_riichi(player, packet)
     elif isinstance(packet, GameTsumoClientPacket):
       self.on_player_tsumo(player, packet)
@@ -109,10 +126,11 @@ class GameServerState(ServerState, GameStateMixin):
         points = None
       ron_players.append(GameRonPlayer(other_player.client, points))
 
-    self.state = GameRonServerState(
-        self.server, self, packet.from_wind, ron_players)
+    self.state = GameRonServerState(self, packet.from_wind, ron_players, self.on_player_ron_complete)
 
   def on_player_ron_complete(self, from_wind: Wind, ron_players: List[GameRonPlayer]):
+    self.state = self
+
     winners = [
         (self.player_for_client(player.client), player.points)
         for player in ron_players
@@ -148,9 +166,11 @@ class GameServerState(ServerState, GameStateMixin):
         GameDrawPlayer(player4.client, packet.tenpai if player ==
                        player4 else None),
     )
-    self.state = GameDrawServerState(self.server, self, players)
+    self.state = GameDrawServerState(self, players, self.on_player_draw_complete)
 
   def on_player_draw_complete(self, players: DrawPlayerTuple):
+    self.state = self
+
     for draw_player in players:
       if not draw_player.tenpai:
         continue
@@ -206,11 +226,14 @@ class GameServerState(ServerState, GameStateMixin):
     self.update_player_states()
 
   def player_for_client(self, client: socket.socket):
-    return next((
-        player
-        for player in self.players
-        if player.client == client
-    ))
+    try:
+      return next((
+          player
+          for player in self.players
+          if player.client == client
+      ))
+    except StopIteration:
+      return None
 
   def update_player_states(self):
     for index, player in enumerate(self.players):

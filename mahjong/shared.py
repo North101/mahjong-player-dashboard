@@ -35,6 +35,15 @@ GamePlayers = Tuple[
 ]
 
 
+class GameState:
+  def __init__(self, hand: int, repeat: int, bonus_honba: int, bonus_riichi: int, max_rounds: int):
+    self.hand = hand
+    self.repeat = repeat
+    self.bonus_honba = bonus_honba
+    self.bonus_riichi = bonus_riichi
+    self.max_rounds = max_rounds
+
+
 class GamePlayerMixin:
   points: int
   riichi: bool

@@ -12,10 +12,9 @@ if TYPE_CHECKING:
 
 
 class GameSetupServerState(ServerState):
-  def __init__(self, server: 'Server', clients: List[socket.socket]):
+  def __init__(self, server: 'Server'):
     super().__init__(server)
 
-    self.clients = list(clients)
     self.players: List[socket.socket] = []
     self.ask_next_wind()
 
@@ -30,7 +29,6 @@ class GameSetupServerState(ServerState):
     super().on_client_disconnect(client)
 
     if client in self.clients:
-      self.clients.remove(client)
       if not self.enough_players():
         return self.to_lobby()
     elif client in self.players:
@@ -40,7 +38,6 @@ class GameSetupServerState(ServerState):
         return self.to_lobby()
 
       if player_index < len(self.players):
-        self.clients += self.players
         self.players = []
 
       self.ask_next_wind()
@@ -50,7 +47,6 @@ class GameSetupServerState(ServerState):
       if packet.wind != len(self.players) and client not in self.players:
         return
 
-      self.clients.remove(client)
       self.players.append(client)
       send_msg(client, SetupConfirmWindServerPacket(packet.wind).pack())
 
@@ -65,13 +61,12 @@ class GameSetupServerState(ServerState):
         self.ask_next_wind()
 
   def enough_players(self):
-    return (len(self.clients) + len(self.players)) >= len(Wind)
+    return len(self.clients) >= len(Wind)
 
   def to_lobby(self):
     from mahjong.server.states.lobby import LobbyServerState
 
     packet = SetupNotEnoughServerPacket().pack()
-    clients = self.clients + self.players
-    for client in clients:
+    for client in self.clients:
       send_msg(client, packet)
-    self.state = LobbyServerState(self.server, clients=clients)
+    self.state = LobbyServerState(self.server)

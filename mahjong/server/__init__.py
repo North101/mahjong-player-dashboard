@@ -15,6 +15,7 @@ class Server:
     self.poll = poll
     self.address = address
     self.socket: socket.socket
+    self.clients: List[socket.socket] = []
     self.state: ServerState = LobbyServerState(self)
 
   def start(self):

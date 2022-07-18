@@ -27,12 +27,15 @@ class GameSetupClientState(ClientState):
     if isinstance(packet, SetupSelectWindServerPacket):
       self.wind = packet.wind
       self.print_wind()
+
     elif isinstance(packet, SetupConfirmWindServerPacket):
       print(f'You are: {packet.wind.name}')
+
     elif isinstance(packet, SetupNotEnoughServerPacket):
       print('')
       print('Not enough players')
       self.state = LobbyClientState(self.client)
+
     elif isinstance(packet, GameStateServerPacket):
       self.state = GameClientState(self.client, packet)
 

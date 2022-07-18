@@ -20,6 +20,10 @@ class ClientMixin:
 class ServerState:
   def __init__(self, server: 'Server'):
     self.server = server
+  
+  @property
+  def clients(self):
+    return self.server.clients
 
   @property
   def state(self):
@@ -37,8 +41,7 @@ class ServerState:
     if event & select.POLLIN:
       client, address = server.accept()
       self.on_client_connect(client, address)
-      self.poll.register(client, select.POLLIN,
-                         self.server.on_client_data)
+      self.poll.register(client, select.POLLIN, self.server.on_client_data)
 
   def on_client_data(self, client: socket.socket, event: int):
     if event & select.POLLHUP:
@@ -49,9 +52,10 @@ class ServerState:
         self.on_client_packet(client, packet)
 
   def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
-    pass
+    self.clients.append(client)
 
   def on_client_disconnect(self, client: socket.socket):
+    self.clients.remove(client)
     self.poll.unregister(client)
     client.close()
 

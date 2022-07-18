@@ -18,5 +18,6 @@ class LobbyClientState(ClientState):
   def on_server_packet(self, server: socket.socket, packet: Packet):
     if isinstance(packet, LobbyPlayersServerPacket):
       print(f'Players: {packet.count} / {packet.max_players}')
-    if isinstance(packet, SetupSelectWindServerPacket):
+
+    elif isinstance(packet, SetupSelectWindServerPacket):
       self.state = GameSetupClientState(self.client, packet.wind)
