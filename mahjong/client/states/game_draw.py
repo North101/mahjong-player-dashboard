@@ -2,8 +2,7 @@ import socket
 from typing import TYPE_CHECKING
 
 from mahjong.packets import GameDrawClientPacket, GameStateServerPacket, Packet
-from mahjong.shared import parseTenpai
-
+from mahjong.shared import parseTenpai, write
 from .shared import GameReconnectClientState
 
 if TYPE_CHECKING:
@@ -35,6 +34,4 @@ class GameDrawClientState(GameReconnectClientState):
       self.print()
 
   def print(self):
-    print('\r', end='')
-    print('Tenpai? [Yes/No]')
-    print('>', end=' ', flush=True)
+    write('Tenpai? [Yes/No]', input=True)

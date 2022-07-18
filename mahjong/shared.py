@@ -1,7 +1,20 @@
 from enum import IntEnum
-from typing import Generic, Protocol, TypeVar
+from typing import Generic, Iterable, Protocol, TypeVar
 
 from mahjong.wind import Wind
+
+
+def writelines(lines: Iterable[str], input=False):
+  print('\r', end='')
+  for line in lines:
+    print(line)
+  if input:
+    print('>', end=' ', flush=True)
+
+
+def write(line, input=False):
+  writelines((line,), input=input)
+
 
 DRAW_POINTS = 1000
 RIICHI_POINTS = 1000
@@ -15,21 +28,17 @@ class TenpaiState(IntEnum):
   unknown = 2
 
 
-TENPAI_VALUES = {
-    'tenpai': TenpaiState.tenpai,
-    'yes': TenpaiState.tenpai,
-    'y': TenpaiState.tenpai,
-    'true': TenpaiState.tenpai,
-
-    'noten': TenpaiState.noten,
-    'no': TenpaiState.noten,
-    'n': TenpaiState.noten,
-    'false': TenpaiState.noten,
-}
+TENPAI_VALUES = {'tenpai', 'yes', 'y', 'true'}
+NOTEN_VALUES = {'noten', 'no', 'n', 'false'}
 
 
 def parseTenpai(value: str):
-  return TENPAI_VALUES.get(value.lower(), TenpaiState.unknown)
+  value = value.lower()
+  if value in TENPAI_VALUES:
+    return TenpaiState.tenpai
+  elif value in NOTEN_VALUES:
+    return TenpaiState.noten
+  return TenpaiState.unknown
 
 
 def tryParseInt(value):
@@ -91,7 +100,7 @@ class GamePlayerTuple(Generic[T]):
       return 2
     elif item == self.player4:
       return 3
-    return -1
+    raise ValueError(item)
 
 
 class GameStateMixin(Generic[T]):

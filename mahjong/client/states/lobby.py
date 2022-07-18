@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from mahjong.packets import (LobbyPlayersServerPacket, Packet,
                              SetupSelectWindServerPacket)
+from mahjong.shared import write
 
 from .base import ClientState
 from .game_setup import GameSetupClientState
@@ -23,5 +24,4 @@ class LobbyClientState(ClientState):
       self.state = GameSetupClientState(self.client, packet.wind)
 
   def print(self, count: int, max_players: int):
-    print('\r', end='')
-    print(f'Players: {count} / {max_players}')
+    write(f'Players: {count} / {max_players}')

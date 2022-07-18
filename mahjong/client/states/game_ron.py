@@ -2,8 +2,7 @@ import socket
 from typing import TYPE_CHECKING
 
 from mahjong.packets import GameRonClientPacket, GameStateServerPacket, Packet
-from mahjong.shared import (GamePlayerMixin, GamePlayerTuple, GameState,
-                            tryParseInt)
+from mahjong.shared import tryParseInt, write
 from mahjong.wind import Wind
 
 from .shared import GameReconnectClientState
@@ -33,6 +32,4 @@ class GameRonClientState(GameReconnectClientState):
     self.send_packet(GameRonClientPacket(self.from_wind, points))
 
   def print(self):
-    print('\r', end='')
-    print('Ron? [points]')
-    print('>', end=' ', flush=True)
+    write('Ron? [points]', input=True)

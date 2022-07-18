@@ -6,6 +6,7 @@ from mahjong.packets import (GameStateServerPacket, Packet,
                              SetupNotEnoughServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket)
+from mahjong.shared import write
 from mahjong.wind import Wind
 
 from .base import ClientState
@@ -22,8 +23,8 @@ class GameSetupClientState(ClientState):
     self.print_select_wind()
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
-    from mahjong.client.states.game import GameClientState
-    from mahjong.client.states.lobby import LobbyClientState
+    from .game import GameClientState
+    from .lobby import LobbyClientState
 
     if isinstance(packet, SetupSelectWindServerPacket):
       self.next_wind = packet.wind
@@ -43,14 +44,10 @@ class GameSetupClientState(ClientState):
     self.send_packet(SetupSelectWindClientPacket(self.next_wind))
 
   def print_select_wind(self):
-    print('\r', end='')
-    print(f'{self.next_wind.name}? [Yes]')
-    print('>', end=' ', flush=True)
+    write(f'{self.next_wind.name}? [Yes]', input=True)
 
   def print_confirm_wind(self, wind: Wind):
-    print('\r', end='')
-    print(f'You are: {wind.name}')
+    write(f'You are: {wind.name}')
 
   def print_not_enough_players(self):
-    print('\r', end='')
-    print('Not enough players')
+    write('Not enough players')

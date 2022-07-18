@@ -1,16 +1,17 @@
 import socket
 from typing import TYPE_CHECKING, List
 
-from mahjong.client.states.game_draw import GameDrawClientState
-from mahjong.client.states.game_ron import GameRonClientState
-from mahjong.client.states.shared import GameReconnectClientState
 from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
                              GameRonServerPacket, GameStateServerPacket,
                              GameTsumoClientPacket, Packet)
 from mahjong.shared import (GamePlayerMixin, GameStateMixin, TenpaiState,
-                            parseTenpai, tryParseInt)
+                            parseTenpai, tryParseInt, write, writelines)
 from mahjong.wind import Wind
+
+from .game_draw import GameDrawClientState
+from .game_ron import GameRonClientState
+from .shared import GameReconnectClientState
 
 if TYPE_CHECKING:
   from mahjong.client import Client
@@ -58,31 +59,23 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
 
   def on_input_tsumo(self, values: List[str]):
     if len(values) < 2:
-      print('\r', end='')
-      print('tsumo dealer_points points')
-      print('>', end=' ', flush=True)
+      write('tsumo dealer_points points', input=True)
       return
 
     dealer_points = tryParseInt(values[0])
     if dealer_points is None:
-      print('\r', end='')
-      print('tsumo dealer_points points')
-      print('>', end=' ', flush=True)
+      write('tsumo dealer_points points', input=True)
       return
     points = tryParseInt(values[1])
     if points is None:
-      print('\r', end='')
-      print('tsumo dealer_points points')
-      print('>', end=' ', flush=True)
+      write('tsumo dealer_points points', input=True)
       return
 
     self.send_packet(GameTsumoClientPacket(dealer_points, points))
 
   def on_input_ron(self, values: List[str]):
     if len(values) < 2:
-      print('\r', end='')
-      print('ron wind points')
-      print('>', end=' ', flush=True)
+      write('ron wind points', input=True)
       return
 
     player_wind = self.player_wind(self.me)
@@ -92,15 +85,11 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
         if wind != player_wind
     }.get(values[0].lower())
     if wind is None:
-      print('\r', end='')
-      print('ron wind points')
-      print('>', end=' ', flush=True)
+      write('ron wind points', input=True)
       return
     points = tryParseInt(values[1])
     if points is None:
-      print('\r', end='')
-      print('ron wind points')
-      print('>', end=' ', flush=True)
+      write('ron wind points', input=True)
       return
 
     self.send_packet(GameRonClientPacket(wind, points))
@@ -123,16 +112,19 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
     return self.players[self.player_index]
 
   def print(self):
-    print('\r', end='')
-    print('----------------')
-    print(f'Round: {self.round + 1}')
-    print(f'Hand: {(self.game_state.hand % len(Wind)) + 1}')
-    print(f'Repeat: {self.game_state.repeat}')
-    print(f'Honba: {self.total_honba}')
-    print(f'Riichi: {self.total_riichi}')
-    print('----------------')
-
-    for wind in Wind:
-      player = self.player_for_wind(wind)
-      print(f'{wind.name}: {player}{" (Me)" if player == self.me else ""}')
-    print('>', end=' ', flush=True)
+    writelines((
+        '----------------',
+        f'Round: {self.round + 1}',
+        f'Hand: {(self.game_state.hand % len(Wind)) + 1}',
+        f'Repeat: {self.game_state.repeat}',
+        f'Honba: {self.total_honba}',
+        f'Riichi: {self.total_riichi}',
+        '----------------',
+    ))
+    writelines((
+        f'{wind.name}: {player}{" (Me)" if player == self.me else ""}'
+        for (player, wind) in (
+            (self.player_for_wind(wind), wind)
+            for wind in Wind
+        )
+    ), input=True)

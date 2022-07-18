@@ -390,7 +390,7 @@ def send_msg(socket: socket.socket, msg: bytes):
 
 
 def recv_msg(socket: socket.socket):
-  data = recvall(socket, 4)
+  data = recvall(socket, msg_length.size)
   if not data:
     return None
   length = msg_length.unpack(data)[0]
