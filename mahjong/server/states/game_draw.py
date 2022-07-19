@@ -1,12 +1,12 @@
 import socket
-from typing import TYPE_CHECKING, Callable, Tuple
+from typing import TYPE_CHECKING
 
 from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameStateServerPacket, Packet)
 from mahjong.shared import DRAW_POINTS, GamePlayerTuple, GameState, TenpaiState
 from mahjong.wind import Wind
 
-from .shared import ClientTuple, GamePlayer, BaseGameServerStateMixin
+from .shared import ClientList, GamePlayer, BaseGameServerStateMixin
 
 if TYPE_CHECKING:
   from mahjong.server import Server
@@ -31,7 +31,7 @@ class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
         continue
       player.send_packet(GameDrawServerPacket())
 
-  def on_players_reconnect(self, clients: ClientTuple):
+  def on_players_reconnect(self, clients: ClientList):
     super().on_players_reconnect(clients)
 
     for index, player in enumerate(self.players):

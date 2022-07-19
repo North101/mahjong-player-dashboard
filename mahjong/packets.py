@@ -1,8 +1,9 @@
 import socket
 import struct
-from typing import Generic, List, Set, Type, TypeVar
+from typing import Generic, Type, TypeVar
 
-from mahjong.shared import GamePlayerMixin, GamePlayerTuple, GameState, TenpaiState
+from mahjong.shared import (GamePlayerMixin, GamePlayerTuple, GameState,
+                            TenpaiState)
 from mahjong.wind import Wind
 
 
@@ -309,7 +310,7 @@ class GameReconnectStatusServerPacket(Packet):
   fmt = struct.Struct('BB')
   id = 14
 
-  def __init__(self, missing_winds: Set[Wind]):
+  def __init__(self, missing_winds: set[Wind]):
     self.missing_winds = missing_winds
 
   def pack(self) -> bytes:
@@ -331,7 +332,7 @@ class GameReconnectStatusServerPacket(Packet):
     })
 
 
-packets: List[Type[Packet]] = [
+packets: list[Type[Packet]] = [
     SetupSelectWindClientPacket,
     GameRiichiClientPacket,
     GameTsumoClientPacket,

@@ -1,6 +1,6 @@
 import select
 import socket
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from mahjong.packets import Packet, read_packet, send_msg
 
@@ -49,7 +49,7 @@ class ServerState:
       if packet is not None:
         self.on_client_packet(client, packet)
 
-  def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
+  def on_client_connect(self, client: socket.socket, address: tuple[str, int]):
     self.clients.append(client)
 
   def on_client_disconnect(self, client: socket.socket):

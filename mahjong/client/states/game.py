@@ -1,5 +1,5 @@
 import socket
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
@@ -57,7 +57,7 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
   def on_input_riichi(self):
     self.send_packet(GameRiichiClientPacket())
 
-  def on_input_tsumo(self, values: List[str]):
+  def on_input_tsumo(self, values: list[str]):
     if len(values) < 2:
       write('tsumo dealer_points points', input=True)
       return
@@ -73,7 +73,7 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
 
     self.send_packet(GameTsumoClientPacket(dealer_points, points))
 
-  def on_input_ron(self, values: List[str]):
+  def on_input_ron(self, values: list[str]):
     if len(values) < 2:
       write('ron wind points', input=True)
       return
@@ -94,7 +94,7 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
 
     self.send_packet(GameRonClientPacket(wind, points))
 
-  def on_input_draw(self, values: List[str]):
+  def on_input_draw(self, values: list[str]):
     if len(values) >= 1:
       tenpai = parseTenpai(values[0].lower())
     else:

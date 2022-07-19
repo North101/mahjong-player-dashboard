@@ -1,5 +1,5 @@
 import select
-from typing import Callable, Dict
+from typing import Callable
 
 
 class FileDescriptorLike:
@@ -17,7 +17,7 @@ class EventCallback:
 
 
 class Poll:
-  lookup: Dict[int, EventCallback] = {}
+  lookup = dict[int, EventCallback]()
 
   def __init__(self):
     self._poll = select.poll()

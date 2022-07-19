@@ -1,19 +1,20 @@
 import select
 import socket
-from typing import List, Tuple
 
 from mahjong.poll import Poll
+from mahjong.shared import Address
 
 from .states.base import ServerState
 from .states.lobby import LobbyServerState
+from .states.shared import ClientList
 
 
 class Server:
-  def __init__(self, poll: Poll, address: Tuple[str, int]):
+  def __init__(self, poll: Poll, address: Address):
     self.poll = poll
     self.address = address
     self.socket: socket.socket
-    self.clients: List[socket.socket] = []
+    self.clients = ClientList()
     self.state: ServerState = LobbyServerState(self)
 
   def start(self):

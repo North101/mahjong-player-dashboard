@@ -1,15 +1,13 @@
 import select
 import socket
 import sys
-from typing import TYPE_CHECKING, TextIO, Tuple
+from typing import TYPE_CHECKING, TextIO
 
 from mahjong.poll import Poll
+from mahjong.shared import Address
 
 if TYPE_CHECKING:
   from mahjong.client.states.base import ClientState
-
-
-Address = Tuple[str, int]
 
 
 class ServerDisconnectedError(Exception):

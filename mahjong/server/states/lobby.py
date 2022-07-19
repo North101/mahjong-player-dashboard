@@ -1,7 +1,8 @@
 import socket
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from mahjong.packets import LobbyPlayersServerPacket, send_msg
+from mahjong.shared import Address
 from mahjong.wind import Wind
 
 from .base import ServerState
@@ -16,7 +17,7 @@ class LobbyServerState(ServerState):
     self.server = server
     self.send_lobby_count()
 
-  def on_client_connect(self, client: socket.socket, address: Tuple[str, int]):
+  def on_client_connect(self, client: socket.socket, address: Address):
     super().on_client_connect(client, address)
 
     self.send_lobby_count()

@@ -1,5 +1,5 @@
 import socket
-from typing import TYPE_CHECKING, Generic, Iterable, List, Tuple, TypeVar
+from typing import TYPE_CHECKING, Generic, Iterable, TypeVar
 
 from mahjong.shared import (RIICHI_POINTS, GamePlayerMixin, GamePlayerTuple, GameState,
                             GameStateMixin)
@@ -26,7 +26,7 @@ class GamePlayer(ClientMixin, GamePlayerMixin):
     other.points -= points
 
 
-ClientTuple = List[socket.socket]
+ClientList = list[socket.socket]
 
 
 T = TypeVar('T', bound=GamePlayer)
@@ -52,7 +52,7 @@ class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
 
     self.state = GameReconnectServerState(self.server, self.game_state, self.players, self.on_players_reconnect)
 
-  def on_players_reconnect(self, clients: ClientTuple):
+  def on_players_reconnect(self, clients: ClientList):
     self.state = self
     for index, player in enumerate(self.players):
       player.client = clients[index]

@@ -3,6 +3,8 @@ from typing import Generic, Iterable, Protocol, TypeVar
 
 from mahjong.wind import Wind
 
+Address = tuple[str, int]
+
 
 def writelines(lines: Iterable[str], input=False):
   print('\r', end='')
