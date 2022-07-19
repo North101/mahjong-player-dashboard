@@ -2,7 +2,9 @@ import select
 import socket
 from typing import TYPE_CHECKING
 
+import badger2040
 from mahjong.client import ServerDisconnectedError
+from mahjong.client.buttons import ButtonHandler
 from mahjong.packets import Packet, read_packet, send_packet
 
 if TYPE_CHECKING:
@@ -42,6 +44,28 @@ class ClientState:
     pass
 
   def on_input(self, input: str):
+    pass
+
+  def on_button(self, handler: ButtonHandler, event: int):
+    if event & select.POLLHUP:
+      self.poll.unregister(handler)
+
+    elif event & select.POLLIN:
+      button = handler.read_button()
+      if button.id == badger2040.BUTTON_A:
+        print('BUTTON_A')
+      elif button.id == badger2040.BUTTON_B:
+        print('BUTTON_B')
+      elif button.id == badger2040.BUTTON_C:
+        print('BUTTON_C')
+      elif button.id == badger2040.BUTTON_UP:
+        print('BUTTON_UP')
+      elif button.id == badger2040.BUTTON_DOWN:
+        print('BUTTON_DOWN')
+      elif button.id == badger2040.BUTTON_USER:
+        print('BUTTON_USER')
+
+  def display(self):
     pass
 
   def read_packet(self):

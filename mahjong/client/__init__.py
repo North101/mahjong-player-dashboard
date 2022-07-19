@@ -3,6 +3,7 @@ import socket
 import sys
 from typing import TYPE_CHECKING, TextIO
 
+from mahjong.client.buttons import ButtonHandler
 from mahjong.poll import Poll
 from mahjong.shared import Address
 
@@ -31,11 +32,20 @@ class Client:
     print('Waiting for connection')
     self.socket.connect((host, port))
 
+    self.button_handler = ButtonHandler()
+
     self.poll.register(self.socket, select.POLLIN, self.on_server_data)
     self.poll.register(sys.stdin, select.POLLIN, self.on_input)
+    self.poll.register(self.button_handler, select.POLLIN, self.on_button)
 
   def on_server_data(self, fd: socket.socket, event: int):
     self.state.on_server_data(fd, event)
 
+  def on_button(self, fd: ButtonHandler, event: int):
+    self.state.on_button(fd, event)
+
   def on_input(self, fd: TextIO, event: int):
     self.state.on_input(fd.readline())
+
+  def display(self):
+    self.state.display()

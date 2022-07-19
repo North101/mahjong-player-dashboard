@@ -28,7 +28,6 @@ class LobbyServerState(ServerState):
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)
 
-    self.clients.remove(client)
     self.send_lobby_count()
 
   def send_lobby_count(self):

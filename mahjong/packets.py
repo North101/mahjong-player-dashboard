@@ -1,3 +1,4 @@
+import io
 import socket
 import struct
 from typing import Generic, Type, TypeVar
@@ -385,9 +386,12 @@ def send_packet(_socket: socket.socket, packet: Packet):
 msg_length = struct.Struct('>I')
 
 
+def create_msg(msg: bytes):
+  return msg_length.pack(len(msg)) + msg
+
+
 def send_msg(socket: socket.socket, msg: bytes):
-  msg = msg_length.pack(len(msg)) + msg
-  socket.sendall(msg)
+  socket.sendall(create_msg(msg))
 
 
 def recv_msg(socket: socket.socket):
@@ -402,6 +406,29 @@ def recvall(socket: socket.socket, length: int):
   data = bytearray()
   while len(data) < length:
     packet = socket.recv(length - len(data))
+    if not packet:
+      return None
+    data.extend(packet)
+  return data
+
+
+def write_msg(writer: io.BufferedWriter, msg: bytes):
+  writer.write(create_msg(msg))
+  writer.flush()
+
+
+def read_msg(reader: io.BufferedReader):
+  data = readall(reader, msg_length.size)
+  if not data:
+    return None
+  length = msg_length.unpack(data)[0]
+  return readall(reader, length)
+
+
+def readall(reader: io.BufferedReader, length: int):
+  data = bytearray()
+  while len(data) < length:
+    packet = reader.read(length - len(data))
     if not packet:
       return None
     data.extend(packet)

@@ -1,6 +1,8 @@
+import signal
+
+from mahjong.client import Client
 from mahjong.poll import Poll
 from mahjong.server import Server
-from mahjong.client import Client
 
 
 def main():
@@ -13,6 +15,7 @@ def main():
     client.start()
     while True:
       poll.poll()
+      client.display()
   finally:
     poll.close()
 

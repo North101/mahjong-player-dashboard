@@ -25,3 +25,6 @@ class LobbyClientState(ClientState):
 
   def print(self, count: int, max_players: int):
     write(f'Players: {count} / {max_players}')
+
+  def display(self):
+    pass
