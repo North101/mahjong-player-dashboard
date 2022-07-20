@@ -1,4 +1,3 @@
-import time
 from mahjong.client import Client
 from mahjong.poll import Poll
 
@@ -11,7 +10,7 @@ def main():
     client.start()
     while True:
       poll.poll()
-      client.display()
+      client.update_display()
   finally:
     poll.close()
 

@@ -18,14 +18,13 @@ class ServerDisconnectedError(Exception):
 
 class Client:
   def __init__(self, poll: Poll, address: Address):
-    from mahjong.client.states.lobby import LobbyClientState
-
     self.poll = poll
     self.address = address
     self.socket: socket.socket
-    self.state: ClientState = LobbyClientState(self)
 
   def start(self):
+    from mahjong.client.states.lobby import LobbyClientState
+
     (host, port) = self.address
 
     self.socket = socket.socket()
@@ -34,6 +33,7 @@ class Client:
 
     self.button_handler = ButtonHandler()
 
+    self.state: ClientState = LobbyClientState(self)
     self.poll.register(self.socket, select.POLLIN, self.on_server_data)
     self.poll.register(sys.stdin, select.POLLIN, self.on_input)
     self.poll.register(self.button_handler, select.POLLIN, self.on_button)
@@ -47,5 +47,5 @@ class Client:
   def on_input(self, fd: TextIO, event: int):
     self.state.on_input(fd.readline())
 
-  def display(self):
-    self.state.display()
+  def update_display(self):
+    self.state.update_display()

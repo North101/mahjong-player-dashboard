@@ -13,9 +13,6 @@ if TYPE_CHECKING:
 
 
 class LobbyClientState(ClientState):
-  def __init__(self, client: 'Client'):
-    self.client = client
-
   def on_server_packet(self, server: socket.socket, packet: Packet):
     if isinstance(packet, LobbyPlayersServerPacket):
       self.print(packet.count, packet.max_players)
@@ -25,6 +22,3 @@ class LobbyClientState(ClientState):
 
   def print(self, count: int, max_players: int):
     write(f'Players: {count} / {max_players}')
-
-  def display(self):
-    pass

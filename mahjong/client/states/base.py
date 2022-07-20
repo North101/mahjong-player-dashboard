@@ -65,9 +65,6 @@ class ClientState:
       elif button.id == badger2040.BUTTON_USER:
         print('BUTTON_USER')
 
-  def display(self):
-    pass
-
   def read_packet(self):
     return read_packet(self.client.socket)
 
