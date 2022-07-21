@@ -1,7 +1,7 @@
 from enum import IntEnum
 from typing import Generic, Iterable, Protocol, TypeVar
 
-from mahjong.wind import Wind
+from mahjong_dashboard.wind import Wind
 
 Address = tuple[str, int]
 

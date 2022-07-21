@@ -1,8 +1,8 @@
 import select
 import socket
 
-from mahjong.poll import Poll
-from mahjong.shared import Address
+from mahjong_dashboard.poll import Poll
+from mahjong_dashboard.shared import Address
 
 from .states.base import ServerState
 from .states.lobby import LobbyServerState

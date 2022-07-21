@@ -1,14 +1,14 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import GameRonClientPacket, GameRonServerPacket, GameStateServerPacket, Packet
-from mahjong.shared import RON_HONBA_POINTS, GamePlayerTuple, GameState
-from mahjong.wind import Wind
+from mahjong_dashboard.packets import GameRonClientPacket, GameRonServerPacket, GameStateServerPacket, Packet
+from mahjong_dashboard.shared import RON_HONBA_POINTS, GamePlayerTuple, GameState
+from mahjong_dashboard.wind import Wind
 
 from .shared import ClientList, GamePlayer, BaseGameServerStateMixin
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 class GameRonPlayer(GamePlayer):
@@ -53,7 +53,7 @@ class GameRonServerState(BaseGameServerStateMixin[GameRonPlayer]):
     self.on_player_ron_complete()
 
   def on_player_ron_complete(self):
-    from mahjong.server.states.game import GameServerState
+    from mahjong_dashboard.server.states.game import GameServerState
 
     if any((player.ron < 0 for player in self.players)):
       return

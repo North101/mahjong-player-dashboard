@@ -5,7 +5,7 @@ from typing import Callable
 
 import badger2040
 from machine import Pin
-from mahjong.packets import create_msg, read_msg
+from mahjong_dashboard.packets import create_msg, read_msg
 
 button_struct = struct.Struct('B')
 

@@ -3,12 +3,12 @@ import socket
 from typing import TYPE_CHECKING
 
 import badger2040
-from mahjong.client import ServerDisconnectedError
-from mahjong.client.buttons import ButtonHandler
-from mahjong.packets import Packet, read_packet, send_packet
+from mahjong_dashboard.client import ServerDisconnectedError
+from mahjong_dashboard.client.buttons import ButtonHandler
+from mahjong_dashboard.packets import Packet, read_packet, send_packet
 
 if TYPE_CHECKING:
-  from mahjong.client import Client
+  from mahjong_dashboard.client import Client
 
 
 class ClientState:

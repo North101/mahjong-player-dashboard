@@ -1,5 +1,5 @@
-from mahjong.client import Client
-from mahjong.poll import Poll
+from mahjong_dashboard.client import Client
+from mahjong_dashboard.poll import Poll
 
 
 def main():

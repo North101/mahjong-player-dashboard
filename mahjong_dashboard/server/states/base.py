@@ -2,10 +2,10 @@ import select
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import Packet, read_packet, send_msg
+from mahjong_dashboard.packets import Packet, read_packet, send_msg
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 class ClientMixin:

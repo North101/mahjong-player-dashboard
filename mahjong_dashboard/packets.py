@@ -3,9 +3,9 @@ import socket
 import struct
 from typing import Generic, Type, TypeVar
 
-from mahjong.shared import (GamePlayerMixin, GamePlayerTuple, GameState,
+from mahjong_dashboard.shared import (GamePlayerMixin, GamePlayerTuple, GameState,
                             TenpaiState)
-from mahjong.wind import Wind
+from mahjong_dashboard.wind import Wind
 
 
 class Struct:

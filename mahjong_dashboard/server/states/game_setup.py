@@ -1,19 +1,19 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import (Packet, SetupConfirmWindServerPacket,
+from mahjong_dashboard.packets import (Packet, SetupConfirmWindServerPacket,
                              SetupNotEnoughServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket, send_msg)
-from mahjong.shared import GamePlayerTuple, GameState
-from mahjong.wind import Wind
+from mahjong_dashboard.shared import GamePlayerTuple, GameState
+from mahjong_dashboard.wind import Wind
 
 from .base import ServerState
 from .game import GameServerState
 from .shared import ClientList, GamePlayer
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 class GameSetupServerState(ServerState):

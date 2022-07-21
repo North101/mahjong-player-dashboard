@@ -1,20 +1,20 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
+from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
                              GameRonServerPacket, GameStateServerPacket,
                              GameTsumoClientPacket, Packet)
-from mahjong.shared import (GamePlayerMixin, GameStateMixin, TenpaiState,
+from mahjong_dashboard.shared import (GamePlayerMixin, GameStateMixin, TenpaiState,
                             parseTenpai, tryParseInt, write, writelines)
-from mahjong.wind import Wind
+from mahjong_dashboard.wind import Wind
 
 from .game_draw import GameDrawClientState
 from .game_ron import GameRonClientState
 from .shared import GameReconnectClientState
 
 if TYPE_CHECKING:
-  from mahjong.client import Client
+  from mahjong_dashboard.client import Client
 
 
 class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin]):

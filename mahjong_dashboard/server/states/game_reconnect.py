@@ -1,20 +1,20 @@
 import socket
 from typing import TYPE_CHECKING, Callable, TypeVar
 
-from mahjong.packets import (GameReconnectStatusServerPacket,
+from mahjong_dashboard.packets import (GameReconnectStatusServerPacket,
                              GameStateServerPacket, Packet,
                              SetupConfirmWindServerPacket,
                              SetupSelectWindClientPacket,
                              SetupSelectWindServerPacket, send_msg,
                              send_packet)
-from mahjong.shared import Address, GamePlayerTuple, GameState, GameStateMixin
-from mahjong.wind import Wind
+from mahjong_dashboard.shared import Address, GamePlayerTuple, GameState, GameStateMixin
+from mahjong_dashboard.wind import Wind
 
 from .base import ServerState
 from .shared import ClientList, GamePlayer
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 T = TypeVar('T', bound=GamePlayer)

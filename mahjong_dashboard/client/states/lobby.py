@@ -1,15 +1,15 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import (LobbyPlayersServerPacket, Packet,
+from mahjong_dashboard.packets import (LobbyPlayersServerPacket, Packet,
                              SetupSelectWindServerPacket)
-from mahjong.shared import write
+from mahjong_dashboard.shared import write
 
 from .base import ClientState
 from .game_setup import GameSetupClientState
 
 if TYPE_CHECKING:
-  from mahjong.client import Client
+  from mahjong_dashboard.client import Client
 
 
 class LobbyClientState(ClientState):

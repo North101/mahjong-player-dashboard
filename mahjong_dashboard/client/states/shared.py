@@ -1,7 +1,7 @@
 import socket
 
-from mahjong.packets import GameReconnectStatusServerPacket, Packet
-from mahjong.shared import writelines
+from mahjong_dashboard.packets import GameReconnectStatusServerPacket, Packet
+from mahjong_dashboard.shared import writelines
 
 from .base import ClientState
 

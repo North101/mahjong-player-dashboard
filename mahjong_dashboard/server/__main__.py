@@ -1,6 +1,6 @@
-from mahjong.client import Client
-from mahjong.poll import Poll
-from mahjong.server import Server
+from mahjong_dashboard.client import Client
+from mahjong_dashboard.poll import Poll
+from mahjong_dashboard.server import Server
 
 
 def main():

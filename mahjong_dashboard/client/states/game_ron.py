@@ -1,14 +1,14 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import GameRonClientPacket, GameStateServerPacket, Packet
-from mahjong.shared import tryParseInt, write
-from mahjong.wind import Wind
+from mahjong_dashboard.packets import GameRonClientPacket, GameStateServerPacket, Packet
+from mahjong_dashboard.shared import tryParseInt, write
+from mahjong_dashboard.wind import Wind
 
 from .shared import GameReconnectClientState
 
 if TYPE_CHECKING:
-  from mahjong.client import Client
+  from mahjong_dashboard.client import Client
 
 
 class GameRonClientState(GameReconnectClientState):

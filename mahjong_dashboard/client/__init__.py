@@ -3,12 +3,12 @@ import socket
 import sys
 from typing import TYPE_CHECKING, TextIO
 
-from mahjong.client.buttons import ButtonHandler
-from mahjong.poll import Poll
-from mahjong.shared import Address
+from mahjong_dashboard.client.buttons import ButtonHandler
+from mahjong_dashboard.poll import Poll
+from mahjong_dashboard.shared import Address
 
 if TYPE_CHECKING:
-  from mahjong.client.states.base import ClientState
+  from mahjong_dashboard.client.states.base import ClientState
 
 
 class ServerDisconnectedError(Exception):
@@ -23,7 +23,7 @@ class Client:
     self.socket: socket.socket
 
   def start(self):
-    from mahjong.client.states.lobby import LobbyClientState
+    from mahjong_dashboard.client.states.lobby import LobbyClientState
 
     (host, port) = self.address
 

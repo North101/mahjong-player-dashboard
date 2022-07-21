@@ -1,13 +1,13 @@
 import socket
 from typing import TYPE_CHECKING, Generic, Iterable, TypeVar
 
-from mahjong.shared import (RIICHI_POINTS, GamePlayerMixin, GamePlayerTuple, GameState,
+from mahjong_dashboard.shared import (RIICHI_POINTS, GamePlayerMixin, GamePlayerTuple, GameState,
                             GameStateMixin)
 
 from .base import ClientMixin, ServerState
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 class GamePlayer(ClientMixin, GamePlayerMixin):

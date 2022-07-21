@@ -1,15 +1,15 @@
 import socket
 from typing import TYPE_CHECKING
 
-from mahjong.packets import (GameDrawClientPacket, GameDrawServerPacket,
+from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameStateServerPacket, Packet)
-from mahjong.shared import DRAW_POINTS, GamePlayerTuple, GameState, TenpaiState
-from mahjong.wind import Wind
+from mahjong_dashboard.shared import DRAW_POINTS, GamePlayerTuple, GameState, TenpaiState
+from mahjong_dashboard.wind import Wind
 
 from .shared import ClientList, GamePlayer, BaseGameServerStateMixin
 
 if TYPE_CHECKING:
-  from mahjong.server import Server
+  from mahjong_dashboard.server import Server
 
 
 class GameDrawPlayer(GamePlayer):
@@ -53,7 +53,7 @@ class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
     self.on_player_draw_complete()
 
   def on_player_draw_complete(self):
-    from mahjong.server.states.game import GameServerState
+    from mahjong_dashboard.server.states.game import GameServerState
 
     if any((player.tenpai == TenpaiState.unknown for player in self.players)):
       return
