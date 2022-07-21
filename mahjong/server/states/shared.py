@@ -89,7 +89,6 @@ class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
 
     self.reset_player_riichi()
     self.game_state.repeat += 1
-    self.update_player_states()
 
   def next_hand(self, draw=False):
     if draw:
@@ -102,4 +101,3 @@ class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
     self.reset_player_riichi()
     self.game_state.hand += 1
     self.game_state.repeat = 0
-    self.update_player_states()

@@ -70,3 +70,6 @@ class ClientState:
 
   def send_packet(self, packet: Packet):
     send_packet(self.client.socket, packet)
+
+  def update_display(self):
+    pass

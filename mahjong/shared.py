@@ -127,7 +127,7 @@ class GameStateMixin(Generic[T]):
     return self.game_state.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
   def player_wind(self, player: T):
-    return Wind((self.players.index(player) + self.game_state.hand) % len(Wind))
+    return Wind((self.players.index(player) - self.game_state.hand) % len(Wind))
 
   def player_index_for_wind(self, wind: Wind):
     return (wind + self.game_state.hand) % len(Wind)
