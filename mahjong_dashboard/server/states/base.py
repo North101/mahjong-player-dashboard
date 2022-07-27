@@ -1,11 +1,8 @@
 import select
 import socket
-from typing import TYPE_CHECKING
 
 from mahjong_dashboard.packets import Packet, read_packet, send_msg
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
+from mahjong_dashboard.shared import Address
 
 
 class ClientMixin:
@@ -16,7 +13,7 @@ class ClientMixin:
 
 
 class ServerState:
-  def __init__(self, server: 'Server'):
+  def __init__(self, server):
     self.server = server
 
   @property
@@ -49,7 +46,7 @@ class ServerState:
       if packet is not None:
         self.on_client_packet(client, packet)
 
-  def on_client_connect(self, client: socket.socket, address: tuple[str, int]):
+  def on_client_connect(self, client: socket.socket, address: Address):
     self.clients.append(client)
 
   def on_client_disconnect(self, client: socket.socket):

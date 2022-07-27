@@ -1,14 +1,13 @@
 import socket
-from typing import TYPE_CHECKING
 
-from mahjong_dashboard.packets import GameRonClientPacket, GameRonServerPacket, GameStateServerPacket, Packet
-from mahjong_dashboard.shared import RON_HONBA_POINTS, GamePlayerTuple, GameState
+from mahjong_dashboard.packets import (GameRonClientPacket,
+                                       GameRonServerPacket,
+                                       GameStateServerPacket, Packet)
+from mahjong_dashboard.shared import (RON_HONBA_POINTS, GamePlayerTuple,
+                                      GameState)
 from mahjong_dashboard.wind import Wind
 
-from .shared import ClientList, GamePlayer, BaseGameServerStateMixin
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
+from .shared import BaseGameServerStateMixin, GamePlayer
 
 
 class GameRonPlayer(GamePlayer):
@@ -19,9 +18,14 @@ class GameRonPlayer(GamePlayer):
     self.ron = ron
 
 
-class GameRonServerState(BaseGameServerStateMixin[GameRonPlayer]):
-  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple[GameRonPlayer],
-               from_wind: Wind):
+class GameRonServerState(BaseGameServerStateMixin):
+  def __init__(
+      self,
+      server,
+      game_state: GameState,
+      players: GamePlayerTuple,
+      from_wind: int,
+  ):
     self.server = server
     self.game_state = game_state
     self.players = players
@@ -32,7 +36,7 @@ class GameRonServerState(BaseGameServerStateMixin[GameRonPlayer]):
         continue
       player.send_packet(GameRonServerPacket(from_wind))
 
-  def on_players_reconnect(self, clients: ClientList):
+  def on_players_reconnect(self, clients: list[socket.socket]):
     super().on_players_reconnect(clients)
 
     for index, player in enumerate(self.players):
@@ -70,7 +74,7 @@ class GameRonServerState(BaseGameServerStateMixin[GameRonPlayer]):
       points = player.ron + (self.total_honba * RON_HONBA_POINTS)
       player.take_points(discarder, points)
 
-    if self.player_for_wind(Wind.EAST) in winners:
+    if self.player_for_wind(0) in winners:
       self.repeat_hand()
     else:
       self.next_hand()

@@ -1,13 +1,10 @@
 import socket
-from typing import TYPE_CHECKING, Generic, Iterable, TypeVar
 
-from mahjong_dashboard.shared import (RIICHI_POINTS, GamePlayerMixin, GamePlayerTuple, GameState,
-                            GameStateMixin)
+from mahjong_dashboard.shared import (RIICHI_POINTS, GamePlayerMixin,
+                                      GamePlayerTuple, GameState,
+                                      GameStateMixin)
 
 from .base import ClientMixin, ServerState
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
 
 
 class GamePlayer(ClientMixin, GamePlayerMixin):
@@ -26,14 +23,8 @@ class GamePlayer(ClientMixin, GamePlayerMixin):
     other.points -= points
 
 
-ClientList = list[socket.socket]
-
-
-T = TypeVar('T', bound=GamePlayer)
-
-
-class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
-  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple[T]):
+class BaseGameServerStateMixin(ServerState, GameStateMixin):
+  def __init__(self, server, game_state: GameState, players: GamePlayerTuple):
     self.server = server
     self.game_state = game_state
     self.players = players
@@ -47,12 +38,12 @@ class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
 
     self.on_player_disconnect(player)
 
-  def on_player_disconnect(self, player: T):
+  def on_player_disconnect(self, player: GamePlayer):
     from .game_reconnect import GameReconnectServerState
 
     self.state = GameReconnectServerState(self.server, self.game_state, self.players, self.on_players_reconnect)
 
-  def on_players_reconnect(self, clients: ClientList):
+  def on_players_reconnect(self, clients: list[socket.socket]):
     self.state = self
     for index, player in enumerate(self.players):
       player.client = clients[index]
@@ -67,7 +58,7 @@ class BaseGameServerStateMixin(Generic[T], ServerState, GameStateMixin[T]):
     except StopIteration:
       return None
 
-  def take_riichi_points(self, winners: Iterable[T]):
+  def take_riichi_points(self, winners: list[GamePlayer]):
     winner = next((
         player
         for _, player in self.players_by_wind

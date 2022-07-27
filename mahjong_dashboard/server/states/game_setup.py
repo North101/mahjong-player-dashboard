@@ -1,30 +1,26 @@
 import socket
-from typing import TYPE_CHECKING
 
 from mahjong_dashboard.packets import (Packet, SetupConfirmWindServerPacket,
-                             SetupNotEnoughServerPacket,
-                             SetupSelectWindClientPacket,
-                             SetupSelectWindServerPacket, send_msg)
+                                       SetupNotEnoughServerPacket,
+                                       SetupSelectWindClientPacket,
+                                       SetupSelectWindServerPacket, send_msg)
 from mahjong_dashboard.shared import GamePlayerTuple, GameState
 from mahjong_dashboard.wind import Wind
 
 from .base import ServerState
 from .game import GameServerState
-from .shared import ClientList, GamePlayer
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
+from .shared import GamePlayer
 
 
 class GameSetupServerState(ServerState):
-  def __init__(self, server: 'Server'):
+  def __init__(self, server):
     super().__init__(server)
 
-    self.players = ClientList()
+    self.players: list[socket.socket] = []
     self.ask_next_wind()
 
   def ask_next_wind(self):
-    wind = Wind(len(self.players))
+    wind = len(self.players)
     packet = SetupSelectWindServerPacket(wind).pack()
     for client in self.clients:
       if client not in self.players:

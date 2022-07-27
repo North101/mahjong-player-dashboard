@@ -1,22 +1,20 @@
 import socket
-from typing import TYPE_CHECKING
 
-from mahjong_dashboard.packets import (GameDrawClientPacket, GameRiichiClientPacket,
-                             GameRonClientPacket, GameStateServerPacket,
-                             GameTsumoClientPacket, Packet)
+from mahjong_dashboard.packets import (GameDrawClientPacket,
+                                       GameRiichiClientPacket,
+                                       GameRonClientPacket,
+                                       GameStateServerPacket,
+                                       GameTsumoClientPacket, Packet)
 from mahjong_dashboard.shared import TSUMO_HONBA_POINTS, GameState, TenpaiState
 from mahjong_dashboard.wind import Wind
 
 from .game_draw import GameDrawPlayer, GameDrawServerState
 from .game_ron import GameRonPlayer, GameRonServerState
-from .shared import GamePlayer, GamePlayerTuple, BaseGameServerStateMixin
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
+from .shared import BaseGameServerStateMixin, GamePlayer, GamePlayerTuple
 
 
 class GameServerState(BaseGameServerStateMixin):
-  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple):
+  def __init__(self, server, game_state: GameState, players: GamePlayerTuple):
     self.server = server
     self.game_state = game_state
     self.players = players
@@ -54,14 +52,14 @@ class GameServerState(BaseGameServerStateMixin):
 
       other_player_wind = self.player_wind(other_player)
       points: int
-      if other_player_wind == Wind.EAST:
+      if other_player_wind == 0:
         points = packet.dealer_points
       else:
         points = packet.points
       points += self.total_honba * TSUMO_HONBA_POINTS
       player.take_points(other_player, points)
 
-    if self.player_wind(player) == Wind.EAST:
+    if self.player_wind(player) == 0:
       self.repeat_hand()
     else:
       self.next_hand()

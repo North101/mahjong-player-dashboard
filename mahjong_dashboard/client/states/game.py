@@ -1,5 +1,4 @@
 import socket
-from typing import TYPE_CHECKING
 
 from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameRiichiClientPacket, GameRonClientPacket,
@@ -13,12 +12,9 @@ from .game_draw import GameDrawClientState
 from .game_ron import GameRonClientState
 from .shared import GameReconnectClientState
 
-if TYPE_CHECKING:
-  from mahjong_dashboard.client import Client
 
-
-class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin]):
-  def __init__(self, client: 'Client', packet: GameStateServerPacket):
+class GameClientState(GameReconnectClientState, GameStateMixin):
+  def __init__(self, client, packet: GameStateServerPacket):
     self.client = client
 
     self.update_game(packet)
@@ -80,8 +76,8 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
 
     player_wind = self.player_wind(self.me)
     wind = {
-        wind.name.lower(): wind
-        for wind in Wind
+        Wind[wind].lower(): wind
+        for wind in range(len(Wind))
         if wind != player_wind
     }.get(values[0].lower())
     if wind is None:
@@ -122,9 +118,9 @@ class GameClientState(GameReconnectClientState, GameStateMixin[GamePlayerMixin])
         '----------------',
     ))
     writelines((
-        f'{wind.name}: {player}{" (Me)" if player == self.me else ""}'
+        f'{Wind[wind]}: {player}{" (Me)" if player == self.me else ""}'
         for (player, wind) in (
             (self.player_for_wind(wind), wind)
-            for wind in Wind
+            for wind in range(len(Wind))
         )
     ), input=True)

@@ -1,5 +1,4 @@
 import socket
-from typing import TYPE_CHECKING
 
 from mahjong_dashboard.packets import GameRonClientPacket, GameStateServerPacket, Packet
 from mahjong_dashboard.shared import tryParseInt, write
@@ -7,12 +6,9 @@ from mahjong_dashboard.wind import Wind
 
 from .shared import GameReconnectClientState
 
-if TYPE_CHECKING:
-  from mahjong_dashboard.client import Client
-
 
 class GameRonClientState(GameReconnectClientState):
-  def __init__(self, client: 'Client', from_wind: Wind):
+  def __init__(self, client, from_wind: int):
     self.client = client
     self.from_wind = from_wind
 

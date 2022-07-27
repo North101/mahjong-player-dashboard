@@ -6,7 +6,6 @@ from mahjong_dashboard.shared import Address
 
 from .states.base import ServerState
 from .states.lobby import LobbyServerState
-from .states.shared import ClientList
 
 
 class Server:
@@ -14,7 +13,7 @@ class Server:
     self.poll = poll
     self.address = address
     self.socket: socket.socket
-    self.clients = ClientList()
+    self.clients: list[socket.socket] = []
     self.state: ServerState = LobbyServerState(self)
 
   def start(self):
@@ -22,7 +21,7 @@ class Server:
 
     self.socket = socket.socket()
     self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.socket.bind((host, port))
+    self.socket.bind(socket.getaddrinfo(host, port)[0][-1])
 
     print(f'Server is listing on the port {port}...')
     self.socket.listen()

@@ -1,27 +1,23 @@
 import socket
-from typing import TYPE_CHECKING
 
 from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
                              GameStateServerPacket, Packet)
 from mahjong_dashboard.shared import DRAW_POINTS, GamePlayerTuple, GameState, TenpaiState
 from mahjong_dashboard.wind import Wind
 
-from .shared import ClientList, GamePlayer, BaseGameServerStateMixin
-
-if TYPE_CHECKING:
-  from mahjong_dashboard.server import Server
+from .shared import GamePlayer, BaseGameServerStateMixin
 
 
 class GameDrawPlayer(GamePlayer):
-  def __init__(self, client: socket.socket, points: int, riichi: bool, tenpai: TenpaiState):
+  def __init__(self, client: socket.socket, points: int, riichi: bool, tenpai: int):
     self.client = client
     self.points = points
     self.riichi = riichi
     self.tenpai = tenpai
 
 
-class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
-  def __init__(self, server: 'Server', game_state: GameState, players: GamePlayerTuple[GameDrawPlayer]):
+class GameDrawServerState(BaseGameServerStateMixin):
+  def __init__(self, server, game_state: GameState, players: GamePlayerTuple):
     self.server = server
     self.game_state = game_state
     self.players = players
@@ -31,7 +27,7 @@ class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
         continue
       player.send_packet(GameDrawServerPacket())
 
-  def on_players_reconnect(self, clients: ClientList):
+  def on_players_reconnect(self, clients: list[socket.socket]):
     super().on_players_reconnect(clients)
 
     for index, player in enumerate(self.players):
@@ -69,7 +65,7 @@ class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
           continue
         player.take_points(other_player, DRAW_POINTS)
 
-    if self.player_for_wind(Wind.EAST) in winners:
+    if self.player_for_wind(0) in winners:
       self.repeat_hand(draw=True)
     else:
       self.next_hand(draw=True)

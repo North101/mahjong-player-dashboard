@@ -1,19 +1,13 @@
 import select
 import socket
 import sys
-from typing import TYPE_CHECKING, TextIO
 
-from mahjong_dashboard.client.buttons import ButtonHandler
 from mahjong_dashboard.poll import Poll
 from mahjong_dashboard.shared import Address
 
-if TYPE_CHECKING:
-  from mahjong_dashboard.client.states.base import ClientState
-
 
 class ServerDisconnectedError(Exception):
-  def __init__(self, address: Address):
-    self.address = address
+  pass
 
 
 class Client:
@@ -29,22 +23,16 @@ class Client:
 
     self.socket = socket.socket()
     print('Waiting for connection')
-    self.socket.connect((host, port))
+    self.socket.connect(socket.getaddrinfo(host, port)[0][-1])
 
-    self.button_handler = ButtonHandler()
-
-    self.state: ClientState = LobbyClientState(self)
+    self.state = LobbyClientState(self)
     self.poll.register(self.socket, select.POLLIN, self.on_server_data)
     self.poll.register(sys.stdin, select.POLLIN, self.on_input)
-    self.poll.register(self.button_handler, select.POLLIN, self.on_button)
 
   def on_server_data(self, fd: socket.socket, event: int):
     self.state.on_server_data(fd, event)
 
-  def on_button(self, fd: ButtonHandler, event: int):
-    self.state.on_button(fd, event)
-
-  def on_input(self, fd: TextIO, event: int):
+  def on_input(self, fd, event: int):
     self.state.on_input(fd.readline())
 
   def update_display(self):
