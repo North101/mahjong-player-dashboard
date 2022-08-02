@@ -3,7 +3,7 @@ import socket
 import struct
 
 from mahjong_dashboard.shared import (GamePlayerMixin, GamePlayerTuple,
-                                      GameState, TenpaiState)
+                                      GameState)
 from mahjong_dashboard.wind import Wind
 
 

@@ -1,6 +1,7 @@
 import socket
 
-from mahjong_dashboard.packets import GameRonClientPacket, GameStateServerPacket, Packet
+from mahjong_dashboard.packets import (GameRonClientPacket,
+                                       GameStateServerPacket, Packet)
 from mahjong_dashboard.shared import tryParseInt, write
 from mahjong_dashboard.wind import Wind
 

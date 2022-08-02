@@ -1,7 +1,7 @@
 import socket
 
 from mahjong_dashboard.packets import (LobbyPlayersServerPacket, Packet,
-                             SetupSelectWindServerPacket)
+                                       SetupSelectWindServerPacket)
 from mahjong_dashboard.shared import write
 
 from .base import ClientState

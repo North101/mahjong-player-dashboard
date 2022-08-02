@@ -1,7 +1,6 @@
 import select
 import socket
 
-import badger2040
 from mahjong_dashboard.client import ServerDisconnectedError
 from mahjong_dashboard.packets import Packet, read_packet, send_packet
 

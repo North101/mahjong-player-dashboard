@@ -1,11 +1,15 @@
 import socket
 
-from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
-                             GameRiichiClientPacket, GameRonClientPacket,
-                             GameRonServerPacket, GameStateServerPacket,
-                             GameTsumoClientPacket, Packet)
-from mahjong_dashboard.shared import (GamePlayerMixin, GameStateMixin, TenpaiState,
-                            parseTenpai, tryParseInt, write, writelines)
+from mahjong_dashboard.packets import (GameDrawClientPacket,
+                                       GameDrawServerPacket,
+                                       GameRiichiClientPacket,
+                                       GameRonClientPacket,
+                                       GameRonServerPacket,
+                                       GameStateServerPacket,
+                                       GameTsumoClientPacket, Packet)
+from mahjong_dashboard.shared import (GameStateMixin,
+                                      TenpaiState, parseTenpai, tryParseInt,
+                                      write, writelines)
 from mahjong_dashboard.wind import Wind
 
 from .game_draw import GameDrawClientState

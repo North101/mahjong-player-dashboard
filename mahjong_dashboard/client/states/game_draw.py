@@ -1,7 +1,9 @@
 import socket
 
-from mahjong_dashboard.packets import GameDrawClientPacket, GameStateServerPacket, Packet
+from mahjong_dashboard.packets import (GameDrawClientPacket,
+                                       GameStateServerPacket, Packet)
 from mahjong_dashboard.shared import parseTenpai, write
+
 from .shared import GameReconnectClientState
 
 

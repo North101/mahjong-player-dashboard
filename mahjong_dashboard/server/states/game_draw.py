@@ -1,11 +1,13 @@
 import socket
 
-from mahjong_dashboard.packets import (GameDrawClientPacket, GameDrawServerPacket,
-                             GameStateServerPacket, Packet)
-from mahjong_dashboard.shared import DRAW_POINTS, GamePlayerTuple, GameState, TenpaiState
+from mahjong_dashboard.packets import (GameDrawClientPacket,
+                                       GameDrawServerPacket,
+                                       GameStateServerPacket, Packet)
+from mahjong_dashboard.shared import (DRAW_POINTS, GamePlayerTuple, GameState,
+                                      TenpaiState)
 from mahjong_dashboard.wind import Wind
 
-from .shared import GamePlayer, BaseGameServerStateMixin
+from .shared import BaseGameServerStateMixin, GamePlayer
 
 
 class GameDrawPlayer(GamePlayer):
