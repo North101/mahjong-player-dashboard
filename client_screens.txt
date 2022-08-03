@@ -1,0 +1,24 @@
+Lobby:
+
+SelectWind:
+
+Game:
+
+RonWind:
+handle other game states
+
+RonScore:
+handle other game states
+
+TsumoDealer:
+handle other game states
+
+TsumoNonDealer:
+handle other game states
+
+Draw:
+tenpai/noten/redeal
+handle other game states
+
+GameEnd:
+QR code for game details

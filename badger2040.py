@@ -24,7 +24,7 @@ class Badger2040:
   def text(self, text: str, x: int, y: int, scale=1.0, rotation=0.0):
     pass
 
-  def measure_text(self, text: str, scale=1.0):
+  def measure_text(self, text: str, scale=1.0) -> int:
     pass
 
   def clear(self):
