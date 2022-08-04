@@ -1,20 +1,18 @@
-from math import gamma
 import socket
 
-from mahjong2040.packets import (DrawClientPacket,
-                                       RiichiClientPacket,
-                                       RonClientPacket,
-                                       GameStateServerPacket,
-                                       TsumoClientPacket, Packet)
-from mahjong2040.shared import TSUMO_HONBA_POINTS, GameState, TenpaiState
+from mahjong2040.packets import (DrawClientPacket, GameStateServerPacket,
+                                 Packet, RiichiClientPacket, RonClientPacket,
+                                 TsumoClientPacket)
+from mahjong2040.shared import (TSUMO_HONBA_POINTS, ClientGameState,
+                                GamePlayerTuple, GameState, Tenpai)
 
 from .game_draw import GameDrawPlayer, GameDrawServerState
 from .game_ron import GameRonPlayer, GameRonServerState
-from .shared import BaseGameServerStateMixin, GamePlayer, GamePlayerTuple
+from .shared import BaseGameServerStateMixin, GamePlayerType
 
 
-class GameServerState(BaseGameServerStateMixin):
-  def __init__(self, server, game_state: GameState):
+class GameServerState(BaseGameServerStateMixin[GamePlayerType]):
+  def __init__(self, server, game_state: GameState[GamePlayerType]):
     self.server = server
     self.game_state = game_state
 
@@ -38,14 +36,14 @@ class GameServerState(BaseGameServerStateMixin):
     elif isinstance(packet, DrawClientPacket):
       self.on_player_draw(player, packet)
 
-  def on_player_riichi(self, player: GamePlayer, packet: RiichiClientPacket):
+  def on_player_riichi(self, player: GamePlayerType, packet: RiichiClientPacket):
     player.declare_riichi()
     self.update_player_states()
 
-  def on_player_tsumo(self, player: GamePlayer, packet: TsumoClientPacket):
+  def on_player_tsumo(self, player: GamePlayerType, packet: TsumoClientPacket):
     self.take_riichi_points([player])
 
-    for other_player in self.players:
+    for other_player in self.game_state.players:
       if other_player == player:
         continue
 
@@ -63,7 +61,7 @@ class GameServerState(BaseGameServerStateMixin):
     else:
       self.next_hand()
 
-  def on_player_ron(self, player: GamePlayer, packet: RonClientPacket):
+  def on_player_ron(self, player: GamePlayerType, packet: RonClientPacket):
     if self.game_state.player_wind(player) == packet.from_wind:
       return
 
@@ -72,7 +70,7 @@ class GameServerState(BaseGameServerStateMixin):
         for wind, player in self.game_state.players_by_wind
     }
 
-    def ron_player(p: GamePlayer):
+    def ron_player(p: GamePlayerType):
       if p == player:
         ron = packet.points
       elif players_by_wind[p] == packet.from_wind:
@@ -82,41 +80,53 @@ class GameServerState(BaseGameServerStateMixin):
 
       return GameRonPlayer(p.client, p.points, p.riichi, ron)
 
-    player1, player2, player3, player4 = self.players
+    player1, player2, player3, player4 = self.game_state.players
     self.child = GameRonServerState(
         self.server,
         GameState(
-          players=GamePlayerTuple(
-              ron_player(player1),
-              ron_player(player2),
-              ron_player(player3),
-              ron_player(player4),
-          ),
-          hand=self.game_state.hand,
-          repeat=self.game_state.repeat,
-          bonus_honba=self.game_state.bonus_honba,
-          bonus_riichi=self.game_state.bonus_riichi,
+            players=GamePlayerTuple(
+                ron_player(player1),
+                ron_player(player2),
+                ron_player(player3),
+                ron_player(player4),
+            ),
+            hand=self.game_state.hand,
+            repeat=self.game_state.repeat,
+            bonus_honba=self.game_state.bonus_honba,
+            bonus_riichi=self.game_state.bonus_riichi,
         ),
         packet.from_wind,
     )
 
-  def on_player_draw(self, player: GamePlayer, packet: DrawClientPacket):
-    def draw_player(p: GamePlayer):
-      tenpai = packet.tenpai if p == player else TenpaiState.unknown
+  def on_player_draw(self, player: GamePlayerType, packet: DrawClientPacket):
+    def draw_player(p: GamePlayerType):
+      tenpai = packet.tenpai if p == player else Tenpai.UNKNOWN
       return GameDrawPlayer(p.client, p.points, p.riichi, tenpai)
 
-    player1, player2, player3, player4 = self.players
+    player1, player2, player3, player4 = self.game_state.players
     self.child = GameDrawServerState(
         self.server,
-        self.game_state,
-        GamePlayerTuple(
-            draw_player(player1),
-            draw_player(player2),
-            draw_player(player3),
-            draw_player(player4),
+        GameState(
+            players=GamePlayerTuple(
+                draw_player(player1),
+                draw_player(player2),
+                draw_player(player3),
+                draw_player(player4),
+            ),
+            hand=self.game_state.hand,
+            repeat=self.game_state.repeat,
+            bonus_honba=self.game_state.bonus_honba,
+            bonus_riichi=self.game_state.bonus_riichi,
         ),
     )
 
   def update_player_states(self):
-    for index, player in enumerate(self.players):
-      player.send_packet(GameStateServerPacket(self.game_state, index, self.players))
+    for index, player in enumerate(self.game_state.players):
+      player.send_packet(GameStateServerPacket(ClientGameState(
+          index,
+          players=self.game_state.players,
+          hand=self.game_state.hand,
+          repeat=self.game_state.repeat,
+          bonus_honba=self.game_state.bonus_honba,
+          bonus_riichi=self.game_state.bonus_riichi,
+      )))

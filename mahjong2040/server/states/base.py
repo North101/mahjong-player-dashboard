@@ -2,7 +2,8 @@ import select
 import socket
 
 from mahjong2040.packets import Packet, read_packet, send_msg
-from mahjong2040.shared import Address
+from mahjong2040.server import Server
+from mahjong2040.shared import RIICHI_POINTS, Address, GamePlayerMixin
 
 
 class ClientMixin:
@@ -12,8 +13,24 @@ class ClientMixin:
     send_msg(self.client, packet.pack())
 
 
+class GamePlayer(ClientMixin, GamePlayerMixin):
+  def __init__(self, client: socket.socket, points: int, riichi: bool = False):
+    self.client = client
+    self.points = points
+    self.riichi = riichi
+
+  def declare_riichi(self):
+    if not self.riichi:
+      self.riichi = True
+      self.points -= RIICHI_POINTS
+
+  def take_points(self, other: 'GamePlayer', points: int):
+    self.points += points
+    other.points -= points
+
+
 class ServerState:
-  def __init__(self, server):
+  def __init__(self, server: Server):
     self.server = server
 
   @property

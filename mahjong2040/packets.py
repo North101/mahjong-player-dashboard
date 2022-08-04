@@ -2,8 +2,7 @@ import socket
 import struct
 
 from mahjong2040.shared import (ClientGameState, GamePlayerMixin,
-                                GamePlayerTuple)
-from mahjong2040.wind import Wind
+                                GamePlayerTuple, Wind)
 
 
 class Struct:
@@ -27,7 +26,7 @@ class Packet(Struct):
 
 class RiichiClientPacket(Packet):
   fmt = 'B'
-  id = 2
+  id = 1
 
   def pack(self) -> bytes:
     return struct.pack(self.fmt, self.id)
@@ -45,7 +44,7 @@ class RiichiClientPacket(Packet):
 
 class TsumoClientPacket(Packet):
   fmt = 'BHH'
-  id = 3
+  id = 2
 
   def __init__(self, dealer_points, points):
     self.dealer_points = dealer_points
@@ -67,7 +66,7 @@ class TsumoClientPacket(Packet):
 
 class RonClientPacket(Packet):
   fmt = 'BBH'
-  id = 4
+  id = 3
 
   def __init__(self, from_wind: int, points: int):
     self.from_wind = from_wind
@@ -89,7 +88,7 @@ class RonClientPacket(Packet):
 
 class DrawClientPacket(Packet):
   fmt = 'BB'
-  id = 5
+  id = 4
 
   def __init__(self, tenpai: int):
     self.tenpai = tenpai
@@ -106,6 +105,22 @@ class DrawClientPacket(Packet):
 
   def __repr__(self) -> str:
     return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
+
+
+class RedrawClientPacket(Packet):
+  fmt = 'B'
+  id = 5
+
+  def pack(self) -> bytes:
+    return struct.pack(self.fmt, self.id)
+
+  @classmethod
+  def unpack(cls, data: bytes):
+    id, = struct.unpack(cls.fmt, data)
+
+    if id != cls.id:
+      raise ValueError(id)
+    return DrawServerPacket()
 
 
 class SelectWindClientPacket(Packet):
@@ -148,7 +163,7 @@ class PlayerStruct(Struct, GamePlayerMixin):
 
 class GameStateServerPacket(Packet):
   fmt = 'BHHHHB'
-  id = 7
+  id = 101
 
   def __init__(self, game_state: ClientGameState):
     self.game_state = game_state
@@ -199,7 +214,23 @@ class GameStateServerPacket(Packet):
 
 class DrawServerPacket(Packet):
   fmt = 'B'
-  id = 8
+  id = 102
+
+  def pack(self) -> bytes:
+    return struct.pack(self.fmt, self.id)
+
+  @classmethod
+  def unpack(cls, data: bytes):
+    id, = struct.unpack(cls.fmt, data)
+
+    if id != cls.id:
+      raise ValueError(id)
+    return DrawServerPacket()
+
+
+class RedrawServerPacket(Packet):
+  fmt = 'B'
+  id = 103
 
   def pack(self) -> bytes:
     return struct.pack(self.fmt, self.id)
@@ -215,7 +246,7 @@ class DrawServerPacket(Packet):
 
 class RonServerPacket(Packet):
   fmt = 'BB'
-  id = 9
+  id = 104
 
   def __init__(self, from_wind: int):
     self.from_wind = from_wind
@@ -234,7 +265,7 @@ class RonServerPacket(Packet):
 
 class SelectWindServerPacket(Packet):
   fmt = 'BB'
-  id = 10
+  id = 105
 
   def __init__(self, wind: int):
     self.wind = wind
@@ -253,7 +284,7 @@ class SelectWindServerPacket(Packet):
 
 class ConfirmWindServerPacket(Packet):
   fmt = 'BB'
-  id = 11
+  id = 106
 
   def __init__(self, wind: int):
     self.wind = wind
@@ -272,7 +303,7 @@ class ConfirmWindServerPacket(Packet):
 
 class NotEnoughPlayersServerPacket(Packet):
   fmt = 'B'
-  id = 12
+  id = 107
 
   def pack(self) -> bytes:
     return struct.pack(self.fmt, self.id)
@@ -288,7 +319,7 @@ class NotEnoughPlayersServerPacket(Packet):
 
 class LobbyPlayersServerPacket(Packet):
   fmt = 'BHH'
-  id = 13
+  id = 108
 
   def __init__(self, count: int, max_players: int):
     self.count = count
@@ -308,7 +339,7 @@ class LobbyPlayersServerPacket(Packet):
 
 class GameReconnectStatusServerPacket(Packet):
   fmt = 'BB'
-  id = 14
+  id = 109
 
   def __init__(self, missing_winds: set[int]):
     self.missing_winds = missing_winds
@@ -332,12 +363,13 @@ class GameReconnectStatusServerPacket(Packet):
     })
 
 
-packets = [
+packets: set = {
     SelectWindClientPacket,
     RiichiClientPacket,
     TsumoClientPacket,
     RonClientPacket,
     DrawClientPacket,
+    RedrawClientPacket,
 
     LobbyPlayersServerPacket,
     SelectWindServerPacket,
@@ -347,7 +379,11 @@ packets = [
     DrawServerPacket,
     RonServerPacket,
     GameReconnectStatusServerPacket,
-]
+}
+assert(len({
+    packet.id
+    for packet in packets
+}) == len(packets))
 
 
 def find_packet(id):
@@ -372,7 +408,7 @@ def read_packet(_socket: socket.socket):
     data = recv_msg(_socket)
     if not data:
       return None
-  except socket.error:
+  except OSError:
     return None
 
   return unpack_packet(data)

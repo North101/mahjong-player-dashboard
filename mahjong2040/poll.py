@@ -1,7 +1,8 @@
 import select
+from typing import Protocol
 
 
-class FileDescriptorLike:
+class FileDescriptorLike(Protocol):
   def fileno(self) -> int:
     raise NotImplementedError()
 

@@ -1,7 +1,7 @@
 import socket
 
 import badger2040
-from badger_ui import *
+from badger_ui import App, Offset, Size
 from badger_ui.center import Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
@@ -9,7 +9,7 @@ from mahjong2040.packets import (GameStateServerPacket, Packet,
                                  ConfirmWindServerPacket,
                                  NotEnoughPlayersServerPacket,
                                  SelectWindServerPacket)
-from mahjong2040.wind import Wind
+from mahjong2040.shared import Wind
 
 from .base import ClientState
 
@@ -46,12 +46,12 @@ class SelectWindClientState(ClientState):
     if self.confirmed_wind >= 0:
       Center(child=Column(children=[
           TextWidget(
-              text=f'{Wind[self.confirmed_wind]}',
+              text=f'{Wind.name(self.confirmed_wind)}',
               line_height=30,
               thickness=2,
           ),
           TextWidget(
-              text=f'Waiting for: {Wind[self.next_wind]}',
+              text=f'Waiting for: {Wind.name(self.next_wind)}',
               line_height=21,
               thickness=2,
               scale=0.7,
@@ -60,7 +60,7 @@ class SelectWindClientState(ClientState):
       return
 
     Center(child=TextWidget(
-        text=f'{Wind[self.next_wind]}?',
+        text=f'{Wind.name(self.next_wind)}?',
         line_height=30,
         thickness=2,
     )).render(app, size, offset)

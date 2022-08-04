@@ -1,23 +1,21 @@
 import socket
 
 import badger2040
-from badger_ui.base import App
+from badger_ui import App, Offset, Size
 from badger_ui.center import Center
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
-from badger_ui.util import Offset, Size
-from mahjong2040.client.states.ron_score import RonScoreClientState
-from mahjong2040.client.states.tsumo_dealer import TsumoDealerClientState
-from mahjong2040.client.states.tsumo_nondealer import TsumoNonDealerClientState
-from mahjong2040.packets import (DrawServerPacket, RiichiClientPacket,
-                                 RonServerPacket, GameStateServerPacket,
-                                 Packet, send_packet)
-from mahjong2040.shared import ClientGameState, GamePlayerMixin, GameState
-from mahjong2040.wind import Wind
+from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
+                                 Packet, RiichiClientPacket, RonServerPacket)
+from mahjong2040.shared import (ClientGameState, GamePlayerMixin, GameState,
+                                Wind)
 
 from .draw import DrawClientState
+from .ron_score import RonScoreClientState
 from .ron_wind import RonWindClientState
 from .shared import GameReconnectClientState
+from .tsumo_dealer import TsumoDealerClientState
+from .tsumo_nondealer import TsumoNonDealerClientState
 
 
 class GameClientState(GameReconnectClientState):
@@ -122,7 +120,7 @@ class GameClientState(GameReconnectClientState):
 
 
 def round_widget(app: App, size: Size, offset: Offset, game_state: GameState):
-  round_text = f'{Wind[game_state.round][0].upper()}{game_state.hand + 1}'
+  round_text = f'{Wind.name(game_state.round)[0].upper()}{game_state.hand + 1}'
 
   width = size.width
   height = size.height
@@ -212,7 +210,7 @@ def player_widget(app: App, size: Size, offset: Offset, player: GamePlayerMixin,
   Center(child=Row(
       children=[
           TextWidget(
-              text=Wind[wind][0].upper(),
+              text=Wind.name(wind)[0].upper(),
               font='sans',
               thickness=2,
               scale=0.6,

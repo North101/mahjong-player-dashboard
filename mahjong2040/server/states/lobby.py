@@ -1,8 +1,7 @@
 import socket
 
 from mahjong2040.packets import LobbyPlayersServerPacket, send_msg
-from mahjong2040.shared import Address
-from mahjong2040.wind import Wind
+from mahjong2040.shared import Address, Wind
 
 from .base import ServerState
 from .game_setup import GameSetupServerState

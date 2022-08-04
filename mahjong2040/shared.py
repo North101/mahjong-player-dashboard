@@ -1,23 +1,6 @@
-from collections import namedtuple
+from typing import Generic, Tuple, TypeAlias, TypeVar
 
-from mahjong2040.wind import Wind
-
-Address = namedtuple('Address', [
-    'host',
-    'port',
-])
-
-
-def writelines(lines: list[str], input=False):
-  print('\r', end='')
-  for line in lines:
-    print(line)
-  if input:
-    print('>')
-
-
-def write(line: str, input=False):
-  writelines([line], input=input)
+Address: TypeAlias = Tuple[str, int]
 
 
 DRAW_POINTS = 1000
@@ -26,17 +9,101 @@ TSUMO_HONBA_POINTS = 100
 RON_HONBA_POINTS = 300
 
 
-TenpaiState = [
-    'tenpai',
-    'noten',
-    'redraw',
-]
+class IntEnum:
+  def __init__(self):
+    self.__items__ = [
+        (key, value)
+        for (key, value) in (
+            (key, getattr(self, key))
+            for key in dir(self)
+        )
+        if isinstance(value, int)
+    ]
+
+  def name(self, value: int):
+    return self.__items__[value][0]
+
+  def __iter__(self):
+    for item in self.__items__:
+      yield item[1]
+
+  def __len__(self):
+    return len(self.__items__)
 
 
-class GameState:
+class WindState(IntEnum):
+  EAST = 0
+  SOUTH = 1
+  WEST = 2
+  NORTH = 3
+
+
+Wind = WindState()
+
+
+class TenpaiState(IntEnum):
+  UNKNOWN = 0
+  TENPAI = 1
+  NOTEN = 2
+
+
+Tenpai = TenpaiState()
+
+
+class GamePlayerMixin:
+  points: int
+  riichi: bool
+
+
+PlayerType = TypeVar('PlayerType', bound=GamePlayerMixin)
+
+
+class GamePlayerTuple(Generic[PlayerType]):
   def __init__(
       self,
-      players: 'GamePlayerTuple',
+      player1: PlayerType,
+      player2: PlayerType,
+      player3: PlayerType,
+      player4: PlayerType,
+  ):
+    self.player1 = player1
+    self.player2 = player2
+    self.player3 = player3
+    self.player4 = player4
+
+  def __iter__(self):
+    yield self.player1
+    yield self.player2
+    yield self.player3
+    yield self.player4
+
+  def __getitem__(self, index: int):
+    if index == 0:
+      return self.player1
+    elif index == 1:
+      return self.player2
+    elif index == 2:
+      return self.player3
+    elif index == 3:
+      return self.player4
+    raise IndexError(index)
+
+  def index(self, item: PlayerType):
+    if item == self.player1:
+      return 0
+    elif item == self.player2:
+      return 1
+    elif item == self.player3:
+      return 2
+    elif item == self.player4:
+      return 3
+    raise ValueError(item)
+
+
+class GameState(Generic[PlayerType]):
+  def __init__(
+      self,
+      players: GamePlayerTuple[PlayerType],
       hand: int = 0,
       repeat: int = 0,
       bonus_honba: int = 0,
@@ -65,7 +132,7 @@ class GameState:
   def total_riichi(self):
     return self.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
-  def player_wind(self, player: 'GamePlayerMixin'):
+  def player_wind(self, player: PlayerType):
     return (self.players.index(player) - self.hand) % len(Wind)
 
   def player_index_for_wind(self, wind: int):
@@ -104,50 +171,3 @@ class ClientGameState(GameState):
 
   def __repr__(self):
     return f'{self.__class__.__name__}({self.player_index}, {self.players}, {self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
-
-
-class GamePlayerMixin:
-  points: int
-  riichi: bool
-
-
-class GamePlayerTuple:
-  def __init__(
-      self,
-      player1: GamePlayerMixin,
-      player2: GamePlayerMixin,
-      player3: GamePlayerMixin,
-      player4: GamePlayerMixin,
-  ):
-    self.player1 = player1
-    self.player2 = player2
-    self.player3 = player3
-    self.player4 = player4
-
-  def __iter__(self):
-    yield self.player1
-    yield self.player2
-    yield self.player3
-    yield self.player4
-
-  def __getitem__(self, index: int):
-    if index == 0:
-      return self.player1
-    elif index == 1:
-      return self.player2
-    elif index == 2:
-      return self.player3
-    elif index == 3:
-      return self.player4
-    raise IndexError(index)
-
-  def index(self, item: GamePlayerMixin):
-    if item == self.player1:
-      return 0
-    elif item == self.player2:
-      return 1
-    elif item == self.player3:
-      return 2
-    elif item == self.player4:
-      return 3
-    raise ValueError(item)

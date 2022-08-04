@@ -1,8 +1,7 @@
 import math
 
 import badger2040
-from badger_ui.base import App, Widget
-from badger_ui.util import Offset, Size
+from badger_ui import App, Offset, Size, Widget
 
 
 class ScoreInputWidget(Widget):

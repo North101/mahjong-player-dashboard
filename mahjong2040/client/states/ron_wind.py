@@ -1,18 +1,17 @@
-from mahjong2040.client.states.draw import DrawClientState
+from mahjong2040.shared import Wind
 import socket
 
 import badger2040
-from badger_ui.base import App
+from badger_ui import App, Offset, Size
 from badger_ui.center import Center
 from badger_ui.row import Row
 from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
-from badger_ui.util import Offset, Size
-from mahjong2040.client.states.ron_score import RonScoreClientState
-from mahjong2040.packets import (DrawServerPacket, RonServerPacket, GameStateServerPacket,
-                                 Packet)
-from mahjong2040.wind import Wind
+from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
+                                 Packet, RonServerPacket)
 
+from .draw import DrawClientState
+from .ron_score import RonScoreClientState
 from .shared import GameReconnectClientState
 
 
@@ -54,7 +53,7 @@ class RonWindClientState(GameReconnectClientState):
     Row(children=[
         SizedBox(
             child=Center(child=TextWidget(
-                text=Wind[wind],
+                text=Wind.name(wind),
                 line_height=int(30 * 0.8),
                 thickness=2,
                 scale=0.8,

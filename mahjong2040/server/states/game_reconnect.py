@@ -1,25 +1,22 @@
 import socket
 
-from mahjong2040.packets import (GameReconnectStatusServerPacket,
-                                       GameStateServerPacket, Packet,
-                                       ConfirmWindServerPacket,
-                                       SelectWindClientPacket,
-                                       SelectWindServerPacket, send_msg,
-                                       send_packet)
-from mahjong2040.shared import (Address, ClientGameState, GamePlayerTuple, GameState)
-from mahjong2040.wind import Wind
+from mahjong2040.packets import (ConfirmWindServerPacket,
+                                 GameReconnectStatusServerPacket,
+                                 GameStateServerPacket, Packet,
+                                 SelectWindClientPacket,
+                                 SelectWindServerPacket, send_msg, send_packet)
+from mahjong2040.shared import Address, ClientGameState, GameState, Wind
 
 from .base import ServerState
+from .shared import GamePlayerType
 
 
 class GameReconnectServerState(ServerState):
-  def __init__(self, server, game_state: GameState,
-               players: GamePlayerTuple, callback):
+  def __init__(self, server, game_state: GameState[GamePlayerType], callback):
     self.server = server
     self.game_state = game_state
-    self.players = players
 
-    player1, player2, player3, player4 = players
+    player1, player2, player3, player4 = game_state.players
     self.player_clients = [
         player1.client,
         player2.client,
@@ -51,12 +48,12 @@ class GameReconnectServerState(ServerState):
 
         index = self.game_state.player_index_for_wind(self.wind)
         send_packet(client, GameStateServerPacket(ClientGameState(
-          index,
-          self.game_state.players,
-          self.game_state.hand,
-          self.game_state.repeat,
-          self.game_state.bonus_honba,
-          self.game_state.bonus_riichi,
+            index,
+            self.game_state.players,
+            self.game_state.hand,
+            self.game_state.repeat,
+            self.game_state.bonus_honba,
+            self.game_state.bonus_riichi,
         )))
 
       self.ask_wind()

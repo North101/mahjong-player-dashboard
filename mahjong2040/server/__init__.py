@@ -4,12 +4,12 @@ import socket
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 
-from .states.base import ServerState
-from .states.lobby import LobbyServerState
-
 
 class Server:
   def __init__(self, poll: Poll, address: Address):
+    from .states.base import ServerState
+    from .states.lobby import LobbyServerState
+
     self.poll = poll
     self.address = address
     self.socket: socket.socket

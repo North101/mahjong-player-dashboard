@@ -2,7 +2,7 @@ import select
 import socket
 
 import badger2040
-from badger_ui.base import App
+from badger_ui import App
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 

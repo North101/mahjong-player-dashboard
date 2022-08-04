@@ -8,6 +8,8 @@
     "python.languageServer": "Pylance",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
-        ".vscode/Pico-Stub/stubs"
+        ".vscode/Pico-Stub/stubs",
+        "/Users/alexander/git/badger2040/",
+        "/Users/alexander/git/badger2040/badger_ui/"
     ]
 }

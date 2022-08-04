@@ -10,7 +10,7 @@ def main():
   display = badger2040.Badger2040()
   display.update_speed(badger2040.UPDATE_TURBO)
 
-  address = Address('127.0.0.1', 1246)
+  address = ('127.0.0.1', 1246)
   poll = Poll()
   try:
     client = Client(display, poll, address)

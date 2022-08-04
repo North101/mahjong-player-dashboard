@@ -1,14 +1,13 @@
 import select
 import socket
 
-from badger_ui.base import App, Widget
-from badger_ui.util import Offset, Size
-from mahjong2040.client import ServerDisconnectedError
+from badger_ui import App, Offset, Size, Widget
+from mahjong2040.client import Client, ServerDisconnectedError
 from mahjong2040.packets import Packet, read_packet, send_packet
 
 
 class ClientState(Widget):
-  def __init__(self, client):
+  def __init__(self, client: Client):
     self.client = client
 
   @property
@@ -27,7 +26,9 @@ class ClientState(Widget):
     if event & select.POLLHUP:
       self.on_server_disconnect(server)
     elif event & select.POLLIN:
-      self.on_server_packet(server, self.read_packet())
+      packet = self.read_packet()
+      if packet:
+        self.on_server_packet(server, packet)
 
   def on_server_disconnect(self, server: socket.socket):
     self.poll.unregister(server)

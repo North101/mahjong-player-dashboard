@@ -1,10 +1,9 @@
 import socket
 
-from mahjong2040.packets import (DrawClientPacket,
-                                       DrawServerPacket,
-                                       GameStateServerPacket, Packet)
-from mahjong2040.shared import (DRAW_POINTS, ClientGameState,
-                                      GamePlayerTuple, GameState, TenpaiState)
+from mahjong2040.packets import (DrawClientPacket, DrawServerPacket,
+                                 GameStateServerPacket, Packet)
+from mahjong2040.shared import (DRAW_POINTS, ClientGameState, GameState,
+                                Tenpai, Wind)
 
 from .shared import BaseGameServerStateMixin, GamePlayer
 
@@ -17,13 +16,12 @@ class GameDrawPlayer(GamePlayer):
     self.tenpai = tenpai
 
 
-class GameDrawServerState(BaseGameServerStateMixin):
-  def __init__(self, server, game_state: GameState, players: GamePlayerTuple):
+class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
+  def __init__(self, server, game_state: GameState[GameDrawPlayer]):
     self.server = server
     self.game_state = game_state
-    self.players = players
 
-    for player in players:
+    for player in game_state.players:
       if player.tenpai is not None:
         continue
       player.send_packet(DrawServerPacket())
@@ -31,10 +29,10 @@ class GameDrawServerState(BaseGameServerStateMixin):
   def on_players_reconnect(self, clients: list[socket.socket]):
     super().on_players_reconnect(clients)
 
-    for index, player in enumerate(self.players):
+    for index, player in enumerate(self.game_state.players):
       player.send_packet(GameStateServerPacket(ClientGameState(
           index,
-          self.players,
+          self.game_state.players,
           self.game_state.hand,
           self.game_state.repeat,
           self.game_state.bonus_honba,
@@ -59,23 +57,23 @@ class GameDrawServerState(BaseGameServerStateMixin):
   def on_player_draw_complete(self):
     from mahjong2040.server.states.game import GameServerState
 
-    if any((player.tenpai == TenpaiState.unknown for player in self.players)):
+    if any((player.tenpai == Tenpai.UNKNOWN for player in self.game_state.players)):
       return
 
     winners = [
         player
-        for player in self.players
+        for player in self.game_state.players
         if player.tenpai == True
     ]
     for player in winners:
-      for other_player in self.players:
+      for other_player in self.game_state.players:
         if player == other_player:
           continue
         player.take_points(other_player, DRAW_POINTS)
 
-    if self.player_for_wind(0) in winners:
+    if self.game_state.player_for_wind(Wind.EAST) in winners:
       self.repeat_hand(draw=True)
     else:
       self.next_hand(draw=True)
 
-    self.child = GameServerState(self.server, self.game_state, self.players)
+    self.child = GameServerState(self.server, self.game_state)

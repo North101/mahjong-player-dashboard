@@ -1,4 +1,3 @@
-from mahjong2040.shared import TenpaiState
 import socket
 
 import badger2040
@@ -8,7 +7,8 @@ from badger_ui.row import Row
 from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
 from mahjong2040.packets import (DrawClientPacket, GameStateServerPacket,
-                                 Packet)
+                                 Packet, RedrawClientPacket)
+from mahjong2040.shared import Tenpai
 
 from .shared import GameReconnectClientState
 
@@ -26,15 +26,15 @@ class DrawClientState(GameReconnectClientState):
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
     if pressed[badger2040.BUTTON_A]:
-      self.send_packet(DrawClientPacket(0))
+      self.send_packet(DrawClientPacket(Tenpai.TENPAI))
       return True
 
     elif pressed[badger2040.BUTTON_B]:
-      self.send_packet(DrawClientPacket(1))
+      self.send_packet(DrawClientPacket(Tenpai.NOTEN))
       return True
 
     elif pressed[badger2040.BUTTON_C]:
-      self.send_packet(DrawClientPacket(2))
+      self.send_packet(RedrawClientPacket())
       return True
 
     return super().on_button(app, pressed)

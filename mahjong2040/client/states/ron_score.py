@@ -1,16 +1,15 @@
 import socket
 
 import badger2040
-from badger_ui.base import App
+from badger_ui import App, Offset, Size
 from badger_ui.center import Center
 from badger_ui.text import TextWidget
-from badger_ui.util import Offset, Size
-from mahjong2040.client.states.draw import DrawClientState
 from mahjong2040.client.widgets.score_input import ScoreInputWidget
 from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
                                  Packet, RonClientPacket, RonServerPacket)
-from mahjong2040.wind import Wind
+from mahjong2040.shared import Wind
 
+from .draw import DrawClientState
 from .shared import GameReconnectClientState
 
 
@@ -43,7 +42,7 @@ class RonScoreClientState(GameReconnectClientState):
 
   def render(self, app: App, size: Size, offset: Offset):
     Center(child=TextWidget(
-        text=f'Ron: {Wind[self.from_wind]}',
+        text=f'Ron: {Wind.name(self.from_wind)}',
         line_height=24,
         thickness=2,
         scale=0.8,
