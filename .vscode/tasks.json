@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "sync",
+      "command": "rshell",
+      "args": [
+        "rsync",
+        "-m",
+        "./mahjong2040/",
+        "/pyboard/mahjong2040/",
+      ],
+      "type": "shell",
+      "problemMatcher": []
+    },
+    {
+      "label": "run",
+      "command": "pyboard",
+      "args": [
+        "--device",
+        "/dev/cu.usbmodem14401",
+        "-c",
+        "'import mahjong2040.client; mahjong2040.client.start();'",
+      ],
+      "type": "shell",
+      "problemMatcher": [],
+    },
+  ]
+}
