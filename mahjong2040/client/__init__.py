@@ -1,10 +1,10 @@
 import select
 import socket
 
-import badger2040
 from badger_ui import App
+from mahjong2040.packets import PlayerStruct
 from mahjong2040.poll import Poll
-from mahjong2040.shared import Address
+from mahjong2040.shared import Address, ClientGameState, GamePlayerTuple
 
 
 class ServerDisconnectedError(Exception):
@@ -12,10 +12,10 @@ class ServerDisconnectedError(Exception):
 
 
 class Client(App):
-  def __init__(self, display: badger2040.Badger2040, poll: Poll, address: Address):
+  def __init__(self, poll: Poll, address: Address):
     from mahjong2040.client.states.base import ClientState
 
-    super().__init__(display=display)
+    super().__init__()
 
     self.poll = poll
     self.address = address
@@ -36,3 +36,27 @@ class Client(App):
 
   def on_server_data(self, fd: socket.socket, event: int):
     self.child.on_server_data(fd, event)
+
+
+def start():
+  from mahjong2040.client.states.game import GameClientState
+
+  address = ('127.0.0.1', 1246)
+  poll = Poll()
+  try:
+    client = Client(poll, address)
+    client.child = GameClientState(client, ClientGameState(
+        0,
+        GamePlayerTuple(
+            PlayerStruct(2500, False),
+            PlayerStruct(2500, False),
+            PlayerStruct(2500, False),
+            PlayerStruct(2500, False),
+        ),
+    ))
+    # client.start()
+    while True:
+      poll.poll()
+      client.update()
+  finally:
+    poll.close()
