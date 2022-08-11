@@ -15,12 +15,10 @@
     },
     {
       "label": "run",
-      "command": "pyboard",
+      "command": "rshell",
       "args": [
-        "--device",
-        "/dev/cu.usbmodem14401",
-        "-c",
-        "'import mahjong2040.client; mahjong2040.client.start();'",
+        "run",
+        "mahjong2040/client/__main__.py",
       ],
       "type": "shell",
       "problemMatcher": [],

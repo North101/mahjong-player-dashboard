@@ -1,7 +1,7 @@
 import socket
 
 from badger_ui import App, Offset, Size
-from badger_ui.center import Center
+from badger_ui.align import Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
 from mahjong2040.packets import (LobbyPlayersServerPacket, Packet,
