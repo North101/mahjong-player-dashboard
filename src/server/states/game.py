@@ -6,12 +6,10 @@ from mahjong2040.packets import (DrawClientPacket, GameStateServerPacket,
 from mahjong2040.shared import (TSUMO_HONBA_POINTS, ClientGameState,
                                 GamePlayerTuple, GameState, Tenpai)
 
-from .game_draw import GameDrawPlayer, GameDrawServerState
-from .game_ron import GameRonPlayer, GameRonServerState
 from .shared import BaseGameServerStateMixin, GamePlayerType
 
 
-class GameServerState(BaseGameServerStateMixin[GamePlayerType]):
+class GameServerState(BaseGameServerStateMixin):
   def __init__(self, server, game_state: GameState[GamePlayerType]):
     self.server = server
     self.game_state = game_state
@@ -62,6 +60,8 @@ class GameServerState(BaseGameServerStateMixin[GamePlayerType]):
       self.next_hand()
 
   def on_player_ron(self, player: GamePlayerType, packet: RonClientPacket):
+    from .game_ron import GameRonPlayer, GameRonServerState
+
     if self.game_state.player_wind(player) == packet.from_wind:
       return
 
@@ -99,6 +99,8 @@ class GameServerState(BaseGameServerStateMixin[GamePlayerType]):
     )
 
   def on_player_draw(self, player: GamePlayerType, packet: DrawClientPacket):
+    from .game_draw import GameDrawPlayer, GameDrawServerState
+
     def draw_player(p: GamePlayerType):
       tenpai = packet.tenpai if p == player else Tenpai.UNKNOWN
       return GameDrawPlayer(p.client, p.points, p.riichi, tenpai)

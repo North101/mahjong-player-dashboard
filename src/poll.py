@@ -1,14 +1,8 @@
 import select
-from typing import Protocol
-
-
-class FileDescriptorLike(Protocol):
-  def fileno(self) -> int:
-    raise NotImplementedError()
 
 
 class EventCallback:
-  def __init__(self, fd: FileDescriptorLike, callback):
+  def __init__(self, fd, callback):
     self.fd = fd
     self.callback = callback
 
@@ -22,17 +16,17 @@ class Poll:
   def __init__(self):
     self._poll = select.poll()
 
-  def register(self, fd: FileDescriptorLike, eventmask: int, callback):
+  def register(self, fd, eventmask: int, callback):
     self._poll.register(fd, eventmask)
-    self.lookup[fd.fileno()] = EventCallback(fd, callback)
+    self.lookup[id(fd)] = EventCallback(fd, callback)
 
-  def unregister(self, fd: FileDescriptorLike):
+  def unregister(self, fd):
     self._poll.unregister(fd)
-    del self.lookup[fd.fileno()]
+    del self.lookup[id(fd)]
 
   def poll(self):
     for (fd, event) in self._poll.ipoll(0):
-      event_callback = self.lookup.get(fd.fileno())
+      event_callback = self.lookup.get(id(fd))
       if not event_callback:
         continue
       event_callback(event)

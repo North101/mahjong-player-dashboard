@@ -12,21 +12,27 @@ class Server:
 
     self.poll = poll
     self.address = address
-    self.socket: socket.socket
+    self.socket: socket.socket = None
     self.clients: list[socket.socket] = []
     self.child: ServerState = LobbyServerState(self)
 
   def start(self):
     host, port = self.address
 
-    self.socket = socket.socket()
-    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.socket.bind(socket.getaddrinfo(host, port)[0][-1])
-
-    print(f'Server is listing on the port {port}...')
-    self.socket.listen()
-
+    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.poll.register(self.socket, select.POLLIN, self.on_server_data)
+
+    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self.socket.bind(('', port))
+
+    print(f'Server is listing on port {port}...')
+    self.socket.listen()
+  
+  def close(self):
+    if self.socket is None:
+      return
+    
+    self.socket.close()
 
   def on_server_data(self, fd: socket.socket, event: int):
     self.child.on_server_data(fd, event)

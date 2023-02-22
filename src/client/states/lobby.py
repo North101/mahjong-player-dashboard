@@ -19,6 +19,7 @@ class LobbyClientState(ClientState):
     self.count = count
 
   def on_server_packet(self, server: socket.socket, packet: Packet):
+    print(packet.__class__.__name__, packet.__repr__())
     if isinstance(packet, LobbyPlayersServerPacket):
       self.count = (packet.count, packet.max_players)
 
@@ -26,7 +27,6 @@ class LobbyClientState(ClientState):
       self.child = SelectWindClientState(self.client, packet.wind)
 
   def render(self, app: App, size: Size, offset: Offset):
-    print(self.count)
     if self.count is None:
       Center(child=TextWidget(
           text='Connecting...',

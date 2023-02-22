@@ -23,6 +23,15 @@ class Struct:
 class Packet(Struct):
   id: int
 
+  def __repr__(self) -> str:
+    args = ', '.join([
+      f'id={self.id}'
+    ] + [
+      f'{key}={value}'
+      for key, value in self.__dict__.items()
+    ])
+    return f'{self.__class__.__name__}({args})'
+
 
 class RiichiClientPacket(Packet):
   fmt = 'B'
@@ -37,9 +46,6 @@ class RiichiClientPacket(Packet):
     if id != cls.id:
       raise ValueError(id)
     return RiichiClientPacket()
-
-  def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}()'
 
 
 class TsumoClientPacket(Packet):
@@ -60,9 +66,6 @@ class TsumoClientPacket(Packet):
       raise ValueError(id)
     return TsumoClientPacket(dealer_points, points)
 
-  def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.dealer_points}, {self.points})'
-
 
 class RonClientPacket(Packet):
   fmt = 'BBH'
@@ -82,9 +85,6 @@ class RonClientPacket(Packet):
       raise ValueError(id)
     return RonClientPacket(from_wind, points)
 
-  def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.from_wind, self.points})'
-
 
 class DrawClientPacket(Packet):
   fmt = 'BB'
@@ -102,9 +102,6 @@ class DrawClientPacket(Packet):
     if id != cls.id:
       raise ValueError(id)
     return DrawClientPacket(tenpai)
-
-  def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.tenpai})'
 
 
 class RedrawClientPacket(Packet):
@@ -157,9 +154,6 @@ class PlayerStruct(Struct, GamePlayerMixin):
     points, riichi = struct.unpack_from(cls.fmt, data, offset)
     return PlayerStruct(points, riichi != 0)
 
-  def __repr__(self) -> str:
-    return f'{self.__class__.__name__}({self.points}, {self.riichi})'
-
 
 class GameStateServerPacket(Packet):
   fmt = 'BHHHHB'
@@ -207,9 +201,6 @@ class GameStateServerPacket(Packet):
   @classmethod
   def size(cls):
     return struct.calcsize(cls.fmt) + (PlayerStruct.size() * len(Wind))
-
-  def __repr__(self) -> str:
-    return f'[{self.id}]: {self.__class__.__name__}({self.game_state})'
 
 
 class DrawServerPacket(Packet):

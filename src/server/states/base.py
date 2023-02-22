@@ -1,9 +1,15 @@
 import select
 import socket
+import typing
 
 from mahjong2040.packets import Packet, read_packet, send_msg
-from mahjong2040.server import Server
 from mahjong2040.shared import RIICHI_POINTS, Address, GamePlayerMixin
+
+try:
+  if typing.TYPE_CHECKING:
+    from mahjong2040.server import Server
+except:
+  pass
 
 
 class ClientMixin:
@@ -30,7 +36,8 @@ class GamePlayer(ClientMixin, GamePlayerMixin):
 
 
 class ServerState:
-  def __init__(self, server: Server):
+  def __init__(self, server: 'Server'):
+    print(self.__class__.__name__)
     self.server = server
 
   @property

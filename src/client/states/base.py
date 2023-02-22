@@ -9,6 +9,7 @@ from badger_ui import App, Offset, Size, Widget
 
 class ClientState(Widget):
   def __init__(self, client: Client):
+    print(self.__class__.__name__)
     self.client = client
 
   @property
