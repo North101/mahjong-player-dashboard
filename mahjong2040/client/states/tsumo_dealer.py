@@ -1,12 +1,13 @@
 import socket
 
-import badger2040
-from badger_ui import App, Offset, Size
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.text import TextWidget
 from mahjong2040.client.widgets.score_input import ScoreInputWidget
 from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
                                  Packet, RonServerPacket)
+
+from badger_ui import App, Offset, Size
 
 from .draw import DrawClientState
 from .ron_score import RonScoreClientState
@@ -34,7 +35,7 @@ class TsumoDealerClientState(GameReconnectClientState):
       self.child = DrawClientState(self.client)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040.BUTTON_B]:
+    if pressed[badger2040w.BUTTON_B]:
       app.child = TsumoNonDealerClientState(self.client, self.score.to_value)
       return True
 

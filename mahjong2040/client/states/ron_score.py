@@ -1,13 +1,14 @@
 import socket
 
-import badger2040
-from badger_ui import App, Offset, Size
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.text import TextWidget
 from mahjong2040.client.widgets.score_input import ScoreInputWidget
 from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
                                  Packet, RonClientPacket, RonServerPacket)
 from mahjong2040.shared import Wind
+
+from badger_ui import App, Offset, Size
 
 from .draw import DrawClientState
 from .shared import GameReconnectClientState
@@ -34,7 +35,7 @@ class RonScoreClientState(GameReconnectClientState):
       self.child = DrawClientState(self.client)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040.BUTTON_B]:
+    if pressed[badger2040w.BUTTON_B]:
       self.send_packet(RonClientPacket(self.from_wind, self.score.to_value))
       return True
 

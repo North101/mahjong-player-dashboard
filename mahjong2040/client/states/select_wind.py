@@ -1,15 +1,16 @@
 import socket
 
-import badger2040
-from badger_ui import App, Offset, Size
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (GameStateServerPacket, Packet,
-                                 ConfirmWindServerPacket,
-                                 NotEnoughPlayersServerPacket,
+from mahjong2040.packets import (ConfirmWindServerPacket,
+                                 GameStateServerPacket,
+                                 NotEnoughPlayersServerPacket, Packet,
                                  SelectWindServerPacket)
 from mahjong2040.shared import Wind
+
+from badger_ui import App, Offset, Size
 
 from .base import ClientState
 
@@ -37,7 +38,7 @@ class SelectWindClientState(ClientState):
       self.child = GameClientState(self.client, packet.game_state)
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040.BUTTON_B] and self.confirmed_wind < 0:
+    if pressed[badger2040w.BUTTON_B] and self.confirmed_wind < 0:
       return True
 
     return super().on_button(app, pressed)

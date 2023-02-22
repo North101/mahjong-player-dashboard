@@ -1,6 +1,7 @@
 import math
 
-import badger2040
+import badger2040w
+
 from badger_ui import App, Offset, Size, Widget
 
 
@@ -22,27 +23,27 @@ class ScoreInputWidget(Widget):
     )
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040.BUTTON_A]:
+    if pressed[badger2040w.BUTTON_A]:
       self.index = (self.index - 1) % len(self.value)
       return True
 
-    elif pressed[badger2040.BUTTON_C]:
+    elif pressed[badger2040w.BUTTON_C]:
       self.index = (self.index + 1) % len(self.value)
       return True
 
-    elif pressed[badger2040.BUTTON_UP]:
+    elif pressed[badger2040w.BUTTON_UP]:
       self.value[self.index] = (self.value[self.index] + 1) % 10
       return True
 
-    elif pressed[badger2040.BUTTON_DOWN]:
+    elif pressed[badger2040w.BUTTON_DOWN]:
       self.value[self.index] = (self.value[self.index] - 1) % 10
       return True
 
     return super().on_button(app, pressed)
 
   def render(self, app: App, size: Size, offset: Offset):
-    app.display.pen(0)
-    app.display.thickness(2)
+    app.display.set_pen(0)
+    app.display.set_thickness(2)
 
     value_scale = 2
 

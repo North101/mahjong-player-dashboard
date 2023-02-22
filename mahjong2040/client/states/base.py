@@ -1,9 +1,10 @@
 import select
 import socket
 
-from badger_ui import App, Offset, Size, Widget
 from mahjong2040.client import Client, ServerDisconnectedError
 from mahjong2040.packets import Packet, read_packet, send_packet
+
+from badger_ui import App, Offset, Size, Widget
 
 
 class ClientState(Widget):

@@ -1,7 +1,6 @@
 import socket
 
-import badger2040
-from badger_ui import App, Offset, Size
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
@@ -9,6 +8,8 @@ from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
                                  Packet, RiichiClientPacket, RonServerPacket)
 from mahjong2040.shared import (ClientGameState, GamePlayerMixin, GameState,
                                 Wind)
+
+from badger_ui import App, Offset, Size
 
 from .draw import DrawClientState
 from .ron_score import RonScoreClientState
@@ -39,14 +40,14 @@ class GameClientState(GameReconnectClientState):
       self.child = RonScoreClientState(self.client, packet.from_wind)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040.BUTTON_A]:
+    if pressed[badger2040w.BUTTON_A]:
       if self.game_state.player_wind(self.game_state.me) == 0:
         app.child = TsumoNonDealerClientState(self.client, 0)
       else:
         app.child = TsumoDealerClientState(self.client)
       return True
 
-    elif pressed[badger2040.BUTTON_B]:
+    elif pressed[badger2040w.BUTTON_B]:
       app.child = RonWindClientState(self.client, [
           wind
           for wind, player in self.game_state.players_from_me
@@ -54,15 +55,15 @@ class GameClientState(GameReconnectClientState):
       ])
       return True
 
-    elif pressed[badger2040.BUTTON_C]:
+    elif pressed[badger2040w.BUTTON_C]:
       app.child = DrawClientState(self.client)
       return True
 
-    elif pressed[badger2040.BUTTON_UP]:
+    elif pressed[badger2040w.BUTTON_UP]:
       self.send_packet(RiichiClientPacket())
       return True
 
-    elif pressed[badger2040.BUTTON_DOWN]:
+    elif pressed[badger2040w.BUTTON_DOWN]:
       # toggle scores
       pass
 
@@ -129,7 +130,7 @@ def round_widget(app: App, size: Size, offset: Offset, game_state: GameState):
   end_x = start_x + width
   end_y = start_y + height
 
-  app.display.pen(0)
+  app.display.set_pen(0)
   app.display.line(
       start_x,
       start_y,
@@ -171,7 +172,7 @@ def riichi_widget(app: App, size: Size, offset: Offset):
   end_x = start_x + width
   end_y = start_y + height
 
-  app.display.pen(0)
+  app.display.set_pen(0)
   app.display.line(
       start_x,
       start_y,
