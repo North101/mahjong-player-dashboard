@@ -18,7 +18,7 @@ class ScoreInputWidget(Widget):
   @property
   def to_value(self):
     return sum(
-        int(math.pow(10, len(self.value) + 2 - i)) * v
+        int(math.pow(10, len(self.value) - i)) * v
         for i, v in enumerate(self.value, start=1)
     )
 

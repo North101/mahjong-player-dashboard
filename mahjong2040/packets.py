@@ -49,7 +49,7 @@ class RiichiClientPacket(Packet):
 
 
 class TsumoClientPacket(Packet):
-  fmt = 'BHH'
+  fmt = 'BHI'
   id = 2
 
   def __init__(self, dealer_points, points):
@@ -68,7 +68,7 @@ class TsumoClientPacket(Packet):
 
 
 class RonClientPacket(Packet):
-  fmt = 'BBH'
+  fmt = 'BBI'
   id = 3
 
   def __init__(self, from_wind: int, points: int):
@@ -140,7 +140,7 @@ class SelectWindClientPacket(Packet):
 
 
 class PlayerStruct(Struct, GamePlayerMixin):
-  fmt = 'HB'
+  fmt = 'IB'
 
   def __init__(self, points: int, riichi: bool) -> None:
     self.points = points

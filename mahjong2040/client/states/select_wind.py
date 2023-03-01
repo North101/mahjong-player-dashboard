@@ -7,6 +7,7 @@ from badger_ui.text import TextWidget
 from mahjong2040.packets import (ConfirmWindServerPacket,
                                  GameStateServerPacket,
                                  NotEnoughPlayersServerPacket, Packet,
+                                 SelectWindClientPacket,
                                  SelectWindServerPacket)
 from mahjong2040.shared import Wind
 
@@ -39,6 +40,7 @@ class SelectWindClientState(ClientState):
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.confirmed_wind < 0:
+      self.send_packet(SelectWindClientPacket(self.next_wind))
       return True
 
     return super().on_button(app, pressed)
@@ -52,7 +54,7 @@ class SelectWindClientState(ClientState):
               thickness=2,
           ),
           TextWidget(
-              text=f'Waiting for: {Wind.name(self.next_wind)}',
+              text=f'Waiting for: {Wind.name((self.next_wind + 1) % len(Wind))}',
               line_height=21,
               thickness=2,
               scale=0.7,

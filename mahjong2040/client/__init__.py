@@ -1,7 +1,6 @@
 import select
 import socket
 
-import network
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 

@@ -2,7 +2,7 @@ import select
 import socket
 import typing
 
-from mahjong2040.packets import Packet, read_packet, send_msg
+from mahjong2040.packets import Packet, read_packet, send_packet
 from mahjong2040.shared import RIICHI_POINTS, Address, GamePlayerMixin
 
 try:
@@ -16,7 +16,7 @@ class ClientMixin:
   client: socket.socket
 
   def send_packet(self, packet: Packet):
-    send_msg(self.client, packet.pack())
+    send_packet(self.client, packet)
 
 
 class GamePlayer(ClientMixin, GamePlayerMixin):
@@ -68,6 +68,7 @@ class ServerState:
     elif event & select.POLLIN:
       packet = read_packet(client)
       if packet is not None:
+        print(self.__class__.__name__, repr(packet))
         self.on_client_packet(client, packet)
 
   def on_client_connect(self, client: socket.socket, address: Address):
@@ -79,4 +80,7 @@ class ServerState:
     client.close()
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
-    pass
+    print(repr(packet))
+
+  def send_msg(self, client: socket.socket, msg: bytes):
+    self.server.send_msg(client, msg)

@@ -3,8 +3,9 @@ import socket
 from mahjong2040.packets import (ConfirmWindServerPacket,
                                  NotEnoughPlayersServerPacket, Packet,
                                  SelectWindClientPacket,
-                                 SelectWindServerPacket, send_msg)
-from mahjong2040.shared import GamePlayerTuple, GameState, Wind
+                                 SelectWindServerPacket)
+from mahjong2040.shared import (STARTING_POINTS, GamePlayerTuple, GameState,
+                                Wind)
 
 from .base import ServerState
 from .game import GameServerState
@@ -23,7 +24,7 @@ class GameSetupServerState(ServerState):
     packet = SelectWindServerPacket(wind).pack()
     for client in self.clients:
       if client not in self.players:
-        send_msg(client, packet)
+        self.send_msg(client, packet)
 
   def on_client_disconnect(self, client: socket.socket):
     super().on_client_disconnect(client)
@@ -48,17 +49,17 @@ class GameSetupServerState(ServerState):
         return
 
       self.players.append(client)
-      send_msg(client, ConfirmWindServerPacket(packet.wind).pack())
+      self.send_msg(client, ConfirmWindServerPacket(packet.wind).pack())
 
       if len(self.players) == len(Wind):
         self.child = GameServerState(
             server=self.server,
             game_state=GameState(
                 players=GamePlayerTuple(
-                    GamePlayer(self.players[0], 25000),
-                    GamePlayer(self.players[1], 25000),
-                    GamePlayer(self.players[2], 25000),
-                    GamePlayer(self.players[3], 25000),
+                    GamePlayer(self.players[0], STARTING_POINTS),
+                    GamePlayer(self.players[1], STARTING_POINTS),
+                    GamePlayer(self.players[2], STARTING_POINTS),
+                    GamePlayer(self.players[3], STARTING_POINTS),
                 ),
             ),
         )
@@ -73,5 +74,5 @@ class GameSetupServerState(ServerState):
 
     packet = NotEnoughPlayersServerPacket().pack()
     for client in self.clients:
-      send_msg(client, packet)
+      self.send_msg(client, packet)
     self.child = LobbyServerState(self.server)

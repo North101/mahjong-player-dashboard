@@ -21,6 +21,7 @@ from .tsumo_nondealer import TsumoNonDealerClientState
 
 class GameClientState(GameReconnectClientState):
   player_size = Size(115, 30)
+  round_size = Size(40, 8)
 
   def __init__(self, client, game_state: ClientGameState):
     self.client = client
@@ -75,22 +76,39 @@ class GameClientState(GameReconnectClientState):
     player_widget(
         app=app,
         size=self.player_size,
-        offset=Offset((size.width - self.player_size.width) // 2, size.height - self.player_size.height),
+        offset=Offset((size.width - self.player_size.width) // 2, size.height - self.player_size.height - self.round_size.height - 1),
         player=player1,
         wind=wind1,
     )
     if player1.riichi:
-      riichi_widget(app, Size(40, 8), Offset((size.width - 40) // 2, (size.height + 40) // 2))
+      riichi_widget(
+        app=app,
+        size=self.round_size,
+        offset=Offset(
+          (size.width - self.round_size.width) // 2,
+          size.height - self.round_size.height - 1
+        ),
+      )
 
     player_widget(
         app=app,
         size=self.player_size,
-        offset=Offset(size.width - self.player_size.width, (128 - self.player_size.height) // 2),
+        offset=Offset(
+          size.width - self.player_size.width,
+          (size.height // 2) - ((self.player_size.height + self.round_size.height) // 2),
+        ),
         player=player2,
         wind=wind2,
     )
     if player2.riichi:
-      riichi_widget(app, Size(8, 40), Offset((size.width + 40) // 2, (size.height - 40) // 2))
+      riichi_widget(
+        app=app,
+        size=self.round_size,
+        offset=Offset(
+          (size.width - self.player_size.width) + ((self.player_size.width - self.round_size.width) // 2),
+          (size.height // 2) + ((self.player_size.height - self.round_size.height) // 2),
+        ),
+      )
 
     player_widget(
         app=app,
@@ -100,17 +118,34 @@ class GameClientState(GameReconnectClientState):
         wind=wind3,
     )
     if player3.riichi:
-      riichi_widget(app, Size(40, 8), Offset((size.width - 40) // 2, ((size.height - 40) // 2) - 8))
+      riichi_widget(
+        app=app,
+        size=self.round_size,
+        offset=Offset(
+          (size.width - self.round_size.width) // 2,
+          self.player_size.height
+        ),
+      )
 
     player_widget(
         app=app,
         size=self.player_size,
-        offset=Offset(0, (128 - self.player_size.height) // 2),
+        offset=Offset(
+          0,
+          (size.height // 2) - ((self.player_size.height + self.round_size.height) // 2),
+        ),
         player=player4,
         wind=wind4,
     )
     if player4.riichi:
-      riichi_widget(app, Size(8, 40), Offset(((size.width - 40) // 2) - 8, (size.height - 40) // 2))
+      riichi_widget(
+        app=app,
+        size=self.round_size,
+        offset=Offset(
+          (self.player_size.width - self.round_size.width) // 2,
+          (size.height // 2) + ((self.player_size.height - self.round_size.height) // 2)
+        ),
+      )
 
     round_widget(
         app=app,
@@ -125,42 +160,14 @@ def round_widget(app: App, size: Size, offset: Offset, game_state: GameState):
 
   width = size.width
   height = size.height
-  start_x = offset.x
-  start_y = offset.y
-  end_x = start_x + width
-  end_y = start_y + height
 
   app.display.set_pen(0)
-  app.display.line(
-      start_x,
-      start_y,
-      start_x,
-      end_y,
-  )
-  app.display.line(
-      start_x,
-      start_y,
-      end_x,
-      start_y,
-  )
-  app.display.line(
-      end_x,
-      start_y,
-      end_x,
-      end_y,
-  )
-  app.display.line(
-      start_x,
-      end_y,
-      end_x,
-      end_y,
-  )
-
-  round_width = app.display.measure_text(round_text)
+  round_width = app.display.measure_text(round_text, scale=1)
   app.display.text(
       round_text,
       offset.x + (width // 2) - (round_width // 2),
       offset.y + (height // 2),
+      scale=1,
   )
 
 
@@ -218,7 +225,7 @@ def player_widget(app: App, size: Size, offset: Offset, player: GamePlayerMixin,
               line_height=size.height,
           ),
           TextWidget(
-              text=str(player.points),
+              text=f'{player.points * 100}',
               font='sans',
               thickness=2,
               color=0,

@@ -29,7 +29,8 @@ class ClientState(Widget):
       self.on_server_disconnect(server)
     elif event & select.POLLIN:
       packet = self.read_packet()
-      if packet:
+      if packet is not None:
+        print(self.__class__.__name__, repr(packet))
         self.on_server_packet(server, packet)
 
   def on_server_disconnect(self, server: socket.socket):

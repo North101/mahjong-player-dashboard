@@ -16,7 +16,7 @@ class GameDrawPlayer(GamePlayer):
     self.tenpai = tenpai
 
 
-class GameDrawServerState(BaseGameServerStateMixin[GameDrawPlayer]):
+class GameDrawServerState(BaseGameServerStateMixin):
   def __init__(self, server, game_state: GameState[GameDrawPlayer]):
     self.server = server
     self.game_state = game_state

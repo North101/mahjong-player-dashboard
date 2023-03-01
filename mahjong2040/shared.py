@@ -3,10 +3,11 @@ from typing import Generic, Tuple, TypeAlias, TypeVar
 Address: TypeAlias = Tuple[str, int]
 
 
-DRAW_POINTS = 1000
-RIICHI_POINTS = 1000
-TSUMO_HONBA_POINTS = 100
-RON_HONBA_POINTS = 300
+STARTING_POINTS = 250
+DRAW_POINTS = 10
+RIICHI_POINTS = 10
+TSUMO_HONBA_POINTS = 1
+RON_HONBA_POINTS = 3
 
 
 class IntEnum:
@@ -54,6 +55,13 @@ class GamePlayerMixin:
   points: int
   riichi: bool
 
+  def __repr__(self) -> str:
+    args = ', '.join([
+      f'{key}={value}'
+      for key, value in self.__dict__.items()
+    ])
+    return f'{self.__class__.__name__}({args})'
+
 
 PlayerType = TypeVar('PlayerType', bound=GamePlayerMixin)
 
@@ -98,6 +106,13 @@ class GamePlayerTuple(Generic[PlayerType]):
     elif item == self.player4:
       return 3
     raise ValueError(item)
+
+  def __repr__(self) -> str:
+    args = ', '.join([
+      f'{key}={value}'
+      for key, value in self.__dict__.items()
+    ])
+    return f'{self.__class__.__name__}({args})'
 
 
 class GameState(Generic[PlayerType]):

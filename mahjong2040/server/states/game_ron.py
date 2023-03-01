@@ -16,7 +16,7 @@ class GameRonPlayer(GamePlayer):
     self.ron = ron
 
 
-class GameRonServerState(BaseGameServerStateMixin[GameRonPlayer]):
+class GameRonServerState(BaseGameServerStateMixin):
   def __init__(
       self,
       server,

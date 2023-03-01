@@ -1,6 +1,6 @@
 import socket
 
-from mahjong2040.packets import LobbyPlayersServerPacket, send_msg
+from mahjong2040.packets import LobbyPlayersServerPacket
 from mahjong2040.shared import Address, Wind
 
 from .base import ServerState
@@ -28,4 +28,4 @@ class LobbyServerState(ServerState):
   def send_lobby_count(self):
     packet = LobbyPlayersServerPacket(len(self.clients), len(Wind)).pack()
     for client in self.clients:
-      send_msg(client, packet)
+      self.send_msg(client, packet)

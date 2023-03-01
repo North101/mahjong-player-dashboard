@@ -1,6 +1,7 @@
 import select
 import socket
 
+from mahjong2040.packets import Packet, send_msg
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 
@@ -39,3 +40,6 @@ class Server:
 
   def on_client_data(self, fd: socket.socket, event: int):
     self.child.on_client_data(fd, event)
+
+  def send_msg(self, client: socket.socket, msg: bytes):
+    send_msg(client, msg)

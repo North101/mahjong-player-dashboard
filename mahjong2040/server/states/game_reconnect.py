@@ -1,10 +1,14 @@
 import socket
 
-from mahjong2040.packets import (ConfirmWindServerPacket,
-                                 GameReconnectStatusServerPacket,
-                                 GameStateServerPacket, Packet,
-                                 SelectWindClientPacket,
-                                 SelectWindServerPacket, send_msg, send_packet)
+from mahjong2040.packets import (
+    ConfirmWindServerPacket,
+    GameReconnectStatusServerPacket,
+    GameStateServerPacket,
+    Packet,
+    SelectWindClientPacket,
+    SelectWindServerPacket,
+    send_packet,
+)
 from mahjong2040.shared import Address, ClientGameState, GameState, Wind
 
 from .base import ServerState
@@ -78,7 +82,7 @@ class GameReconnectServerState(ServerState):
         self.send_client_select_wind_packet(client, self.wind)
 
   def send_client_reconnect_status_packet(self, client: socket.socket, missing_winds: set[int]):
-    send_msg(client, GameReconnectStatusServerPacket(missing_winds).pack())
+    send_packet(client, GameReconnectStatusServerPacket(missing_winds))
 
   def send_client_select_wind_packet(self, client: socket.socket, wind: int):
-    send_msg(client, SelectWindServerPacket(wind).pack())
+    send_packet(client, SelectWindServerPacket(wind))
