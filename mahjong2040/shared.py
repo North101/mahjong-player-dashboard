@@ -181,7 +181,7 @@ class ClientGameState(GameState):
   @property
   def players_from_me(self):
     for wind in range(len(Wind)):
-      wind = (wind + self.player_index) % len(Wind)
+      wind = (wind + self.player_index - self.hand) % len(Wind)
       yield wind, self.player_for_wind(wind)
 
   def __repr__(self):

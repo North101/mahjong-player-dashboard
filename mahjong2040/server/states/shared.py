@@ -55,6 +55,12 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
   def reset_player_riichi(self):
     for player in self.game_state.players:
       player.riichi = False
+  
+  def redraw(self):
+    self.game_state.bonus_honba += 1
+    self.game_state.bonus_riichi = self.game_state.total_riichi
+
+    self.reset_player_riichi()
 
   def repeat_hand(self, draw=False):
     if draw:
@@ -67,7 +73,7 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
 
   def next_hand(self, draw=False):
     if draw:
-      self.game_state.bonus_honba = self.game_state.repeat + 1
+      self.game_state.bonus_honba = self.game_state.total_honba + 1
       self.game_state.bonus_riichi = self.game_state.total_riichi
     else:
       self.game_state.bonus_honba = 0

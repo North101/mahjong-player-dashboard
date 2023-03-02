@@ -1,7 +1,7 @@
 import select
 import socket
 
-from mahjong2040.packets import Packet, send_msg
+from mahjong2040.packets import send_msg
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 

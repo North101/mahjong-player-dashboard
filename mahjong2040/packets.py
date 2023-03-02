@@ -1,8 +1,8 @@
+import io
 import socket
 import struct
 
-from mahjong2040.shared import (ClientGameState, GamePlayerMixin,
-                                GamePlayerTuple, Wind)
+from mahjong2040.shared import ClientGameState, GamePlayerMixin, GamePlayerTuple, Wind
 
 
 class Struct:
@@ -45,7 +45,7 @@ class RiichiClientPacket(Packet):
     id, = struct.unpack(cls.fmt, data)
     if id != cls.id:
       raise ValueError(id)
-    return RiichiClientPacket()
+    return cls()
 
 
 class TsumoClientPacket(Packet):
@@ -64,31 +64,48 @@ class TsumoClientPacket(Packet):
     id, dealer_points, points = struct.unpack(cls.fmt, data)
     if id != cls.id:
       raise ValueError(id)
-    return TsumoClientPacket(dealer_points, points)
+    return cls(dealer_points, points)
 
 
-class RonClientPacket(Packet):
-  fmt = 'BBI'
+class RonWindClientPacket(Packet):
+  fmt = 'BB'
   id = 3
 
-  def __init__(self, from_wind: int, points: int):
+  def __init__(self, from_wind: int):
     self.from_wind = from_wind
-    self.points = points
 
   def pack(self) -> bytes:
-    return struct.pack(self.fmt, self.id, self.from_wind, self.points)
+    return struct.pack(self.fmt, self.id, self.from_wind)
 
   @classmethod
   def unpack(cls, data: bytes):
-    id, from_wind, points = struct.unpack(cls.fmt, data)
+    id, from_wind = struct.unpack(cls.fmt, data)
     if id != cls.id:
       raise ValueError(id)
-    return RonClientPacket(from_wind, points)
+    return cls(from_wind)
+
+
+class RonScoreClientPacket(Packet):
+  fmt = 'BI'
+  id = 4
+
+  def __init__(self, points):
+    self.points = points
+
+  def pack(self) -> bytes:
+    return struct.pack(self.fmt, self.id, self.points)
+
+  @classmethod
+  def unpack(cls, data: bytes):
+    id, points = struct.unpack(cls.fmt, data)
+    if id != cls.id:
+      raise ValueError(id)
+    return cls(points)
 
 
 class DrawClientPacket(Packet):
   fmt = 'BB'
-  id = 4
+  id = 5
 
   def __init__(self, tenpai: int):
     self.tenpai = tenpai
@@ -101,12 +118,12 @@ class DrawClientPacket(Packet):
     id, tenpai = struct.unpack(cls.fmt, data)
     if id != cls.id:
       raise ValueError(id)
-    return DrawClientPacket(tenpai)
+    return cls(tenpai)
 
 
 class RedrawClientPacket(Packet):
   fmt = 'B'
-  id = 5
+  id = 6
 
   def pack(self) -> bytes:
     return struct.pack(self.fmt, self.id)
@@ -117,12 +134,12 @@ class RedrawClientPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return DrawServerPacket()
+    return cls()
 
 
 class SelectWindClientPacket(Packet):
   fmt = 'BB'
-  id = 6
+  id = 7
 
   def __init__(self, wind: int):
     self.wind = wind
@@ -136,7 +153,7 @@ class SelectWindClientPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return SelectWindClientPacket(wind)
+    return cls(wind)
 
 
 class PlayerStruct(Struct, GamePlayerMixin):
@@ -196,7 +213,7 @@ class GameStateServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return GameStateServerPacket(game_state)
+    return cls(game_state)
 
   @classmethod
   def size(cls):
@@ -204,19 +221,22 @@ class GameStateServerPacket(Packet):
 
 
 class DrawServerPacket(Packet):
-  fmt = 'B'
+  fmt = 'BH'
   id = 102
 
+  def __init__(self, tenpai: int):
+    self.tenpai = tenpai
+
   def pack(self) -> bytes:
-    return struct.pack(self.fmt, self.id)
+    return struct.pack(self.fmt, self.id, self.tenpai)
 
   @classmethod
   def unpack(cls, data: bytes):
-    id, = struct.unpack(cls.fmt, data)
+    id, tenpai = struct.unpack(cls.fmt, data)
 
     if id != cls.id:
       raise ValueError(id)
-    return DrawServerPacket()
+    return cls(tenpai)
 
 
 class RedrawServerPacket(Packet):
@@ -232,10 +252,10 @@ class RedrawServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return DrawServerPacket()
+    return cls()
 
 
-class RonServerPacket(Packet):
+class RonWindServerPacket(Packet):
   fmt = 'BB'
   id = 104
 
@@ -251,29 +271,30 @@ class RonServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return RonServerPacket(from_wind)
+    return cls(from_wind)
 
 
-class SelectWindServerPacket(Packet):
-  fmt = 'BB'
+class RonScoreServerPacket(Packet):
+  fmt = 'BBI'
   id = 105
 
-  def __init__(self, wind: int):
-    self.wind = wind
+  def __init__(self, from_wind: int, points: int):
+    self.from_wind = from_wind
+    self.points = points
 
   def pack(self) -> bytes:
-    return struct.pack(self.fmt, self.id, self.wind)
+    return struct.pack(self.fmt, self.id, self.from_wind, self.points)
 
   @classmethod
   def unpack(cls, data: bytes):
-    id, wind = struct.unpack(cls.fmt, data)
+    id, from_wind, points = struct.unpack(cls.fmt, data)
 
     if id != cls.id:
       raise ValueError(id)
-    return SelectWindServerPacket(wind)
+    return cls(from_wind, points)
 
 
-class ConfirmWindServerPacket(Packet):
+class SelectWindServerPacket(Packet):
   fmt = 'BB'
   id = 106
 
@@ -289,12 +310,31 @@ class ConfirmWindServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return ConfirmWindServerPacket(wind)
+    return cls(wind)
+
+
+class ConfirmWindServerPacket(Packet):
+  fmt = 'BB'
+  id = 107
+
+  def __init__(self, wind: int):
+    self.wind = wind
+
+  def pack(self) -> bytes:
+    return struct.pack(self.fmt, self.id, self.wind)
+
+  @classmethod
+  def unpack(cls, data: bytes):
+    id, wind = struct.unpack(cls.fmt, data)
+
+    if id != cls.id:
+      raise ValueError(id)
+    return cls(wind)
 
 
 class NotEnoughPlayersServerPacket(Packet):
   fmt = 'B'
-  id = 107
+  id = 108
 
   def pack(self) -> bytes:
     return struct.pack(self.fmt, self.id)
@@ -305,12 +345,12 @@ class NotEnoughPlayersServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return NotEnoughPlayersServerPacket()
+    return cls()
 
 
 class LobbyPlayersServerPacket(Packet):
   fmt = 'BHH'
-  id = 108
+  id = 109
 
   def __init__(self, count: int, max_players: int):
     self.count = count
@@ -325,12 +365,12 @@ class LobbyPlayersServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return LobbyPlayersServerPacket(count, max_players)
+    return cls(count, max_players)
 
 
 class GameReconnectStatusServerPacket(Packet):
   fmt = 'BB'
-  id = 109
+  id = 110
 
   def __init__(self, missing_winds: set[int]):
     self.missing_winds = missing_winds
@@ -347,7 +387,7 @@ class GameReconnectStatusServerPacket(Packet):
 
     if id != cls.id:
       raise ValueError(id)
-    return GameReconnectStatusServerPacket({
+    return cls({
         wind
         for wind in range(len(Wind))
         if (missing_winds >> wind & 1) != 0
@@ -358,7 +398,8 @@ packets: set = {
     SelectWindClientPacket,
     RiichiClientPacket,
     TsumoClientPacket,
-    RonClientPacket,
+    RonWindClientPacket,
+    RonScoreClientPacket,
     DrawClientPacket,
     RedrawClientPacket,
 
@@ -368,7 +409,8 @@ packets: set = {
     NotEnoughPlayersServerPacket,
     GameStateServerPacket,
     DrawServerPacket,
-    RonServerPacket,
+    RonWindServerPacket,
+    RonScoreServerPacket,
     GameReconnectStatusServerPacket,
 }
 assert(len({

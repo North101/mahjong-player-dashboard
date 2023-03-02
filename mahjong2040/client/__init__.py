@@ -1,10 +1,9 @@
 import select
 import socket
 
+from badger_ui import App
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
-
-from badger_ui import App
 
 
 class ServerDisconnectedError(Exception):

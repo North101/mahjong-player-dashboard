@@ -1,14 +1,12 @@
 import math
 
 import badger2040w
-
 from badger_ui import App, Offset, Size, Widget
 
 
 class ScoreInputWidget(Widget):
   def __init__(self):
     self.value = [
-        0,
         0,
         0,
         0,

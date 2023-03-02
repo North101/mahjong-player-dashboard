@@ -1,16 +1,19 @@
 import socket
 
-import badger2040w
-from badger_ui.align import Center
+from badger_ui.align import Center, Top
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (ConfirmWindServerPacket,
-                                 GameStateServerPacket,
-                                 NotEnoughPlayersServerPacket, Packet,
-                                 SelectWindClientPacket,
-                                 SelectWindServerPacket)
+from mahjong2040.packets import (
+    ConfirmWindServerPacket,
+    GameStateServerPacket,
+    NotEnoughPlayersServerPacket,
+    Packet,
+    SelectWindClientPacket,
+    SelectWindServerPacket,
+)
 from mahjong2040.shared import Wind
 
+import badger2040w
 from badger_ui import App, Offset, Size
 
 from .base import ClientState
@@ -18,7 +21,8 @@ from .base import ClientState
 
 class SelectWindClientState(ClientState):
   def __init__(self, client, wind: int):
-    self.client = client
+    super().__init__(client)
+
     self.next_wind = wind
     self.confirmed_wind = -1
 
@@ -46,6 +50,15 @@ class SelectWindClientState(ClientState):
     return super().on_button(app, pressed)
 
   def render(self, app: App, size: Size, offset: Offset):
+    super().render(app, size, offset)
+
+    Top(child=Center(child=TextWidget(
+      text='Player Wind',
+      line_height=24,
+      thickness=2,
+      scale=0.8,
+    ))).render(app, size, offset)
+
     if self.confirmed_wind >= 0:
       Center(child=Column(children=[
           TextWidget(
@@ -60,10 +73,9 @@ class SelectWindClientState(ClientState):
               scale=0.7,
           ),
       ])).render(app, size, offset)
-      return
-
-    Center(child=TextWidget(
-        text=f'{Wind.name(self.next_wind)}?',
-        line_height=30,
-        thickness=2,
-    )).render(app, size, offset)
+    else:
+      Center(child=TextWidget(
+          text=f'{Wind.name(self.next_wind)}?',
+          line_height=30,
+          thickness=2,
+      )).render(app, size, offset)

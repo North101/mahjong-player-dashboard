@@ -104,16 +104,20 @@
       "file:mahjong2040/client/states/ron_score.py"
     ],
     [
+      "mahjong2040/client/states/menu.py",
+      "file:mahjong2040/client/states/menu.py"
+    ],
+    [
       "mahjong2040/client/states/tsumo_nondealer.py",
       "file:mahjong2040/client/states/tsumo_nondealer.py"
     ],
     [
-      "mahjong2040/client/states/lobby.py",
-      "file:mahjong2040/client/states/lobby.py"
+      "mahjong2040/client/states/draw_menu.py",
+      "file:mahjong2040/client/states/draw_menu.py"
     ],
     [
-      "mahjong2040/client/states/draw.py",
-      "file:mahjong2040/client/states/draw.py"
+      "mahjong2040/client/states/lobby.py",
+      "file:mahjong2040/client/states/lobby.py"
     ],
     [
       "mahjong2040/client/states/base.py",

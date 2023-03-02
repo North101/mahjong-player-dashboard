@@ -3,8 +3,7 @@ import socket
 from badger_ui.align import Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (LobbyPlayersServerPacket, Packet,
-                                 SelectWindServerPacket)
+from mahjong2040.packets import LobbyPlayersServerPacket, Packet, SelectWindServerPacket
 
 from badger_ui import App, Offset, Size
 
@@ -26,11 +25,14 @@ class LobbyClientState(ClientState):
       self.child = SelectWindClientState(self.client, packet.wind)
 
   def render(self, app: App, size: Size, offset: Offset):
+    super().render(app, size, offset)
+
     if self.count is None:
       Center(child=TextWidget(
           text='Connecting...',
           line_height=30,
           thickness=2,
+          scale=1,
       )).render(app, size, offset)
       return
 

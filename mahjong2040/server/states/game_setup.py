@@ -1,11 +1,13 @@
 import socket
 
-from mahjong2040.packets import (ConfirmWindServerPacket,
-                                 NotEnoughPlayersServerPacket, Packet,
-                                 SelectWindClientPacket,
-                                 SelectWindServerPacket)
-from mahjong2040.shared import (STARTING_POINTS, GamePlayerTuple, GameState,
-                                Wind)
+from mahjong2040.packets import (
+    ConfirmWindServerPacket,
+    NotEnoughPlayersServerPacket,
+    Packet,
+    SelectWindClientPacket,
+    SelectWindServerPacket,
+)
+from mahjong2040.shared import STARTING_POINTS, GamePlayerTuple, GameState, Wind
 
 from .base import ServerState
 from .game import GameServerState

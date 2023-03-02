@@ -1,9 +1,13 @@
 import socket
 
-from mahjong2040.packets import (GameStateServerPacket, Packet,
-                                 RonClientPacket, RonServerPacket)
-from mahjong2040.shared import (RON_HONBA_POINTS, ClientGameState, GameState,
-                                Wind)
+from mahjong2040.packets import (
+    GameStateServerPacket,
+    Packet,
+    RonScoreClientPacket,
+    RonScoreServerPacket,
+    RonWindServerPacket,
+)
+from mahjong2040.shared import RON_HONBA_POINTS, ClientGameState, GameState, Wind
 
 from .shared import BaseGameServerStateMixin, GamePlayer
 
@@ -30,7 +34,7 @@ class GameRonServerState(BaseGameServerStateMixin):
     for player in game_state.players:
       if player.ron >= 0:
         continue
-      player.send_packet(RonServerPacket(from_wind))
+      player.send_packet(RonWindServerPacket(from_wind))
 
   def on_players_reconnect(self, clients: list[socket.socket]):
     super().on_players_reconnect(clients)
@@ -46,17 +50,18 @@ class GameRonServerState(BaseGameServerStateMixin):
       )))
       if player.ron >= 0:
         continue
-      player.send_packet(RonServerPacket(self.from_wind))
+      player.send_packet(RonWindServerPacket(self.from_wind))
 
   def on_client_packet(self, client: socket.socket, packet: Packet):
     player = self.player_for_client(client)
     if not player:
       return
-    elif isinstance(packet, RonClientPacket):
+    elif isinstance(packet, RonScoreClientPacket):
       self.on_player_ron(player, packet)
 
-  def on_player_ron(self, player: GameRonPlayer, packet: RonClientPacket):
+  def on_player_ron(self, player: GameRonPlayer, packet: RonScoreClientPacket):
     player.ron = packet.points
+    player.send_packet(RonScoreServerPacket(self.from_wind, packet.points))
     self.on_player_ron_complete()
 
   def on_player_ron_complete(self):

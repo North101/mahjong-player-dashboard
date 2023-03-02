@@ -1,22 +1,26 @@
 import socket
 
-import badger2040w
-from badger_ui.align import Center
+from badger_ui.align import Bottom, Center, Left, Right, Top
+from badger_ui.base import App, Offset, Size, Widget
+from badger_ui.column import Column
+from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (DrawServerPacket, GameStateServerPacket,
-                                 Packet, RiichiClientPacket, RonServerPacket)
-from mahjong2040.shared import (ClientGameState, GamePlayerMixin, GameState,
-                                Wind)
+from mahjong2040.packets import (
+    DrawServerPacket,
+    GameStateServerPacket,
+    Packet,
+    RiichiClientPacket,
+    RonWindServerPacket,
+)
+from mahjong2040.shared import ClientGameState, GamePlayerMixin, GameState, Wind
 
-from badger_ui import App, Offset, Size
+import badger2040w
 
-from .draw import DrawClientState
+from .draw_menu import DrawMenuClientState
+from .menu import MenuClientState
 from .ron_score import RonScoreClientState
-from .ron_wind import RonWindClientState
 from .shared import GameReconnectClientState
-from .tsumo_dealer import TsumoDealerClientState
-from .tsumo_nondealer import TsumoNonDealerClientState
 
 
 class GameClientState(GameReconnectClientState):
@@ -24,7 +28,7 @@ class GameClientState(GameReconnectClientState):
   round_size = Size(40, 8)
 
   def __init__(self, client, game_state: ClientGameState):
-    self.client = client
+    super().__init__(client)
 
     self.game_state = game_state
 
@@ -35,29 +39,14 @@ class GameClientState(GameReconnectClientState):
       self.game_state = packet.game_state
 
     elif isinstance(packet, DrawServerPacket):
-      self.child = DrawClientState(self.client)
+      self.child = DrawMenuClientState(self.client, packet.tenpai)
 
-    elif isinstance(packet, RonServerPacket):
+    elif isinstance(packet, RonWindServerPacket):
       self.child = RonScoreClientState(self.client, packet.from_wind)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_A]:
-      if self.game_state.player_wind(self.game_state.me) == 0:
-        app.child = TsumoNonDealerClientState(self.client, 0)
-      else:
-        app.child = TsumoDealerClientState(self.client)
-      return True
-
-    elif pressed[badger2040w.BUTTON_B]:
-      app.child = RonWindClientState(self.client, [
-          wind
-          for wind, player in self.game_state.players_from_me
-          if player != self.game_state.me
-      ])
-      return True
-
-    elif pressed[badger2040w.BUTTON_C]:
-      app.child = DrawClientState(self.client)
+    if pressed[badger2040w.BUTTON_B]:
+      app.child = MenuClientState(self.client, self.game_state)
       return True
 
     elif pressed[badger2040w.BUTTON_UP]:
@@ -71,81 +60,26 @@ class GameClientState(GameReconnectClientState):
     return super().on_button(app, pressed)
 
   def render(self, app: App, size: Size, offset: Offset):
+    super().render(app, size, offset)
+
     (wind1, player1), (wind2, player2), (wind3, player3), (wind4, player4) = self.game_state.players_from_me
 
-    player_widget(
-        app=app,
-        size=self.player_size,
-        offset=Offset((size.width - self.player_size.width) // 2, size.height - self.player_size.height - self.round_size.height - 1),
+    Bottom(child=Center(child=PlayerWidget(
         player=player1,
         wind=wind1,
-    )
-    if player1.riichi:
-      riichi_widget(
-        app=app,
-        size=self.round_size,
-        offset=Offset(
-          (size.width - self.round_size.width) // 2,
-          size.height - self.round_size.height - 1
-        ),
-      )
-
-    player_widget(
-        app=app,
-        size=self.player_size,
-        offset=Offset(
-          size.width - self.player_size.width,
-          (size.height // 2) - ((self.player_size.height + self.round_size.height) // 2),
-        ),
+    ))).render(app, size, offset)
+    Right(child=Center(child=PlayerWidget(
         player=player2,
         wind=wind2,
-    )
-    if player2.riichi:
-      riichi_widget(
-        app=app,
-        size=self.round_size,
-        offset=Offset(
-          (size.width - self.player_size.width) + ((self.player_size.width - self.round_size.width) // 2),
-          (size.height // 2) + ((self.player_size.height - self.round_size.height) // 2),
-        ),
-      )
-
-    player_widget(
-        app=app,
-        size=self.player_size,
-        offset=Offset((size.width - self.player_size.width) // 2, 0),
+    ))).render(app, size, offset)
+    Top(child=Center(child=PlayerWidget(
         player=player3,
         wind=wind3,
-    )
-    if player3.riichi:
-      riichi_widget(
-        app=app,
-        size=self.round_size,
-        offset=Offset(
-          (size.width - self.round_size.width) // 2,
-          self.player_size.height
-        ),
-      )
-
-    player_widget(
-        app=app,
-        size=self.player_size,
-        offset=Offset(
-          0,
-          (size.height // 2) - ((self.player_size.height + self.round_size.height) // 2),
-        ),
+    ))).render(app, size, offset)
+    Left(child=Center(child=PlayerWidget(
         player=player4,
         wind=wind4,
-    )
-    if player4.riichi:
-      riichi_widget(
-        app=app,
-        size=self.round_size,
-        offset=Offset(
-          (self.player_size.width - self.round_size.width) // 2,
-          (size.height // 2) + ((self.player_size.height - self.round_size.height) // 2)
-        ),
-      )
+    ))).render(app, size, offset)
 
     round_widget(
         app=app,
@@ -171,66 +105,91 @@ def round_widget(app: App, size: Size, offset: Offset, game_state: GameState):
   )
 
 
-def riichi_widget(app: App, size: Size, offset: Offset):
-  width = size.width
-  height = size.height
-  start_x = offset.x
-  start_y = offset.y
-  end_x = start_x + width
-  end_y = start_y + height
+class RiichiWidget(Widget):
+  size = Size(40, 8)
 
-  app.display.set_pen(0)
-  app.display.line(
-      start_x,
-      start_y,
-      start_x,
-      end_y,
-  )
-  app.display.line(
-      start_x,
-      start_y,
-      end_x,
-      start_y,
-  )
-  app.display.line(
-      end_x,
-      start_y,
-      end_x,
-      end_y,
-  )
-  app.display.line(
-      start_x,
-      end_y,
-      end_x,
-      end_y,
-  )
+  def __init__(self, riichi):
+    self.riichi = riichi
+  
+  def measure(self, app: 'App', size: Size) -> Size:
+    return self.size
 
-  dot_size = 2
-  app.display.rectangle(
-      start_x + ((width - dot_size) // 2),
-      start_y + ((height - dot_size) // 2),
-      dot_size,
-      dot_size,
-  )
+  def render(self, app: 'App', size: Size, offset: Offset):
+    if not self.riichi:
+      return
+
+    width = size.width
+    height = size.height
+    start_x = offset.x
+    start_y = offset.y
+    end_x = start_x + width
+    end_y = start_y + height
+
+    app.display.set_pen(0)
+    app.display.rectangle(
+        start_x,
+        start_y,
+        2,
+        height,
+    )
+    app.display.rectangle(
+        start_x,
+        start_y,
+        width,
+        2,
+    )
+    app.display.rectangle(
+        end_x,
+        start_y,
+        2,
+        height,
+    )
+    app.display.rectangle(
+        start_x,
+        end_y,
+        width,
+        2,
+    )
+
+    dot_size = 4
+    app.display.rectangle(
+        start_x + ((width - dot_size) // 2),
+        start_y + ((height - dot_size) // 2) + 1,
+        dot_size,
+        dot_size,
+    )
 
 
-def player_widget(app: App, size: Size, offset: Offset, player: GamePlayerMixin, wind: int):
-  Center(child=Row(
-      children=[
+class PlayerWidget(Widget):
+  size = Size(115, 40)
+
+  def __init__(self, player: GamePlayerMixin, wind: int):
+    self.player = player
+    self.wind = wind
+  
+  def measure(self, app: 'App', size: Size) -> Size:
+    return self.size
+  
+  def render(self, app: 'App', size: Size, offset: Offset):
+    Padding(
+      padding=EdgeOffsets(bottom=1),
+      child=Column(children=[
+        Row(children=[
           TextWidget(
-              text=Wind.name(wind)[0].upper(),
+              text=Wind.name(self.wind)[0].upper(),
+              line_height=30,
               font='sans',
               thickness=2,
               scale=0.6,
-              line_height=size.height,
           ),
           TextWidget(
-              text=f'{player.points * 100}',
+              text=f'{self.player.points * 100}',
+              line_height=30,
               font='sans',
               thickness=2,
-              color=0,
               scale=1,
-              line_height=size.height,
           ),
-      ],
-  )).render(app, size, offset)
+        ]),
+        RiichiWidget(self.player.riichi),
+      ]),
+    ).render(app, size, offset)

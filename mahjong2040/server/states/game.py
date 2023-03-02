@@ -1,10 +1,21 @@
 import socket
 
-from mahjong2040.packets import (DrawClientPacket, GameStateServerPacket,
-                                 Packet, RiichiClientPacket, RonClientPacket,
-                                 TsumoClientPacket)
-from mahjong2040.shared import (TSUMO_HONBA_POINTS, ClientGameState,
-                                GamePlayerTuple, GameState, Tenpai)
+from mahjong2040.packets import (
+    DrawClientPacket,
+    GameStateServerPacket,
+    Packet,
+    RedrawClientPacket,
+    RiichiClientPacket,
+    RonWindClientPacket,
+    TsumoClientPacket,
+)
+from mahjong2040.shared import (
+    TSUMO_HONBA_POINTS,
+    ClientGameState,
+    GamePlayerTuple,
+    GameState,
+    Tenpai,
+)
 
 from .shared import BaseGameServerStateMixin, GamePlayerType
 
@@ -26,15 +37,17 @@ class GameServerState(BaseGameServerStateMixin):
     if not player:
       return
     elif isinstance(packet, RiichiClientPacket):
-      self.on_player_riichi(player, packet)
+      self.on_player_riichi(player)
     elif isinstance(packet, TsumoClientPacket):
       self.on_player_tsumo(player, packet)
-    elif isinstance(packet, RonClientPacket):
+    elif isinstance(packet, RonWindClientPacket):
       self.on_player_ron(player, packet)
     elif isinstance(packet, DrawClientPacket):
       self.on_player_draw(player, packet)
+    elif isinstance(packet, RedrawClientPacket):
+      self.on_player_redraw()
 
-  def on_player_riichi(self, player: GamePlayerType, packet: RiichiClientPacket):
+  def on_player_riichi(self, player: GamePlayerType):
     player.declare_riichi()
     self.update_player_states()
 
@@ -58,8 +71,9 @@ class GameServerState(BaseGameServerStateMixin):
       self.repeat_hand()
     else:
       self.next_hand()
+    self.update_player_states()
 
-  def on_player_ron(self, player: GamePlayerType, packet: RonClientPacket):
+  def on_player_ron(self, player: GamePlayerType, packet: RonWindClientPacket):
     from .game_ron import GameRonPlayer, GameRonServerState
 
     if self.game_state.player_wind(player) == packet.from_wind:
@@ -71,9 +85,7 @@ class GameServerState(BaseGameServerStateMixin):
     }
 
     def ron_player(p: GamePlayerType):
-      if p == player:
-        ron = packet.points
-      elif players_by_wind[p] == packet.from_wind:
+      if players_by_wind[p] == packet.from_wind:
         ron = 0
       else:
         ron = -1
@@ -121,6 +133,10 @@ class GameServerState(BaseGameServerStateMixin):
             bonus_riichi=self.game_state.bonus_riichi,
         ),
     )
+
+  def on_player_redraw(self):
+    self.redraw()
+    self.update_player_states()
 
   def update_player_states(self):
     for index, player in enumerate(self.game_state.players):

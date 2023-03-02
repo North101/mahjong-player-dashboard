@@ -1,9 +1,10 @@
 import gc
 
 import uasyncio
-import WIFI_CONFIG
 from mahjong2040.poll import Poll
 from mahjong2040.server import Server
+
+import WIFI_CONFIG
 from network_manager import NetworkManager
 
 

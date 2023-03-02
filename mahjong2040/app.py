@@ -1,15 +1,15 @@
 import gc
 
-import badger2040w
 import network
 import uasyncio
+
+import badger2040w
 import WIFI_CONFIG
+from badger_ui import App, Offset, Size, Widget
 from badger_ui.align import Bottom, Center
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
 from network_manager import NetworkManager
-
-from badger_ui import App, Offset, Size, Widget
 
 from .poll import Poll
 

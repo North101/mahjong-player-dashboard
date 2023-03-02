@@ -1,16 +1,17 @@
 import select
 import socket
 
+import badger2040w
+from badger_ui import App, Offset, Size, Widget
 from mahjong2040.client import Client, ServerDisconnectedError
 from mahjong2040.packets import Packet, read_packet, send_packet
-
-from badger_ui import App, Offset, Size, Widget
 
 
 class ClientState(Widget):
   def __init__(self, client: Client):
     print(self.__class__.__name__)
     self.client = client
+    self.first_render = True
 
   @property
   def poll(self):
@@ -48,8 +49,12 @@ class ClientState(Widget):
   def send_packet(self, packet: Packet):
     send_packet(self.client.socket, packet)
 
-  def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
+  def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     return False
 
   def render(self, app: App, size: Size, offset: Offset):
-    pass
+    if self.first_render:
+      app.display.set_update_speed(badger2040w.UPDATE_FAST)
+      self.first_render = False
+    else:
+      app.display.set_update_speed(badger2040w.UPDATE_TURBO)

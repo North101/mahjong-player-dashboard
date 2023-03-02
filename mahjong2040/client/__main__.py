@@ -1,10 +1,12 @@
 import gc
 
 import uasyncio
-import WIFI_CONFIG
-from mahjong2040.poll import Poll
 from mahjong2040.client import Client
+from mahjong2040.poll import Poll
+
+import WIFI_CONFIG
 from network_manager import NetworkManager
+
 
 def main():
     poll = Poll()
