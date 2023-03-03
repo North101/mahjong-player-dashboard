@@ -17,7 +17,7 @@ class LobbyClientState(ClientState):
 
     self.count = count
 
-  def on_server_packet(self, server: socket.socket, packet: Packet):
+  def on_server_packet(self, packet: Packet):
     if isinstance(packet, LobbyPlayersServerPacket):
       self.count = (packet.count, packet.max_players)
 

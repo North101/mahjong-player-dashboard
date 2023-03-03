@@ -1,9 +1,11 @@
 import select
 import socket
 
-from badger_ui import App
+from mahjong2040.packets import Packet, read_packet, send_packet
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
+
+from badger_ui import App
 
 
 class ServerDisconnectedError(Exception):
@@ -42,9 +44,33 @@ class Client(App):
     
     self.socket.close()
 
-  def on_server_data(self, fd: socket.socket, event: int):
-    self.child.on_server_data(fd, event)
+  def on_server_data(self, server: socket.socket, event: int):
+    if event & select.POLLHUP:
+      self.on_server_disconnect(server)
+    elif event & select.POLLIN:
+      packet = self.read_packet()
+      if packet is not None:
+        print(self.__class__.__name__, repr(packet))
+        self.on_server_packet(packet)
+    else:
+      print(event)
+
+  def on_server_disconnect(self, server: socket.socket):
     self.dirty = True
+    self.poll.unregister(server)
+    server.close()
+
+    raise ServerDisconnectedError()
+
+  def on_server_packet(self, packet: Packet):
+    self.dirty = True
+    self.child.on_server_packet(packet)
+
+  def send_packet(self, packet: Packet):
+    send_packet(self.socket, packet)
+
+  def read_packet(self):
+    return read_packet(self.socket)
 
 
 def start():

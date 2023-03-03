@@ -27,10 +27,10 @@ class RonWindClientState(GameReconnectClientState):
 
     self.players = players
 
-  def on_server_packet(self, server: socket.socket, packet: Packet):
+  def on_server_packet(self, packet: Packet):
     from .game import GameClientState
 
-    super().on_server_packet(server, packet)
+    super().on_server_packet(packet)
     if isinstance(packet, GameStateServerPacket):
       self.child = GameClientState(self.client, packet.game_state)
 

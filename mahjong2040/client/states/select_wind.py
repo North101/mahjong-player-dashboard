@@ -26,7 +26,7 @@ class SelectWindClientState(ClientState):
     self.next_wind = wind
     self.confirmed_wind = -1
 
-  def on_server_packet(self, server: socket.socket, packet: Packet):
+  def on_server_packet(self, packet: Packet):
     from .game import GameClientState
     from .lobby import LobbyClientState
 

@@ -31,8 +31,8 @@ class GameReconnectServerState(ServerState):
 
     self.ask_wind()
 
-  def on_client_connect(self, client: socket.socket, address: Address):
-    super().on_client_connect(client, address)
+  def on_client_connect(self, client: socket.socket):
+    super().on_client_connect(client)
 
     self.send_client_select_wind_packet(client, self.wind)
 

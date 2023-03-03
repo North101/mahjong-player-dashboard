@@ -32,8 +32,8 @@ class GameClientState(GameReconnectClientState):
 
     self.game_state = game_state
 
-  def on_server_packet(self, server: socket.socket, packet: Packet):
-    super().on_server_packet(server, packet)
+  def on_server_packet(self, packet: Packet):
+    super().on_server_packet(packet)
 
     if isinstance(packet, GameStateServerPacket):
       self.game_state = packet.game_state

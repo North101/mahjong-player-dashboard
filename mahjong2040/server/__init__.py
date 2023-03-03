@@ -1,7 +1,7 @@
 import select
 import socket
 
-from mahjong2040.packets import send_msg
+from mahjong2040.packets import Packet, send_msg
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 
@@ -29,6 +29,10 @@ class Server:
     print(f'Server is listing on port {port}...')
     self.socket.listen()
   
+  def add_client(self, client):
+    self.child.on_client_connect(client)
+    client.register_packet(self.on_client_packet)
+  
   def close(self):
     if self.socket is None:
       return
@@ -40,6 +44,9 @@ class Server:
 
   def on_client_data(self, fd: socket.socket, event: int):
     self.child.on_client_data(fd, event)
+  
+  def on_client_packet(self, fd: socket.socket, packet: Packet):
+    self.child.on_client_packet(fd, packet)
 
   def send_msg(self, client: socket.socket, msg: bytes):
     send_msg(client, msg)

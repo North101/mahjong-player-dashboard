@@ -1,7 +1,5 @@
 import socket
 
-import badger2040w
-from badger_ui import App, Offset, Size
 from badger_ui.align import Center
 from badger_ui.text import TextWidget
 from mahjong2040.client.widgets.score_input import ScoreInputWidget
@@ -11,6 +9,9 @@ from mahjong2040.packets import (
     Packet,
     RonWindServerPacket,
 )
+
+import badger2040w
+from badger_ui import App, Offset, Size
 
 from .draw_menu import DrawMenuClientState
 from .ron_score import RonScoreClientState
@@ -24,10 +25,10 @@ class TsumoDealerClientState(GameReconnectClientState):
 
     self.score = ScoreInputWidget()
 
-  def on_server_packet(self, server: socket.socket, packet: Packet):
+  def on_server_packet(self, packet: Packet):
     from .game import GameClientState
 
-    super().on_server_packet(server, packet)
+    super().on_server_packet(packet)
     if isinstance(packet, GameStateServerPacket):
       self.child = GameClientState(self.client, packet.game_state)
 

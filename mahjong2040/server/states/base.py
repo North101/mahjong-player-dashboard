@@ -58,8 +58,8 @@ class ServerState:
 
   def on_server_data(self, server: socket.socket, event: int):
     if event & select.POLLIN:
-      client, address = server.accept()
-      self.on_client_connect(client, address)
+      client, _ = server.accept()
+      self.on_client_connect(client)
       self.poll.register(client, select.POLLIN, self.server.on_client_data)
 
   def on_client_data(self, client: socket.socket, event: int):
@@ -71,7 +71,7 @@ class ServerState:
         print(self.__class__.__name__, repr(packet))
         self.on_client_packet(client, packet)
 
-  def on_client_connect(self, client: socket.socket, address: Address):
+  def on_client_connect(self, client: socket.socket):
     self.clients.append(client)
 
   def on_client_disconnect(self, client: socket.socket):

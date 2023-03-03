@@ -12,8 +12,8 @@ class LobbyServerState(ServerState):
     self.server = server
     self.send_lobby_count()
 
-  def on_client_connect(self, client: socket.socket, address: Address):
-    super().on_client_connect(client, address)
+  def on_client_connect(self, client: socket.socket):
+    super().on_client_connect(client)
 
     self.send_lobby_count()
 
