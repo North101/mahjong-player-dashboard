@@ -108,7 +108,7 @@ class Client(App):
     self.socket: socket.socket = None
     self.server: ClientServer = None
   
-  def broadcast(self):
+  def broadcast(self, port: int):
     from .states.server_list import ServerListClientState
 
     self.close()
@@ -123,7 +123,7 @@ class Client(App):
     data = create_msg(BroadcastClientPacket().pack())
     data_sent = 0
     while data_sent < len(data):
-      data_sent += self.socket.sendto(data[data_sent:], ('255.255.255.255', 1246))
+      data_sent += self.socket.sendto(data[data_sent:], ('255.255.255.255', port))
 
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:

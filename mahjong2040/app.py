@@ -1,33 +1,24 @@
 import gc
-import select
-import socket
 
 import network
 import uasyncio
 from badger_ui.align import Bottom, Center
+from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (
-    BroadcastClientPacket,
-    Packet,
-    create_msg,
-    read_packet_from,
-)
 from mahjong2040.shared import Address
 
 import badger2040w
 import WIFI_CONFIG
-from badger_ui import App, Offset, Size, Widget
 from network_manager import NetworkManager
 
 from .poll import Poll
 
 
 class MyApp(App):
-  def __init__(self, host: str, port: int):
+  def __init__(self, port: int):
     super().__init__()
 
-    self.host = host
     self.port = port
     self.child = ConnectingScreen()
     self.connect()
@@ -35,7 +26,7 @@ class MyApp(App):
   def status_handler(self, mode, status, ip):
     print(mode, status, ip)
     if status:
-      self.child = SelectScreen()
+      self.child = SelectScreen(self.port)
 
     self.dirty = True
     self.update()
@@ -65,9 +56,10 @@ class ConnectingScreen(Widget):
 
 
 class SelectScreen(Widget):
-  def __init__(self):
+  def __init__(self, port: int):
     super().__init__()
 
+    self.port = port
     self.items = [
       MenuItem('Client', self.open_client),
       MenuItem('Server', self.open_server),
@@ -80,13 +72,13 @@ class SelectScreen(Widget):
       selected_index=0,
     )
   
-  def open_client(self, app: 'App'):
+  def open_client(self):
     from .client import Client
 
     poll = Poll()
     try:
       client = Client(poll)
-      client.broadcast()
+      client.broadcast(self.port)
       while True:
         poll.poll()
         client.update()
@@ -94,14 +86,14 @@ class SelectScreen(Widget):
       client.close()
       poll.close()
   
-  def open_server(self, app: 'App'):
+  def open_server(self):
     from .client import Client, LocalClientServer
     from .server import Server
 
     poll = Poll()
     try:
       server = Server(poll)
-      server.start(1246)
+      server.start(self.port)
       client = Client(poll)
       client.connect(LocalClientServer(server, client))
       while True:
@@ -148,7 +140,7 @@ class MenuItemWidget(Widget):
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B]:
-      self.item(app)
+      self.item()
       return True
 
     return super().on_button(app, pressed)
