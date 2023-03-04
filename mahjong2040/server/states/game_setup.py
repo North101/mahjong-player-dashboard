@@ -1,36 +1,32 @@
-import socket
-
 from mahjong2040.packets import (
     ConfirmWindServerPacket,
-    NotEnoughPlayersServerPacket,
     Packet,
-    SelectWindClientPacket,
-    SelectWindServerPacket,
+    SetupPlayerCountErrorServerPacket,
+    SetupPlayerWindClientPacket,
+    SetupPlayerWindServerPacket,
 )
 from mahjong2040.shared import STARTING_POINTS, GamePlayerTuple, GameState, Wind
 
 from .base import ServerState
 from .game import GameServerState
-from .shared import GamePlayer
+from .shared import GamePlayer, ServerClient
 
 
 class GameSetupServerState(ServerState):
   def __init__(self, server):
     super().__init__(server)
 
-    self.players: list[socket.socket] = []
+    self.players: list[ServerClient] = []
     self.ask_next_wind()
 
   def ask_next_wind(self):
     wind = len(self.players)
-    packet = SelectWindServerPacket(wind).pack()
+    packet = SetupPlayerWindServerPacket(wind)
     for client in self.clients:
       if client not in self.players:
-        self.send_msg(client, packet)
+        client.send_packet(packet)
 
-  def on_client_disconnect(self, client: socket.socket):
-    super().on_client_disconnect(client)
-
+  def on_client_leave(self, client: ServerClient):
     if client in self.clients:
       if not self.enough_players():
         return self.to_lobby()
@@ -45,13 +41,13 @@ class GameSetupServerState(ServerState):
 
       self.ask_next_wind()
 
-  def on_client_packet(self, client: socket.socket, packet: Packet):
-    if isinstance(packet, SelectWindClientPacket):
+  def on_client_packet(self, client: ServerClient, packet: Packet):
+    if isinstance(packet, SetupPlayerWindClientPacket):
       if packet.wind != len(self.players) and client not in self.players:
         return
 
       self.players.append(client)
-      self.send_msg(client, ConfirmWindServerPacket(packet.wind).pack())
+      client.send_packet(ConfirmWindServerPacket(packet.wind))
 
       if len(self.players) == len(Wind):
         self.child = GameServerState(
@@ -74,7 +70,7 @@ class GameSetupServerState(ServerState):
   def to_lobby(self):
     from .lobby import LobbyServerState
 
-    packet = NotEnoughPlayersServerPacket().pack()
+    packet = SetupPlayerCountErrorServerPacket()
     for client in self.clients:
-      self.send_msg(client, packet)
+      client.send_packet(client)
     self.child = LobbyServerState(self.server)

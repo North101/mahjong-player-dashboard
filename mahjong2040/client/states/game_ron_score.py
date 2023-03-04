@@ -1,11 +1,7 @@
-import socket
-
 from badger_ui.align import Bottom, Center, Top
 from badger_ui.text import TextWidget
 from mahjong2040.client.widgets.score_input import ScoreInputWidget
 from mahjong2040.packets import (
-    DrawServerPacket,
-    GameStateServerPacket,
     Packet,
     RonScoreClientPacket,
     RonScoreServerPacket,
@@ -16,11 +12,10 @@ from mahjong2040.shared import Wind
 import badger2040w
 from badger_ui import App, Offset, Size
 
-from .draw_menu import DrawMenuClientState
 from .shared import GameReconnectClientState
 
 
-class RonScoreClientState(GameReconnectClientState):
+class GameRonScoreClientState(GameReconnectClientState):
   def __init__(self, client, from_wind: int):
     super().__init__(client)
 
@@ -28,23 +23,18 @@ class RonScoreClientState(GameReconnectClientState):
     self.points = None
     self.score = ScoreInputWidget()
 
-  def on_server_packet(self, packet: Packet):
-    from .game import GameClientState
-
-    super().on_server_packet(packet)
+  def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, RonWindServerPacket):
       self.from_wind = packet.from_wind
       self.points = None
+      return True
     
     elif isinstance(packet, RonScoreServerPacket):
       self.from_wind = packet.from_wind
       self.points = packet.points
+      return True
 
-    elif isinstance(packet, GameStateServerPacket):
-      self.child = GameClientState(self.client, packet.game_state)
-
-    elif isinstance(packet, DrawServerPacket):
-      self.child = DrawMenuClientState(self.client, packet.tenpai)
+    return super().on_server_packet(packet)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.points is None:

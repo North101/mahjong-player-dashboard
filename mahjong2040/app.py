@@ -1,14 +1,23 @@
 import gc
+import select
+import socket
 
 import network
 import uasyncio
+from badger_ui.align import Bottom, Center
+from badger_ui.list import ListWidget
+from badger_ui.text import TextWidget
+from mahjong2040.packets import (
+    BroadcastClientPacket,
+    Packet,
+    create_msg,
+    read_packet_from,
+)
+from mahjong2040.shared import Address
 
 import badger2040w
 import WIFI_CONFIG
 from badger_ui import App, Offset, Size, Widget
-from badger_ui.align import Bottom, Center
-from badger_ui.list import ListWidget
-from badger_ui.text import TextWidget
 from network_manager import NetworkManager
 
 from .poll import Poll
@@ -71,15 +80,13 @@ class SelectScreen(Widget):
       selected_index=0,
     )
   
-  def open_client(self, app):
+  def open_client(self, app: 'App'):
     from .client import Client
 
     poll = Poll()
-    address = (app.host, app.port)
-
     try:
-      client = Client(poll, address)
-      client.start()
+      client = Client(poll)
+      client.broadcast()
       while True:
         poll.poll()
         client.update()
@@ -87,18 +94,19 @@ class SelectScreen(Widget):
       client.close()
       poll.close()
   
-  def open_server(self, app):
+  def open_server(self, app: 'App'):
+    from .client import Client, LocalClientServer
     from .server import Server
 
-    app.alive = False
-
     poll = Poll()
-    address = (app.host, app.port)
     try:
-      server = Server(poll, address)
-      server.start()
+      server = Server(poll)
+      server.start(1246)
+      client = Client(poll)
+      client.connect(LocalClientServer(server, client))
       while True:
         poll.poll()
+        client.update()
     finally:
       server.close()
       poll.close()
@@ -109,11 +117,12 @@ class SelectScreen(Widget):
       selected=selected,
     )
 
-  def on_button(self, app: App, pressed: dict[int, bool]):
+  def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     return self.child.on_button(app, pressed)
 
   def render(self, app: App, size: Size, offset: Offset):
     Center(child=self.child).render(app, size, offset)
+
     Bottom(child=Center(child=TextWidget(
       text=f'IP: {app.ip_address()}',
       line_height=15,
@@ -128,8 +137,8 @@ class MenuItem:
     self.name = name
     self.callable = callable
   
-  def __call__(self, app: 'App'):
-    self.callable(app)
+  def __call__(self, *args, **kwargs):
+    self.callable(*args, **kwargs)
 
 
 class MenuItemWidget(Widget):

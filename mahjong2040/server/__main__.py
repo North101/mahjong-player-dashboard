@@ -1,6 +1,7 @@
 import gc
 
 import uasyncio
+from mahjong2040.client import Client, LocalClientServer
 from mahjong2040.poll import Poll
 from mahjong2040.server import Server
 
@@ -9,14 +10,17 @@ from network_manager import NetworkManager
 
 
 def main():
-  address = ('127.0.0.1', 1246)
   poll = Poll()
   try:
-    server = Server(poll, address)
-    server.start()
+    server = Server(poll)
+    server.start(1246)
+    client = Client()
+    client.connect(LocalClientServer(server, client))
     while True:
       poll.poll()
+      client.update()
   finally:
+    server.close()
     poll.close()
 
 

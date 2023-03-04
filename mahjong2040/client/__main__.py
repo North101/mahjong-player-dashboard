@@ -1,7 +1,7 @@
 import gc
 
 import uasyncio
-from mahjong2040.client import Client
+from mahjong2040.client import Client, RemoteClientServer
 from mahjong2040.poll import Poll
 
 import WIFI_CONFIG
@@ -9,18 +9,18 @@ from network_manager import NetworkManager
 
 
 def main():
-    poll = Poll()
-    address = ('192.168.0.180', 1246)
+  poll = Poll()
+  address = ('192.168.0.214', 1246)
 
-    try:
-      client = Client(poll, address)
-      client.start()
-      while True:
-        poll.poll()
-        client.update()
-    finally:
-      client.close()
-      poll.close()
+  try:
+    client = Client()
+    client.connect(RemoteClientServer(poll, address, client))
+    while True:
+      poll.poll()
+      client.update()
+  finally:
+    client.close()
+    poll.close()
 
 
 def status_handler(mode, status, ip):

@@ -1,5 +1,3 @@
-import socket
-
 from mahjong2040.packets import (
     DrawClientPacket,
     GameStateServerPacket,
@@ -17,7 +15,7 @@ from mahjong2040.shared import (
     Tenpai,
 )
 
-from .shared import BaseGameServerStateMixin, GamePlayerType
+from .shared import BaseGameServerStateMixin, GamePlayerType, ServerClient
 
 
 class GameServerState(BaseGameServerStateMixin):
@@ -32,7 +30,7 @@ class GameServerState(BaseGameServerStateMixin):
 
     self.update_player_states()
 
-  def on_client_packet(self, client: socket.socket, packet: Packet):
+  def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
     if not player:
       return

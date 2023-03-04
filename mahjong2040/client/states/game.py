@@ -1,25 +1,15 @@
-import socket
-
 from badger_ui.align import Bottom, Center, Left, Right, Top
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.column import Column
 from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
-from mahjong2040.packets import (
-    DrawServerPacket,
-    GameStateServerPacket,
-    Packet,
-    RiichiClientPacket,
-    RonWindServerPacket,
-)
+from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
 from mahjong2040.shared import ClientGameState, GamePlayerMixin, GameState, Wind
 
 import badger2040w
 
-from .draw_menu import DrawMenuClientState
-from .menu import MenuClientState
-from .ron_score import RonScoreClientState
+from .game_menu import GameMenuClientState
 from .shared import GameReconnectClientState
 
 
@@ -31,22 +21,21 @@ class GameClientState(GameReconnectClientState):
     super().__init__(client)
 
     self.game_state = game_state
+  
+  @property
+  def round_text(self):
+    return f'{Wind.name(self.game_state.round)[0].upper()}{self.game_state.hand + 1}'
 
-  def on_server_packet(self, packet: Packet):
-    super().on_server_packet(packet)
-
+  def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, GameStateServerPacket):
       self.game_state = packet.game_state
+      return True
 
-    elif isinstance(packet, DrawServerPacket):
-      self.child = DrawMenuClientState(self.client, packet.tenpai)
-
-    elif isinstance(packet, RonWindServerPacket):
-      self.child = RonScoreClientState(self.client, packet.from_wind)
+    return super().on_server_packet(packet)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B]:
-      app.child = MenuClientState(self.client, self.game_state)
+      app.child = GameMenuClientState(self.client, self.game_state)
       return True
 
     elif pressed[badger2040w.BUTTON_UP]:
@@ -81,28 +70,11 @@ class GameClientState(GameReconnectClientState):
         wind=wind4,
     ))).render(app, size, offset)
 
-    round_widget(
-        app=app,
-        size=Size(40, 40),
-        offset=Offset((size.width - 40) // 2, (size.height - 40) // 2),
-        game_state=self.game_state,
-    )
-
-
-def round_widget(app: App, size: Size, offset: Offset, game_state: GameState):
-  round_text = f'{Wind.name(game_state.round)[0].upper()}{game_state.hand + 1}'
-
-  width = size.width
-  height = size.height
-
-  app.display.set_pen(0)
-  round_width = app.display.measure_text(round_text, scale=1)
-  app.display.text(
-      round_text,
-      offset.x + (width // 2) - (round_width // 2),
-      offset.y + (height // 2),
-      scale=1,
-  )
+    Center(child=TextWidget(
+      text=self.round_text,
+      line_height=30,
+      thickness=2,
+    )).render(app, size, offset)
 
 
 class RiichiWidget(Widget):

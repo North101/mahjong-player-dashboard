@@ -1,14 +1,17 @@
-import socket
-
-from badger_ui.align import Center
+import network
+from badger_ui.align import Bottom, Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
-from mahjong2040.packets import LobbyPlayersServerPacket, Packet, SelectWindServerPacket
+from mahjong2040.packets import (
+    LobbyPlayersServerPacket,
+    Packet,
+    SetupPlayerWindServerPacket,
+)
 
 from badger_ui import App, Offset, Size
 
 from .base import ClientState
-from .select_wind import SelectWindClientState
+from .setup_player_wind import SetupPlayerWindClientState
 
 
 class LobbyClientState(ClientState):
@@ -17,12 +20,19 @@ class LobbyClientState(ClientState):
 
     self.count = count
 
-  def on_server_packet(self, packet: Packet):
+  def ip_address(self):
+    return network.WLAN(network.STA_IF).ifconfig()[0]
+
+  def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, LobbyPlayersServerPacket):
       self.count = (packet.count, packet.max_players)
+      return True
 
-    elif isinstance(packet, SelectWindServerPacket):
-      self.child = SelectWindClientState(self.client, packet.wind)
+    elif isinstance(packet, SetupPlayerWindServerPacket):
+      self.child = SetupPlayerWindClientState(self.client, packet.wind)
+      return True
+
+    return super().on_server_packet(packet)
 
   def render(self, app: App, size: Size, offset: Offset):
     super().render(app, size, offset)
@@ -30,9 +40,9 @@ class LobbyClientState(ClientState):
     if self.count is None:
       Center(child=TextWidget(
           text='Connecting...',
-          line_height=30,
+          line_height=24,
           thickness=2,
-          scale=1,
+          scale=0.8,
       )).render(app, size, offset)
       return
 
@@ -40,12 +50,22 @@ class LobbyClientState(ClientState):
     Center(child=Column(children=[
         TextWidget(
             text='Waiting...',
-            line_height=30,
+            line_height=24,
             thickness=2,
+            scale=0.8,
         ),
         TextWidget(
             text=f'{current} / {max_players}',
-            line_height=30,
+            line_height=24,
             thickness=2,
+            scale=0.8,
         ),
     ])).render(app, size, offset)
+
+    Bottom(child=Center(child=TextWidget(
+      text=f'IP: {self.ip_address()}',
+      line_height=15,
+      font='sans',
+      thickness=2,
+      scale=0.5,
+    ))).render(app, size, offset)

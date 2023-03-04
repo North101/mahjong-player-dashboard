@@ -1,5 +1,6 @@
 from mahjong2040.client import Client
 from mahjong2040.packets import Packet
+from mahjong2040.shared import Address
 
 import badger2040w
 from badger_ui import App, Offset, Size, Widget
@@ -12,19 +13,18 @@ class ClientState(Widget):
     self.first_render = True
 
   @property
-  def poll(self):
-    return self.client.poll
-
-  @property
   def child(self):
     return self.client.child
 
   @child.setter
   def child(self, child: 'ClientState'):
     self.client.child = child
-
-  def on_server_packet(self, packet: Packet):
+  
+  def on_broadcast_packet(self, packet: Packet, address: Address):
     pass
+
+  def on_server_packet(self, packet: Packet) -> bool:
+    return False
 
   def send_packet(self, packet: Packet):
     self.client.send_packet(packet)

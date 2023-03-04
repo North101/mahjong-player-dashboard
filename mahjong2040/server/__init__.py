@@ -1,25 +1,29 @@
 import select
 import socket
 
-from mahjong2040.packets import Packet, send_msg
+from mahjong2040.packets import (
+    BroadcastClientPacket,
+    Packet,
+    create_msg,
+    read_packet,
+    read_packet_from,
+)
 from mahjong2040.poll import Poll
-from mahjong2040.shared import Address
+
+from .shared import RemoteServerClient, ServerClient
 
 
 class Server:
-  def __init__(self, poll: Poll, address: Address):
+  def __init__(self, poll: Poll):
     from .states.base import ServerState
     from .states.lobby import LobbyServerState
 
     self.poll = poll
-    self.address = address
     self.socket: socket.socket = None
-    self.clients: list[socket.socket] = []
+    self.clients: list[ServerClient] = []
     self.child: ServerState = LobbyServerState(self)
 
-  def start(self):
-    host, port = self.address
-
+  def start(self, port: int):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.poll.register(self.socket, select.POLLIN, self.on_server_data)
 
@@ -28,25 +32,79 @@ class Server:
 
     print(f'Server is listing on port {port}...')
     self.socket.listen()
-  
-  def add_client(self, client):
-    self.child.on_client_connect(client)
-    client.register_packet(self.on_client_packet)
+
+    self.broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self.poll.register(self.broadcast, select.POLLIN, self.on_broadcast_data)
+
+    self.broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self.broadcast.bind(('', port))
   
   def close(self):
     if self.socket is None:
       return
     
     self.socket.close()
-
-  def on_server_data(self, fd: socket.socket, event: int):
-    self.child.on_server_data(fd, event)
-
-  def on_client_data(self, fd: socket.socket, event: int):
-    self.child.on_client_data(fd, event)
   
-  def on_client_packet(self, fd: socket.socket, packet: Packet):
-    self.child.on_client_packet(fd, packet)
+  def on_broadcast_data(self, _socket: socket.socket, event: int):
+    if event & select.POLLIN:
+      packet, address = read_packet_from(_socket)
+      if isinstance(packet, BroadcastClientPacket):
+        data = create_msg(BroadcastClientPacket().pack())
+        data_sent = 0
+        while data_sent < len(data):
+          data_sent += _socket.sendto(data[data_sent:], address)
+  
+  def client_from_socket(self, _socket: socket.socket):
+    try:
+      return next((
+        client
+        for client in self.clients
+        if isinstance(client, RemoteServerClient) and client._socket == _socket
+      ))
+    except StopIteration:
+      return None
+  
+  def add_client(self, client: ServerClient):
+    self.clients.append(client)
+    self.child.on_client_join(client)
 
-  def send_msg(self, client: socket.socket, msg: bytes):
-    send_msg(client, msg)
+  def remove_client(self, client: ServerClient):
+    self.clients.remove(client)
+    self.child.on_client_leave(client)
+
+  def on_server_data(self, _socket: socket.socket, event: int):
+    if event & select.POLLIN:
+      client, _ = _socket.accept()
+      self.on_client_connect(client)
+      self.poll.register(client, select.POLLIN, self.on_client_data)
+
+  def on_client_data(self, _socket: socket.socket, event: int):
+    if event & (select.POLLHUP | select.POLLERR | 32):
+      self.on_client_disconnect(_socket)
+    elif event & select.POLLIN:
+      packet = read_packet(_socket)
+      if packet is None:
+        return
+
+      client = self.client_from_socket(_socket)
+      if client is None:
+        return
+
+      print(self.__class__.__name__, repr(packet))
+      self.on_client_packet(client, packet)
+    else:
+      print(event)
+
+  def on_client_connect(self, _socket: socket.socket):
+    self.add_client(RemoteServerClient(_socket))
+
+  def on_client_disconnect(self, _socket: socket.socket):
+    client = self.client_from_socket(_socket)
+    if client is not None:
+      self.remove_client(client)
+
+    self.poll.unregister(_socket)
+    _socket.close()
+
+  def on_client_packet(self, client: ServerClient, packet: Packet):
+    self.child.on_client_packet(client, packet)

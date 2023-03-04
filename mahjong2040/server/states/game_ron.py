@@ -1,5 +1,3 @@
-import socket
-
 from mahjong2040.packets import (
     GameStateServerPacket,
     Packet,
@@ -9,14 +7,12 @@ from mahjong2040.packets import (
 )
 from mahjong2040.shared import RON_HONBA_POINTS, ClientGameState, GameState, Wind
 
-from .shared import BaseGameServerStateMixin, GamePlayer
+from .shared import BaseGameServerStateMixin, GamePlayer, ServerClient
 
 
 class GameRonPlayer(GamePlayer):
-  def __init__(self, client: socket.socket, points: int, riichi: bool, ron: int):
-    self.client = client
-    self.points = points
-    self.riichi = riichi
+  def __init__(self, client: ServerClient, points: int, riichi: bool, ron: int):
+    super().__init__(client, points, riichi)
     self.ron = ron
 
 
@@ -36,7 +32,7 @@ class GameRonServerState(BaseGameServerStateMixin):
         continue
       player.send_packet(RonWindServerPacket(from_wind))
 
-  def on_players_reconnect(self, clients: list[socket.socket]):
+  def on_players_reconnect(self, clients: list[ServerClient]):
     super().on_players_reconnect(clients)
 
     for index, player in enumerate(self.game_state.players):
@@ -52,7 +48,7 @@ class GameRonServerState(BaseGameServerStateMixin):
         continue
       player.send_packet(RonWindServerPacket(self.from_wind))
 
-  def on_client_packet(self, client: socket.socket, packet: Packet):
+  def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
     if not player:
       return
@@ -75,9 +71,12 @@ class GameRonServerState(BaseGameServerStateMixin):
         for player in self.game_state.players
         if player.ron > 0
     ]
-    self.take_riichi_points(winners)
+    if not winners:
+      self.child = GameServerState(self.server, self.game_state)
+      return
 
-    discarder: GamePlayer = self.game_state.player_for_wind(self.from_wind)
+    self.take_riichi_points(winners)
+    discarder = self.game_state.player_for_wind(self.from_wind)
     for player in winners:
       points = player.ron + (self.game_state.total_honba * RON_HONBA_POINTS)
       player.take_points(discarder, points)

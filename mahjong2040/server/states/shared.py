@@ -1,6 +1,6 @@
-import socket
 from typing import Generic, TypeVar
 
+from mahjong2040.server.shared import ServerClient
 from mahjong2040.shared import RIICHI_POINTS, GameState
 
 from .base import GamePlayer, ServerState
@@ -13,26 +13,24 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
     self.server = server
     self.game_state = game_state
 
-  def on_client_disconnect(self, client: socket.socket):
-    super().on_client_disconnect(client)
-
+  def on_client_leave(self, client: ServerClient):
     player = self.player_for_client(client)
     if not player:
       return
 
-    self.on_player_disconnect(player)
+    self.on_player_leave(player)
 
-  def on_player_disconnect(self, player: GamePlayerType):
+  def on_player_leave(self, player: GamePlayerType):
     from .game_reconnect import GameReconnectServerState
 
-    self.child = GameReconnectServerState(self.server, self.game_state, self.on_players_reconnect)
+    self.child = GameReconnectServerState(self.server, self.game_state, self.on_players_rejoin)
 
-  def on_players_reconnect(self, clients: list[socket.socket]):
+  def on_players_rejoin(self, clients: list[ServerClient]):
     self.child = self
     for index, player in enumerate(self.game_state.players):
       player.client = clients[index]
 
-  def player_for_client(self, client: socket.socket):
+  def player_for_client(self, client: ServerClient):
     try:
       return next((
           player

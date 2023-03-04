@@ -1,15 +1,13 @@
-import socket
-
 from badger_ui.align import Center, Top
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
 from mahjong2040.packets import (
     ConfirmWindServerPacket,
     GameStateServerPacket,
-    NotEnoughPlayersServerPacket,
     Packet,
-    SelectWindClientPacket,
-    SelectWindServerPacket,
+    SetupPlayerCountErrorServerPacket,
+    SetupPlayerWindClientPacket,
+    SetupPlayerWindServerPacket,
 )
 from mahjong2040.shared import Wind
 
@@ -19,32 +17,37 @@ from badger_ui import App, Offset, Size
 from .base import ClientState
 
 
-class SelectWindClientState(ClientState):
+class SetupPlayerWindClientState(ClientState):
   def __init__(self, client, wind: int):
     super().__init__(client)
 
     self.next_wind = wind
     self.confirmed_wind = -1
 
-  def on_server_packet(self, packet: Packet):
-    from .game import GameClientState
-    from .lobby import LobbyClientState
-
-    if isinstance(packet, SelectWindServerPacket):
+  def on_server_packet(self, packet: Packet) -> bool:
+    if isinstance(packet, SetupPlayerWindServerPacket):
       self.next_wind = packet.wind
+      return True
 
     elif isinstance(packet, ConfirmWindServerPacket):
       self.confirmed_wind = packet.wind
+      return True
 
-    elif isinstance(packet, NotEnoughPlayersServerPacket):
+    elif isinstance(packet, SetupPlayerCountErrorServerPacket):
+      from .lobby import LobbyClientState
       self.child = LobbyClientState(self.client)
+      return True
 
     elif isinstance(packet, GameStateServerPacket):
+      from .game import GameClientState
       self.child = GameClientState(self.client, packet.game_state)
+      return True
+
+    return super().on_server_packet(packet)
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.confirmed_wind < 0:
-      self.send_packet(SelectWindClientPacket(self.next_wind))
+      self.send_packet(SetupPlayerWindClientPacket(self.next_wind))
       return True
 
     return super().on_button(app, pressed)

@@ -137,7 +137,7 @@ class RedrawClientPacket(Packet):
     return cls()
 
 
-class SelectWindClientPacket(Packet):
+class SetupPlayerWindClientPacket(Packet):
   fmt = 'BB'
   id = 7
 
@@ -294,7 +294,7 @@ class RonScoreServerPacket(Packet):
     return cls(from_wind, points)
 
 
-class SelectWindServerPacket(Packet):
+class SetupPlayerWindServerPacket(Packet):
   fmt = 'BB'
   id = 106
 
@@ -332,7 +332,7 @@ class ConfirmWindServerPacket(Packet):
     return cls(wind)
 
 
-class NotEnoughPlayersServerPacket(Packet):
+class SetupPlayerCountErrorServerPacket(Packet):
   fmt = 'B'
   id = 108
 
@@ -394,8 +394,24 @@ class GameReconnectStatusServerPacket(Packet):
     })
 
 
+class BroadcastClientPacket(Packet):
+  fmt = 'B'
+  id = 200
+
+  def pack(self) -> bytes:
+    return struct.pack(self.fmt, self.id)
+
+  @classmethod
+  def unpack(cls, data: bytes):
+    id, = struct.unpack(cls.fmt, data)
+
+    if id != cls.id:
+      raise ValueError(id)
+    return cls()
+
+
 packets: set = {
-    SelectWindClientPacket,
+    SetupPlayerWindClientPacket,
     RiichiClientPacket,
     TsumoClientPacket,
     RonWindClientPacket,
@@ -404,14 +420,16 @@ packets: set = {
     RedrawClientPacket,
 
     LobbyPlayersServerPacket,
-    SelectWindServerPacket,
+    SetupPlayerWindServerPacket,
     ConfirmWindServerPacket,
-    NotEnoughPlayersServerPacket,
+    SetupPlayerCountErrorServerPacket,
     GameStateServerPacket,
     DrawServerPacket,
     RonWindServerPacket,
     RonScoreServerPacket,
     GameReconnectStatusServerPacket,
+
+    BroadcastClientPacket(),
 }
 assert(len({
     packet.id
@@ -445,6 +463,17 @@ def read_packet(_socket: socket.socket):
     return None
 
   return unpack_packet(data)
+
+
+def read_packet_from(_socket: socket.socket):
+  try:
+    data, addr = recv_msg_from(_socket)
+    if not data:
+      return None, None
+  except OSError:
+    return None, None
+
+  return unpack_packet(data), addr
 
 
 def send_packet(_socket: socket.socket, packet: Packet):
@@ -481,3 +510,13 @@ def recvall(socket: socket.socket, length: int):
       return None
     data.extend(packet)
   return data
+
+
+def recv_msg_from(socket: socket.socket):
+  data, addr = socket.recvfrom(2048)
+  if not data:
+    return None, None
+  start = struct.calcsize(msg_length)
+  end = start + struct.unpack(msg_length, data)[0]
+  return data[start:end], addr
+

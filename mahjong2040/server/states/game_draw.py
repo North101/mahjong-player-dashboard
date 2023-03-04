@@ -1,5 +1,3 @@
-import socket
-
 from mahjong2040.packets import (
     DrawClientPacket,
     DrawServerPacket,
@@ -8,14 +6,12 @@ from mahjong2040.packets import (
 )
 from mahjong2040.shared import DRAW_POINTS, ClientGameState, GameState, Tenpai, Wind
 
-from .shared import BaseGameServerStateMixin, GamePlayer
+from .shared import BaseGameServerStateMixin, GamePlayer, ServerClient
 
 
 class GameDrawPlayer(GamePlayer):
-  def __init__(self, client: socket.socket, points: int, riichi: bool, tenpai: int):
-    self.client = client
-    self.points = points
-    self.riichi = riichi
+  def __init__(self, client: ServerClient, points: int, riichi: bool, tenpai: int):
+    super().__init__(client, points, riichi)
     self.tenpai = tenpai
 
 
@@ -27,7 +23,7 @@ class GameDrawServerState(BaseGameServerStateMixin):
     for player in game_state.players:
       player.send_packet(DrawServerPacket(player.tenpai))
 
-  def on_players_reconnect(self, clients: list[socket.socket]):
+  def on_players_reconnect(self, clients: list[ServerClient]):
     super().on_players_reconnect(clients)
 
     for index, player in enumerate(self.game_state.players):
@@ -41,7 +37,7 @@ class GameDrawServerState(BaseGameServerStateMixin):
       )))
       player.send_packet(DrawServerPacket(player.tenpai))
 
-  def on_client_packet(self, client: socket.socket, packet: Packet):
+  def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
     if not player:
       return

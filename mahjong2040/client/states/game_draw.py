@@ -1,38 +1,27 @@
-import socket
 from typing import Callable
 
-from badger_ui.align import Center
+from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.stack import Stack
 from badger_ui.text import TextWidget
 from mahjong2040.client import Client
-from mahjong2040.packets import (
-    DrawClientPacket,
-    DrawServerPacket,
-    GameStateServerPacket,
-    Packet,
-    RedrawClientPacket,
-)
-from mahjong2040.shared import GameState, Tenpai
+from mahjong2040.packets import DrawClientPacket, DrawServerPacket, Packet
+from mahjong2040.shared import Tenpai
 
 import badger2040w
 
-from .draw_menu import DrawMenuClientState
 from .shared import GameReconnectClientState
 
 
-class MenuClientState(GameReconnectClientState):
-  def __init__(self, client: Client, game_state: GameState):
+class GameDrawClientState(GameReconnectClientState):
+  def __init__(self, client: Client, tenpai: int):
     super().__init__(client)
 
-    self.game_state = game_state
+    self.tenpai = tenpai
     self.items = [
-      MenuItem('Tsumo', self.select_tsumo),
-      MenuItem('Ron', self.select_ron),
       MenuItem('Draw: Tenpai', self.select_tenpai),
       MenuItem('Draw: Noten', self.select_noten),
-      MenuItem('Redraw', self.select_redraw),
     ]
     self.list = ListWidget(
       item_height=24,
@@ -42,26 +31,6 @@ class MenuClientState(GameReconnectClientState):
       selected_index=0,
     )
 
-  def select_tsumo(self) -> bool:
-    from .tsumo_dealer import TsumoDealerClientState
-    from .tsumo_nondealer import TsumoNonDealerClientState
-
-    if self.game_state.player_wind(self.game_state.me) == 0:
-      self.child = TsumoNonDealerClientState(self.client, 0)
-    else:
-      self.child = TsumoDealerClientState(self.client)
-    return True
-
-  def select_ron(self) -> bool:
-    from .ron_wind import RonWindClientState
-
-    self.child = RonWindClientState(self.client, [
-        wind
-        for wind, player in self.game_state.players_from_me
-        if player != self.game_state.me
-    ])
-    return True
-
   def select_tenpai(self) -> bool:
     self.send_packet(DrawClientPacket(Tenpai.TENPAI))
     return True
@@ -70,21 +39,18 @@ class MenuClientState(GameReconnectClientState):
     self.send_packet(DrawClientPacket(Tenpai.NOTEN))
     return True
 
-  def select_redraw(self) -> bool:
-    self.send_packet(RedrawClientPacket())
-    return True
+  def on_server_packet(self,packet: Packet) -> bool:
+    if isinstance(packet, DrawServerPacket):
+      self.tenpai = packet.tenpai
+      return True
 
-  def on_server_packet(self, packet: Packet):
-    from .game import GameClientState
-
-    super().on_server_packet(packet)
-    if isinstance(packet, GameStateServerPacket):
-      self.child = GameClientState(self.client, packet.game_state)
-    elif isinstance(packet, DrawServerPacket):
-      self.child = DrawMenuClientState(self.client, packet.tenpai)
+    return super().on_server_packet(packet)
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
-    return self.list.on_button(app, pressed)
+    if self.tenpai == Tenpai.UNKNOWN:
+      return self.list.on_button(app, pressed)
+    
+    return super().on_button(app, pressed)
 
   def item_builder(self, index: int, selected: bool):
     return MenuItemWidget(
@@ -95,7 +61,21 @@ class MenuClientState(GameReconnectClientState):
   def render(self, app: App, size: Size, offset: Offset):
     super().render(app, size, offset)
 
-    Center(child=self.list).render(app, size, offset)
+    if self.tenpai == Tenpai.UNKNOWN:
+      Center(child=self.list).render(app, size, offset)
+    else:
+      Center(child=TextWidget(
+        text='Tenpai' if self.tenpai == Tenpai.TENPAI else 'Noten',
+        line_height=60,
+        thickness=2,
+        scale=2,
+      )).render(app, size, offset)
+      Bottom(child=Center(child=TextWidget(
+          text=f'Waiting...',
+          line_height=24,
+          thickness=2,
+          scale=0.8,
+      ))).render(app, size, offset)
 
 
 class MenuItem:
