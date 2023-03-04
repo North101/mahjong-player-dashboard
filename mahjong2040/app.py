@@ -3,7 +3,7 @@ import gc
 import network
 import uasyncio
 from badger_ui.align import Bottom, Center
-from badger_ui.base import App, Offset, Size, Widget
+from badger_ui.base import App, Offset, Size, Widget, app_runner
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
 from mahjong2040.shared import Address
@@ -13,6 +13,13 @@ import WIFI_CONFIG
 from network_manager import NetworkManager
 
 from .poll import Poll
+
+
+def isconnected():
+  return network.WLAN(network.STA_IF).isconnected()
+
+def ip_address():
+  return network.WLAN(network.STA_IF).ifconfig()[0]
 
 
 class MyApp(App):
@@ -31,12 +38,6 @@ class MyApp(App):
     self.dirty = True
     self.update()
 
-  def isconnected(self):
-    return network.WLAN(network.STA_IF).isconnected()
-
-  def ip_address(self):
-    return network.WLAN(network.STA_IF).ifconfig()[0]
-
   def connect(self):
     if WIFI_CONFIG.COUNTRY == "":
         raise RuntimeError("You must populate WIFI_CONFIG.py for networking.")
@@ -48,9 +49,9 @@ class MyApp(App):
 class ConnectingScreen(Widget):
   def render(self, app: App, size: Size, offset: Offset):
     app.display.set_pen(0)
-    if app.isconnected():
+    if isconnected():
       app.display.text("Connected!", 10, 10, 300, 0.5)
-      app.display.text(app.ip_address(), 10, 30, 300, 0.5)
+      app.display.text(ip_address(), 10, 30, 300, 0.5)
     else:
       app.display.text("Connecting...", 10, 10, 300, 0.5)
 
@@ -76,32 +77,20 @@ class SelectScreen(Widget):
     from .client import Client
 
     poll = Poll()
-    try:
-      client = Client(poll)
-      client.broadcast(self.port)
-      while True:
-        poll.poll()
-        client.update()
-    finally:
-      client.close()
-      poll.close()
+    client = Client(poll)
+    client.broadcast(self.port)
+    app_runner.app = client
   
   def open_server(self):
     from .client import Client, LocalClientServer
     from .server import Server
 
     poll = Poll()
-    try:
-      server = Server(poll)
-      server.start(self.port)
-      client = Client(poll)
-      client.connect(LocalClientServer(server, client))
-      while True:
-        poll.poll()
-        client.update()
-    finally:
-      server.close()
-      poll.close()
+    server = Server(poll)
+    server.start(self.port)
+    client = Client(poll)
+    client.connect(LocalClientServer(server, client))
+    app_runner.app = client
 
   def item_builder(self, index: int, selected: bool):
     return MenuItemWidget(
@@ -116,7 +105,7 @@ class SelectScreen(Widget):
     Center(child=self.child).render(app, size, offset)
 
     Bottom(child=Center(child=TextWidget(
-      text=f'IP: {app.ip_address()}',
+      text=f'IP: {ip_address()}',
       line_height=15,
       font='sans',
       thickness=2,

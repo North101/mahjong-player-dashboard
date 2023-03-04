@@ -155,6 +155,10 @@ class Client(App):
 
   def send_packet(self, packet: Packet):
     self.server.send_packet(packet)
+  
+  def update(self):
+    self.poll.poll()
+    return super().update()
 
 
 def start():

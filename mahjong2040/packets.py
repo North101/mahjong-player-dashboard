@@ -513,7 +513,7 @@ def recvall(socket: socket.socket, length: int):
 
 
 def recv_msg_from(socket: socket.socket):
-  data, addr = socket.recvfrom(2048)
+  data, addr = socket.recvfrom(32)
   if not data:
     return None, None
   start = struct.calcsize(msg_length)

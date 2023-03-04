@@ -5,7 +5,7 @@ from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
 from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
-from mahjong2040.shared import ClientGameState, GamePlayerMixin, GameState, Wind
+from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
 
 import badger2040w
 
