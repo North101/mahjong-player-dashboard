@@ -114,16 +114,11 @@ class Client(App):
     self.close()
   
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self.socket.setsockopt(socket.SOL_SOCKET, 32, 1)
     self.poll.register(self.socket, select.POLLIN, self.on_broadcast_data)
 
-    self.socket.setsockopt(socket.SOL_SOCKET, 32, 1)
-
     self.child = ServerListClientState(self)
-
-    data = create_msg(BroadcastClientPacket().pack())
-    data_sent = 0
-    while data_sent < len(data):
-      data_sent += self.socket.sendto(data[data_sent:], ('255.255.255.255', port))
+    self.socket.sendto(create_msg(BroadcastClientPacket().pack()), ('255.255.255.255', port))
 
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:

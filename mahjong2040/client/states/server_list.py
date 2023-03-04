@@ -21,7 +21,7 @@ class ServerListClientState(ClientState):
   def update_list(self):
     if len(self.servers) > 0:
       self.list = ListWidget(
-        item_height=21,
+        item_height=24,
         item_count=len(self.servers),
         item_builder=self.item_builder,
         page_item_count=min(len(self.servers), 6),

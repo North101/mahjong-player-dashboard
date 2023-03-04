@@ -19,40 +19,37 @@ class Server:
     from .states.lobby import LobbyServerState
 
     self.poll = poll
+    self.broadcast: socket.socket = None
     self.socket: socket.socket = None
     self.clients: list[ServerClient] = []
     self.child: ServerState = LobbyServerState(self)
 
   def start(self, port: int):
-    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.poll.register(self.socket, select.POLLIN, self.on_server_data)
+    self.broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self.broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self.poll.register(self.broadcast, select.POLLIN, self.on_broadcast_data)
+    self.broadcast.bind(('', port))
 
+    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self.poll.register(self.socket, select.POLLIN, self.on_server_data)
     self.socket.bind(('', port))
 
     print(f'Server is listing on port {port}...')
     self.socket.listen()
-
-    self.broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.poll.register(self.broadcast, select.POLLIN, self.on_broadcast_data)
-
-    self.broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.broadcast.bind(('', port))
   
   def close(self):
-    if self.socket is None:
-      return
-    
-    self.socket.close()
+    if self.broadcast is not None:
+      self.broadcast.close()
+
+    if self.socket is not None:
+      self.socket.close()
   
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:
       packet, address = read_packet_from(_socket)
       if isinstance(packet, BroadcastClientPacket):
-        data = create_msg(BroadcastClientPacket().pack())
-        data_sent = 0
-        while data_sent < len(data):
-          data_sent += _socket.sendto(data[data_sent:], address)
+        _socket.sendto(create_msg(BroadcastClientPacket().pack()), address)
   
   def client_from_socket(self, _socket: socket.socket):
     try:
