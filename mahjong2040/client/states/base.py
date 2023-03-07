@@ -1,9 +1,8 @@
+import badger2040w
+from badger_ui import App, Offset, Size, Widget
 from mahjong2040.client import Client
 from mahjong2040.packets import Packet
 from mahjong2040.shared import Address
-
-import badger2040w
-from badger_ui import App, Offset, Size, Widget
 
 
 class ClientState(Widget):
@@ -11,6 +10,9 @@ class ClientState(Widget):
     print(self.__class__.__name__)
     self.client = client
     self.first_render = True
+  
+  def init(self):
+    pass
 
   @property
   def child(self):

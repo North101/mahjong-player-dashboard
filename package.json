@@ -3,12 +3,20 @@
   "version": "0.1",
   "repository": "file:.",
   "exclude": [
-    "./*.py"
+    "main.py"
   ],
   "urls": [
     [
+      "mahjong2040/config.py",
+      "file:./mahjong2040/config.py"
+    ],
+    [
       "mahjong2040/__init__.py",
       "file:./mahjong2040/__init__.py"
+    ],
+    [
+      "mahjong2040/score_calculator.py",
+      "file:./mahjong2040/score_calculator.py"
     ],
     [
       "mahjong2040/shared.py",
@@ -91,12 +99,12 @@
       "file:./mahjong2040/client/states/game.py"
     ],
     [
-      "mahjong2040/client/states/game_tsumo_nondealer.py",
-      "file:./mahjong2040/client/states/game_tsumo_nondealer.py"
-    ],
-    [
       "mahjong2040/client/states/__init__.py",
       "file:./mahjong2040/client/states/__init__.py"
+    ],
+    [
+      "mahjong2040/client/states/game_tsumo_result.py",
+      "file:./mahjong2040/client/states/game_tsumo_result.py"
     ],
     [
       "mahjong2040/client/states/shared.py",
@@ -107,12 +115,16 @@
       "file:./mahjong2040/client/states/server_list.py"
     ],
     [
+      "mahjong2040/client/states/game_tsumo_score.py",
+      "file:./mahjong2040/client/states/game_tsumo_score.py"
+    ],
+    [
       "mahjong2040/client/states/game_draw.py",
       "file:./mahjong2040/client/states/game_draw.py"
     ],
     [
-      "mahjong2040/client/states/game_tsumo_dealer.py",
-      "file:./mahjong2040/client/states/game_tsumo_dealer.py"
+      "mahjong2040/client/states/game_ron_result.py",
+      "file:./mahjong2040/client/states/game_ron_result.py"
     ],
     [
       "mahjong2040/client/states/lobby.py",
@@ -127,8 +139,8 @@
       "file:./mahjong2040/client/states/game_menu.py"
     ],
     [
-      "mahjong2040/client/widgets/score_input.py",
-      "file:./mahjong2040/client/widgets/score_input.py"
+      "mahjong2040/client/widgets/han_input.py",
+      "file:./mahjong2040/client/widgets/han_input.py"
     ]
   ],
   "deps": [
@@ -138,6 +150,14 @@
     ],
     [
       "file:../badger_ui",
+      "master"
+    ],
+    [
+      "github:pimoroni/pimoroni-pico/blob/main/micropython/examples/badger2040w/lib/network_manager.py",
+      "master"
+    ],
+    [
+      "github:pimoroni/pimoroni-pico/blob/main/micropython/examples/badger2040w/lib/badger2040w.py",
       "master"
     ]
   ]

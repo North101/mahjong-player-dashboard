@@ -4,10 +4,10 @@ from badger_ui.column import Column
 from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
-from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
-from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
 
 import badger2040w
+from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
+from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
 
 from .game_menu import GameMenuClientState
 from .shared import GameReconnectClientState
@@ -76,6 +76,20 @@ class GameClientState(GameReconnectClientState):
       thickness=2,
     )).render(app, size, offset)
 
+    
+    Left(child=TextWidget(
+      text=f'R: {self.game_state.total_riichi}',
+      line_height=18,
+      thickness=2,
+      scale=0.6,
+    )).render(app, size, offset)
+    Right(child=TextWidget(
+      text=f'H: {self.game_state.total_honba}',
+      line_height=18,
+      thickness=2,
+      scale=0.6,
+    )).render(app, size, offset)
+
 
 class RiichiWidget(Widget):
   size = Size(40, 8)
@@ -133,14 +147,31 @@ class RiichiWidget(Widget):
 
 
 class PlayerWidget(Widget):
-  size = Size(115, 40)
+  height = 40
+  font = 'sans'
+  thickness = 2
+  points_scale = 1
+  wind_scale = 0.6
 
   def __init__(self, player: GamePlayerMixin, wind: int):
     self.player = player
     self.wind = wind
   
-  def measure(self, app: 'App', size: Size) -> Size:
-    return self.size
+  def points_text(self):
+    return f'{self.player.points * 100}'
+  
+  def wind_text(self):
+    return Wind.name(self.wind)[0].upper()
+
+  def width(self, app: App):
+    app.display.set_font(self.font)
+    app.display.set_thickness(self.thickness)
+    points_width = app.display.measure_text(self.points_text(), scale=self.points_scale)
+    wind_width = app.display.measure_text(self.wind_text(), scale=self.wind_scale)
+    return points_width + wind_width
+
+  def measure(self, app: App, size: Size) -> Size:
+    return Size(self.width(app), self.height)
   
   def render(self, app: 'App', size: Size, offset: Offset):
     Padding(
@@ -148,18 +179,18 @@ class PlayerWidget(Widget):
       child=Column(children=[
         Row(children=[
           TextWidget(
-              text=Wind.name(self.wind)[0].upper(),
-              line_height=30,
-              font='sans',
-              thickness=2,
-              scale=0.6,
+              text=self.points_text(),
+              line_height=self.height,
+              font=self.font,
+              thickness=self.thickness,
+              scale=self.points_scale,
           ),
           TextWidget(
-              text=f'{self.player.points * 100}',
-              line_height=30,
-              font='sans',
-              thickness=2,
-              scale=1,
+              text=self.wind_text(),
+              line_height=self.height,
+              font=self.font,
+              thickness=self.thickness,
+              scale=self.wind_scale,
           ),
         ]),
         RiichiWidget(self.player.riichi),

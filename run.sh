@@ -15,4 +15,5 @@ fi
 
 python3 ../tools/update_urls.py
 mpremote connect $dev_id mip install file:. 
-mpremote connect $dev_id run mahjong2040/__init__.py
+mpremote connect $dev_id cp main.py :
+mpremote connect $dev_id run main.py

@@ -5,11 +5,11 @@ from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.stack import Stack
 from badger_ui.text import TextWidget
+
+import badger2040w
 from mahjong2040.client import Client
 from mahjong2040.packets import DrawClientPacket, RedrawClientPacket
 from mahjong2040.shared import GameState, Tenpai
-
-import badger2040w
 
 from .shared import GameReconnectClientState
 
@@ -35,13 +35,9 @@ class GameMenuClientState(GameReconnectClientState):
     )
 
   def select_tsumo(self) -> bool:
-    from .game_tsumo_dealer import GameTsumoDealerClientState
-    from .game_tsumo_nondealer import GameTsumoNonDealerClientState
+    from .game_tsumo_score import GameTsumoScoreClientState
 
-    if self.game_state.player_wind(self.game_state.me) == 0:
-      self.child = GameTsumoNonDealerClientState(self.client, 0)
-    else:
-      self.child = GameTsumoDealerClientState(self.client)
+    self.child = GameTsumoScoreClientState(self.client)
     return True
 
   def select_ron(self) -> bool:

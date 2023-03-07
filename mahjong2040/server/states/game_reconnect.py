@@ -26,12 +26,15 @@ class GameReconnectServerState(ServerState):
     ]
     self.callback = callback
 
+  def init(self):
     self.ask_wind()
 
   def on_client_join(self, client: ServerClient):
+    super().on_client_join(client)
     client.send_packet(SetupPlayerWindServerPacket(self.wind))
 
   def on_client_leave(self, client: ServerClient):
+    super().on_client_leave(client)
     if client not in self.player_clients:
       return
 

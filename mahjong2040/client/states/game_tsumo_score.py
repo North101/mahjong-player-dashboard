@@ -1,24 +1,23 @@
 from badger_ui.align import Center
+from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
-from mahjong2040.client.widgets.score_input import ScoreInputWidget
-from mahjong2040.packets import TsumoClientPacket
 
 import badger2040w
-from badger_ui import App, Offset, Size
+from mahjong2040.client.widgets.han_input import HanInputWidget
+from mahjong2040.packets import TsumoClientPacket
 
 from .shared import GameReconnectClientState
 
 
-class GameTsumoNonDealerClientState(GameReconnectClientState):
-  def __init__(self, client, dealer_score: int):
+class GameTsumoScoreClientState(GameReconnectClientState):
+  def __init__(self, client):
     super().__init__(client)
 
-    self.dealer_score = dealer_score
-    self.score = ScoreInputWidget()
+    self.score = HanInputWidget()
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B]:
-      self.send_packet(TsumoClientPacket(self.dealer_score, self.score.to_value))
+      self.send_packet(TsumoClientPacket(self.score.tsumo(True), self.score.tsumo(False)))
       return True
 
     return self.score.on_button(app, pressed)
@@ -27,7 +26,7 @@ class GameTsumoNonDealerClientState(GameReconnectClientState):
     super().render(app, size, offset)
 
     Center(child=TextWidget(
-        text='Non-Dealer',
+        text='Tsumo',
         line_height=24,
         thickness=2,
         scale=0.8,

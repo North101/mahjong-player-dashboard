@@ -1,6 +1,9 @@
 from badger_ui.align import Bottom, Center, Top
+from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
-from mahjong2040.client.widgets.score_input import ScoreInputWidget
+
+import badger2040w
+from mahjong2040.client.widgets.han_input import HanInputWidget
 from mahjong2040.packets import (
     Packet,
     RonScoreClientPacket,
@@ -9,26 +12,25 @@ from mahjong2040.packets import (
 )
 from mahjong2040.shared import Wind
 
-import badger2040w
-from badger_ui import App, Offset, Size
-
 from .shared import GameReconnectClientState
 
 
 class GameRonScoreClientState(GameReconnectClientState):
-  def __init__(self, client, from_wind: int):
+  def __init__(self, client, from_wind: int, dealer: bool):
     super().__init__(client)
 
     self.from_wind = from_wind
+    self.dealer = dealer
     self.points = None
-    self.score = ScoreInputWidget()
+    self.score = HanInputWidget()
 
   def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, RonWindServerPacket):
       self.from_wind = packet.from_wind
+      self.dealer = packet.dealer
       self.points = None
       return True
-    
+
     elif isinstance(packet, RonScoreServerPacket):
       self.from_wind = packet.from_wind
       self.points = packet.points
@@ -38,7 +40,7 @@ class GameRonScoreClientState(GameReconnectClientState):
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.points is None:
-      self.send_packet(RonScoreClientPacket(self.score.to_value))
+      self.send_packet(RonScoreClientPacket(self.score.ron(self.dealer)))
       return True
 
     return self.score.on_button(app, pressed)

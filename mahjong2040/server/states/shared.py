@@ -14,6 +14,7 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
     self.game_state = game_state
 
   def on_client_leave(self, client: ServerClient):
+    super().on_client_leave(client)
     player = self.player_for_client(client)
     if not player:
       return

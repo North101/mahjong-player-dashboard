@@ -6,10 +6,10 @@ from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size, Widget, app_runner
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
-from mahjong2040.shared import Address
 
 import badger2040w
 import WIFI_CONFIG
+from mahjong2040 import config
 from network_manager import NetworkManager
 
 from .poll import Poll
@@ -28,6 +28,8 @@ class MyApp(App):
 
     self.port = port
     self.child = ConnectingScreen()
+  
+  def init(self):
     self.connect()
 
   def status_handler(self, mode, status, ip):
@@ -36,14 +38,17 @@ class MyApp(App):
       self.child = SelectScreen(self.port)
 
     self.dirty = True
-    self.update()
 
   def connect(self):
     if WIFI_CONFIG.COUNTRY == "":
-        raise RuntimeError("You must populate WIFI_CONFIG.py for networking.")
+      raise RuntimeError("You must populate WIFI_CONFIG.py for networking.")
+
     network_manager = NetworkManager(WIFI_CONFIG.COUNTRY, status_handler=self.status_handler)
     uasyncio.get_event_loop().run_until_complete(network_manager.client(WIFI_CONFIG.SSID, WIFI_CONFIG.PSK))
     gc.collect()
+  
+  def render(self, app: 'App', size: Size, offset: Offset):
+    return super().render(app, size, offset)
 
 
 class ConnectingScreen(Widget):
@@ -62,8 +67,8 @@ class SelectScreen(Widget):
 
     self.port = port
     self.items = [
-      MenuItem('Client', self.open_client),
-      MenuItem('Server', self.open_server),
+      MenuItem('Connect', self.open_client),
+      MenuItem('Host', self.open_server),
     ]
     self.child = ListWidget(
       item_height=21,
@@ -72,7 +77,14 @@ class SelectScreen(Widget):
       page_item_count=2,
       selected_index=0,
     )
+    self.first_render = True
   
+  def init(self):
+    if config.mode == config.Mode.HOST:
+      self.open_server()
+    elif config.mode == config.Mode.CLIENT:
+      self.open_client()
+
   def open_client(self):
     from .client import Client
 
@@ -89,7 +101,7 @@ class SelectScreen(Widget):
     server = Server(poll)
     server.start(self.port)
     client = Client(poll)
-    client.connect(LocalClientServer(server, client))
+    client.connect(LocalClientServer(client, server))
     app_runner.app = client
 
   def item_builder(self, index: int, selected: bool):
@@ -102,6 +114,12 @@ class SelectScreen(Widget):
     return self.child.on_button(app, pressed)
 
   def render(self, app: App, size: Size, offset: Offset):
+    if self.first_render:
+      app.display.set_update_speed(badger2040w.UPDATE_FAST)
+      self.first_render = False
+    else:
+      app.display.set_update_speed(badger2040w.UPDATE_TURBO)
+
     Center(child=self.child).render(app, size, offset)
 
     Bottom(child=Center(child=TextWidget(

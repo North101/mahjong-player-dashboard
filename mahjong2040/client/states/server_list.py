@@ -2,21 +2,48 @@ from badger_ui.align import Center
 from badger_ui.base import Widget
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
-from mahjong2040.packets import BroadcastClientPacket, Packet
-from mahjong2040.shared import Address
+from machine import Timer
 
 import badger2040w
 from badger_ui import App, Offset, Size
+from mahjong2040 import config
+from mahjong2040.packets import (
+    BroadcastClientPacket,
+    BroadcastServerPacket,
+    Packet,
+    send_packet_to,
+)
+from mahjong2040.shared import Address
 
 from .base import ClientState
 
 
 class ServerListClientState(ClientState):
-  def __init__(self, client):
+  def __init__(self, client, port: int):
     super().__init__(client)
 
+    self.address = ('255.255.255.255', port)
     self.servers = []
     self.list = None
+
+    self.timer = Timer(mode=Timer.PERIODIC, period=10000, callback=self.broadcast)
+    self.broadcast()
+
+  def broadcast(self, *args, **kwargs):
+    if not self.client.socket:
+      return
+    
+    send_packet_to(self.client.socket, BroadcastClientPacket(), self.address)
+
+  def on_broadcast_packet(self, packet: Packet, address: Address):
+    if isinstance(packet, BroadcastServerPacket):
+      if address not in self.servers:
+        if config.autoconnect:
+          AddressItem(address, self.on_item_selected)()
+          return
+  
+        self.servers.append(address)
+        self.update_list()
   
   def update_list(self):
     if len(self.servers) > 0:
@@ -29,21 +56,17 @@ class ServerListClientState(ClientState):
       )
     else:
       self.list = None
-  
-  def on_broadcast_packet(self, packet: Packet, address: Address):
-    if isinstance(packet, BroadcastClientPacket):
-      self.servers.append(AddressItem(address, self.on_item_selected))
-      self.update_list()
 
   def item_builder(self, index: int, selected: bool):
     return AddressItemWidget(
-      item=self.servers[index],
+      item=AddressItem(self.servers[index], self.on_item_selected),
       selected=selected,
     )
 
   def on_item_selected(self, item: 'AddressItem'):
     from mahjong2040.client import RemoteClientServer
-    self.client.connect(RemoteClientServer(self.client.poll, item.address, self.client))
+    self.timer.deinit()
+    self.client.connect(RemoteClientServer(self.client, self.client.poll, item.address))
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
     if self.list is not None:
@@ -52,6 +75,8 @@ class ServerListClientState(ClientState):
     return super().on_button(app, pressed)
   
   def render(self, app: 'App', size: Size, offset: Offset):
+    super().render(app, size, offset)
+
     if self.list is not None:
       Center(child=self.list).render(app, size, offset)
   

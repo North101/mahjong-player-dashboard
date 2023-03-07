@@ -3,6 +3,7 @@ from mahjong2040.packets import (
     Packet,
     RonScoreClientPacket,
     RonScoreServerPacket,
+    RonServerPacket,
     RonWindServerPacket,
 )
 from mahjong2040.shared import RON_HONBA_POINTS, ClientGameState, GameState, Wind
@@ -27,26 +28,29 @@ class GameRonServerState(BaseGameServerStateMixin):
     self.game_state = game_state
     self.from_wind = from_wind
 
-    for player in game_state.players:
+  def init(self):
+    dealer = self.game_state.player_for_wind(Wind.EAST)
+    for player in self.game_state.players:
       if player.ron >= 0:
         continue
-      player.send_packet(RonWindServerPacket(from_wind))
+      player.send_packet(RonWindServerPacket(self.from_wind, dealer == player))
 
   def on_players_reconnect(self, clients: list[ServerClient]):
     super().on_players_reconnect(clients)
 
+    dealer = self.game_state.player_for_wind(Wind.EAST)
     for index, player in enumerate(self.game_state.players):
-      player.send_packet(GameStateServerPacket(ClientGameState(
-          index,
-          self.game_state.players,
-          self.game_state.hand,
-          self.game_state.repeat,
-          self.game_state.bonus_honba,
-          self.game_state.bonus_riichi,
-      )))
       if player.ron >= 0:
-        continue
-      player.send_packet(RonWindServerPacket(self.from_wind))
+        player.send_packet(RonWindServerPacket(self.from_wind, dealer == player))
+      else:
+        player.send_packet(GameStateServerPacket(ClientGameState(
+            index,
+            self.game_state.players,
+            self.game_state.hand,
+            self.game_state.repeat,
+            self.game_state.bonus_honba,
+            self.game_state.bonus_riichi,
+        )))
 
   def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
@@ -76,14 +80,37 @@ class GameRonServerState(BaseGameServerStateMixin):
       return
 
     self.take_riichi_points(winners)
-    discarder = self.game_state.player_for_wind(self.from_wind)
+    from_player = self.game_state.player_for_wind(self.from_wind)
+    honba_points = self.game_state.total_honba * RON_HONBA_POINTS
     for player in winners:
-      points = player.ron + (self.game_state.total_honba * RON_HONBA_POINTS)
-      player.take_points(discarder, points)
+      points = player.ron + honba_points
+      player.take_points(from_player, points)
+
+    hand = self.game_state.hand
+    player1_points = self.game_state.player_for_wind(self.from_wind + 1).ron + honba_points
+    player2_points = self.game_state.player_for_wind(self.from_wind + 2).ron + honba_points
+    player3_points = self.game_state.player_for_wind(self.from_wind + 3).ron + honba_points
 
     if self.game_state.player_for_wind(Wind.EAST) in winners:
       self.repeat_hand()
     else:
       self.next_hand()
+    
+    for index, p in enumerate(self.game_state.players):
+      p.send_packet(RonServerPacket(
+        game_state=ClientGameState(
+          index,
+          players=self.game_state.players,
+          hand=self.game_state.hand,
+          repeat=self.game_state.repeat,
+          bonus_honba=self.game_state.bonus_honba,
+          bonus_riichi=self.game_state.bonus_riichi,
+        ),
+        ron_wind=self.from_wind,
+        ron_hand=hand,
+        player1_points=player1_points,
+        player2_points=player2_points,
+        player3_points=player3_points,
+      ))
 
     self.child = GameServerState(self.server, self.game_state)

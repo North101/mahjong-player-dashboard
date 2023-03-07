@@ -20,7 +20,8 @@ class GameDrawServerState(BaseGameServerStateMixin):
     self.server = server
     self.game_state = game_state
 
-    for player in game_state.players:
+  def init(self):
+    for player in self.game_state.players:
       player.send_packet(DrawServerPacket(player.tenpai))
 
   def on_players_reconnect(self, clients: list[ServerClient]):

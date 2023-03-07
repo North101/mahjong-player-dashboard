@@ -6,6 +6,7 @@ from mahjong2040.packets import (
     RiichiClientPacket,
     RonWindClientPacket,
     TsumoClientPacket,
+    TsumoServerPacket,
 )
 from mahjong2040.shared import (
     TSUMO_HONBA_POINTS,
@@ -23,6 +24,7 @@ class GameServerState(BaseGameServerStateMixin):
     self.server = server
     self.game_state = game_state
 
+  def init(self):
     self.update_player_states()
 
   def on_players_reconnect(self, players):
@@ -57,7 +59,6 @@ class GameServerState(BaseGameServerStateMixin):
         continue
 
       other_player_wind = self.game_state.player_wind(other_player)
-      points: int
       if other_player_wind == 0:
         points = packet.dealer_points
       else:
@@ -65,11 +66,30 @@ class GameServerState(BaseGameServerStateMixin):
       points += self.game_state.total_honba * TSUMO_HONBA_POINTS
       player.take_points(other_player, points)
 
+    tsumo_wind = self.game_state.player_wind(player)
+    tsumo_hand = self.game_state.hand
+    total_honba = self.game_state.total_honba
+
     if self.game_state.player_wind(player) == 0:
       self.repeat_hand()
     else:
       self.next_hand()
-    self.update_player_states()
+
+    for index, p in enumerate(self.game_state.players):
+      p.send_packet(TsumoServerPacket(
+        game_state=ClientGameState(
+          index,
+          players=self.game_state.players,
+          hand=self.game_state.hand,
+          repeat=self.game_state.repeat,
+          bonus_honba=self.game_state.bonus_honba,
+          bonus_riichi=self.game_state.bonus_riichi,
+        ),
+        tsumo_wind=tsumo_wind,
+        tsumo_hand=tsumo_hand,
+        dealer_points=packet.dealer_points + (total_honba * TSUMO_HONBA_POINTS),
+        nondealer_points=packet.points + (total_honba * TSUMO_HONBA_POINTS),
+      ))
 
   def on_player_ron(self, player: GamePlayerType, packet: RonWindClientPacket):
     from .game_ron import GameRonPlayer, GameRonServerState

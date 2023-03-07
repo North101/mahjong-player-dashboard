@@ -17,6 +17,8 @@ class GameSetupServerState(ServerState):
     super().__init__(server)
 
     self.players: list[ServerClient] = []
+  
+  def init(self):
     self.ask_next_wind()
 
   def ask_next_wind(self):
@@ -27,6 +29,7 @@ class GameSetupServerState(ServerState):
         client.send_packet(packet)
 
   def on_client_leave(self, client: ServerClient):
+    super().on_client_leave(client)
     if client in self.clients:
       if not self.enough_players():
         return self.to_lobby()
@@ -72,5 +75,5 @@ class GameSetupServerState(ServerState):
 
     packet = SetupPlayerCountErrorServerPacket()
     for client in self.clients:
-      client.send_packet(client)
+      client.send_packet(packet)
     self.child = LobbyServerState(self.server)

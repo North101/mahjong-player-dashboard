@@ -8,16 +8,20 @@ from .shared import ServerClient
 class LobbyServerState(ServerState):
   def __init__(self, server):
     self.server = server
+  
+  def init(self):
     self.send_lobby_count()
 
   def on_client_join(self, client: ServerClient):
-    self.send_lobby_count()
+    super().on_client_join(client)
 
+    self.send_lobby_count()
     if len(self.clients) == len(Wind):
       from .game_setup import GameSetupServerState
       self.child = GameSetupServerState(self.server)
 
   def on_client_leave(self, client: ServerClient):
+    super().on_client_leave(client)
     self.send_lobby_count()
 
   def send_lobby_count(self):

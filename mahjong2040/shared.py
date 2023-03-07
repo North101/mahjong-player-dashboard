@@ -20,9 +20,20 @@ class IntEnum:
         )
         if isinstance(value, int)
     ]
+  
+  def by_name(self, value):
+    return next((
+      item[1]
+      for item in self.__items__
+      if item[0] == value
+    ))
 
   def name(self, value: int):
-    return self.__items__[value][0]
+    return next((
+      item[0]
+      for item in self.__items__
+      if item[1] == value
+    ))
 
   def __iter__(self):
     for item in self.__items__:
@@ -153,8 +164,8 @@ class GameState(Generic[PlayerType]):
   def player_index_for_wind(self, wind: int):
     return (wind + self.hand) % len(Wind)
 
-  def player_for_wind(self, wind: int):
-    return self.players[self.player_index_for_wind(wind)]
+  def player_for_wind(self, wind: int) -> GamePlayerMixin:
+    return self.players[self.player_index_for_wind(wind) % len(Wind)]
 
   def __repr__(self):
     return f'{self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
@@ -184,5 +195,9 @@ class ClientGameState(GameState):
       wind = (wind + self.player_index - self.hand) % len(Wind)
       yield wind, self.player_for_wind(wind)
 
-  def __repr__(self):
-    return f'{self.__class__.__name__}({self.player_index}, {self.players}, {self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
+  def __repr__(self) -> str:
+    args = ', '.join([
+      f'{key}={value}'
+      for key, value in self.__dict__.items()
+    ])
+    return f'{self.__class__.__name__}({args})'

@@ -35,6 +35,9 @@ class ServerState:
   def __init__(self, server: 'Server'):
     print(self.__class__.__name__)
     self.server = server
+  
+  def init(self):
+    pass
 
   @property
   def clients(self):

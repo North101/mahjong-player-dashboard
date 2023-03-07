@@ -3,10 +3,11 @@ import socket
 
 from mahjong2040.packets import (
     BroadcastClientPacket,
+    BroadcastServerPacket,
     Packet,
-    create_msg,
     read_packet,
     read_packet_from,
+    send_packet_to,
 )
 from mahjong2040.poll import Poll
 
@@ -22,7 +23,20 @@ class Server:
     self.broadcast: socket.socket = None
     self.socket: socket.socket = None
     self.clients: list[ServerClient] = []
+    self._child = None
     self.child: ServerState = LobbyServerState(self)
+  
+  @property
+  def child(self):
+    return self._child
+  
+  @child.setter
+  def child(self, value):
+    if self._child is value:
+      return
+    
+    self._child = value
+    self._child.init()
 
   def start(self, port: int):
     self.broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -49,7 +63,7 @@ class Server:
     if event & select.POLLIN:
       packet, address = read_packet_from(_socket)
       if isinstance(packet, BroadcastClientPacket):
-        _socket.sendto(create_msg(BroadcastClientPacket().pack()), address)
+        send_packet_to(_socket, BroadcastServerPacket(), address)
   
   def client_from_socket(self, _socket: socket.socket):
     try:
