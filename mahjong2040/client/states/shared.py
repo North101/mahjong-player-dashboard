@@ -34,7 +34,7 @@ class GameReconnectClientState(ClientState):
 
     elif isinstance(packet, RonWindServerPacket):
       from .game_ron_score import GameRonScoreClientState
-      self.child = GameRonScoreClientState(self.client, packet.from_wind, packet.dealer)
+      self.child = GameRonScoreClientState(self.client, packet.from_wind)
       return True
 
     return super().on_server_packet(packet)

@@ -32,14 +32,14 @@ class HanInputWidget(Widget):
       if self.selected == 0:
         self.han_index = (self.han_index + 1) % len(score_calculator.han_lookup)
       elif self.selected == 1:
-        self.fu_index += (self.fu_index + 1) % len(score_calculator.fu_lookup)
+        self.fu_index = (self.fu_index + 1) % len(score_calculator.fu_lookup)
       return True
 
     elif pressed[badger2040w.BUTTON_DOWN]:
       if self.selected == 0:
         self.han_index = (self.han_index - 1) % len(score_calculator.han_lookup)
       elif self.selected == 1:
-        self.fu_index += (self.fu_index - 1) % len(score_calculator.fu_lookup)
+        self.fu_index = (self.fu_index - 1) % len(score_calculator.fu_lookup)
       return True
 
     return super().on_button(app, pressed)

@@ -29,19 +29,17 @@ class GameRonServerState(BaseGameServerStateMixin):
     self.from_wind = from_wind
 
   def init(self):
-    dealer = self.game_state.player_for_wind(Wind.EAST)
     for player in self.game_state.players:
       if player.ron >= 0:
         continue
-      player.send_packet(RonWindServerPacket(self.from_wind, dealer == player))
+      player.send_packet(RonWindServerPacket(self.from_wind))
 
   def on_players_reconnect(self, clients: list[ServerClient]):
     super().on_players_reconnect(clients)
 
-    dealer = self.game_state.player_for_wind(Wind.EAST)
     for index, player in enumerate(self.game_state.players):
       if player.ron >= 0:
-        player.send_packet(RonWindServerPacket(self.from_wind, dealer == player))
+        player.send_packet(RonWindServerPacket(self.from_wind))
       else:
         player.send_packet(GameStateServerPacket(ClientGameState(
             index,

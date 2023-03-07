@@ -256,20 +256,14 @@ class RedrawServerPacket(Packet):
 
 
 class RonWindServerPacket(Packet):
-  fmt = 'BB'
+  fmt = 'B'
   id = 104
 
-  def __init__(self, from_wind: int, dealer: bool):
+  def __init__(self, from_wind: int):
     self.from_wind = from_wind
-    self.dealer = dealer
 
   def pack_data(self) -> bytes:
-    return (self.from_wind, 1 if self.dealer else 0)
-
-  @classmethod
-  def unpack(cls, buffer: bytes, offset=0):
-    from_wind, dealer = super()._unpack(cls, buffer, offset)
-    return (from_wind, dealer != 0,)
+    return (self.from_wind,)
 
 
 class RonScoreServerPacket(Packet):

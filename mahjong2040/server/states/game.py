@@ -14,6 +14,7 @@ from mahjong2040.shared import (
     GamePlayerTuple,
     GameState,
     Tenpai,
+    Wind,
 )
 
 from .shared import BaseGameServerStateMixin, GamePlayerType, ServerClient
@@ -54,12 +55,12 @@ class GameServerState(BaseGameServerStateMixin):
   def on_player_tsumo(self, player: GamePlayerType, packet: TsumoClientPacket):
     self.take_riichi_points([player])
 
+    from_dealer = self.game_state.player_wind(player) == Wind.EAST
     for other_player in self.game_state.players:
       if other_player == player:
         continue
 
-      other_player_wind = self.game_state.player_wind(other_player)
-      if other_player_wind == 0:
+      if from_dealer:
         points = packet.dealer_points
       else:
         points = packet.points

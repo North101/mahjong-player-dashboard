@@ -86,7 +86,7 @@ han_lookup = [
 ]
 
 
-def calculate_score(han, fu_index):
+def calculate_score(han, fu_index) -> tuple[int, int, int, int]:
     if han >= len(han_lookup):
         han = -1
     han_fu_lookup = han_lookup[han]
@@ -100,11 +100,11 @@ def calculate_score(han, fu_index):
     return han_fu
 
 
-def tsumo(han, fu_index, dealer):
-    (dealer_tsumo, non_dealer_tsumo, _, _) = calculate_score(han, fu_index)
+def tsumo(han: int, fu_index: int, dealer: bool):
+    (_, _, dealer_tsumo, non_dealer_tsumo) = calculate_score(han, fu_index)
     return dealer_tsumo if dealer else non_dealer_tsumo
 
 
-def ron(han, fu_index, dealer):
-    (_, _, dealer_ron, non_dealer_ron) = calculate_score(han, fu_index)
+def ron(han: int, fu_index: int, dealer: bool):
+    (dealer_ron, non_dealer_ron, _, _) = calculate_score(han, fu_index)
     return dealer_ron if dealer else non_dealer_ron

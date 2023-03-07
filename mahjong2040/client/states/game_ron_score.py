@@ -16,18 +16,16 @@ from .shared import GameReconnectClientState
 
 
 class GameRonScoreClientState(GameReconnectClientState):
-  def __init__(self, client, from_wind: int, dealer: bool):
+  def __init__(self, client, from_wind: int):
     super().__init__(client)
 
     self.from_wind = from_wind
-    self.dealer = dealer
     self.points = None
     self.score = HanInputWidget()
 
   def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, RonWindServerPacket):
       self.from_wind = packet.from_wind
-      self.dealer = packet.dealer
       self.points = None
       return True
 
@@ -40,7 +38,7 @@ class GameRonScoreClientState(GameReconnectClientState):
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.points is None:
-      self.send_packet(RonScoreClientPacket(self.score.ron(self.dealer)))
+      self.send_packet(RonScoreClientPacket(self.score.ron(self.from_wind == Wind.EAST)))
       return True
 
     return self.score.on_button(app, pressed)
