@@ -52,7 +52,7 @@ class LengthStruct(Struct):
 
 
 class PlayerStruct(Struct, GamePlayerMixin):
-  fmt = 'IB'
+  fmt = 'hB'
 
   def __init__(self, points: int, riichi: bool) -> None:
     self.points = points
@@ -68,7 +68,7 @@ class PlayerStruct(Struct, GamePlayerMixin):
 
 
 class GameStateStruct(Struct):
-  fmt = 'HHHHHB'
+  fmt = 'HBBBBB'
 
   def __init__(self, game_state: ClientGameState) -> None:
     self.game_state = game_state
@@ -155,7 +155,7 @@ class RiichiClientPacket(Packet):
 
 
 class TsumoClientPacket(Packet):
-  fmt = 'HH'
+  fmt = 'hh'
   id = 2
 
   def __init__(self, dealer_points: int, points: int):
@@ -178,7 +178,7 @@ class RonWindClientPacket(Packet):
 
 
 class RonScoreClientPacket(Packet):
-  fmt = 'I'
+  fmt = 'h'
   id = 4
 
   def __init__(self, points: int):
@@ -242,7 +242,7 @@ class GameStateServerPacket(Packet):
 
 
 class DrawTenpaiServerPacket(Packet):
-  fmt = 'H'
+  fmt = 'B'
   id = 102
 
   def __init__(self, tenpai: int):
@@ -275,7 +275,7 @@ class RonWindServerPacket(Packet):
 
 
 class RonScoreServerPacket(Packet):
-  fmt = 'BI'
+  fmt = 'Bh'
   id = 105
 
   def __init__(self, from_wind: int, points: int):
@@ -314,7 +314,7 @@ class SetupPlayerCountErrorServerPacket(Packet):
 
 
 class LobbyPlayersServerPacket(Packet):
-  fmt = 'HH'
+  fmt = 'BB'
   id = 109
 
   def __init__(self, count: int, max_players: int):
@@ -350,7 +350,7 @@ class GameReconnectStatusServerPacket(Packet):
 
 
 class TsumoServerPacket(Packet):
-  fmt = 'BHhhhh'
+  fmt = 'BBhhhh'
   id = 111
 
   def __init__(self, tsumo_wind: int, tsumo_hand: int, points: tuple[int, int, int, int], game_state: ClientGameState):
@@ -377,7 +377,7 @@ class TsumoServerPacket(Packet):
 
 
 class RonServerPacket(Packet):
-  fmt = 'BHhhhh'
+  fmt = 'BBhhhh'
   id = 112
 
   def __init__(self, ron_wind: int, ron_hand: int, points: tuple[int, int, int, int], game_state: ClientGameState):
@@ -404,7 +404,7 @@ class RonServerPacket(Packet):
 
 
 class DrawServerPacket(Packet):
-  fmt = 'HBBBBhhhh'
+  fmt = 'BBBBBhhhh'
   id = 113
 
   def __init__(self, draw_hand: int, tenpai: tuple[bool, bool, bool, bool], points: tuple[int, int, int, int], game_state: ClientGameState):
