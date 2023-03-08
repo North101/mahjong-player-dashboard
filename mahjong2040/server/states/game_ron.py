@@ -29,17 +29,17 @@ class GameRonServerState(BaseGameServerStateMixin):
     self.from_wind = from_wind
 
   def init(self):
-    for player in self.game_state.players:
+    for wind, player in self.game_state.players_by_wind:
       if player.ron >= 0:
         continue
-      player.send_packet(RonWindServerPacket(self.from_wind))
+      player.send_packet(RonWindServerPacket(self.from_wind, wind == Wind.EAST))
 
   def on_players_reconnect(self, clients: list[ServerClient]):
     super().on_players_reconnect(clients)
 
-    for index, player in enumerate(self.game_state.players):
+    for index, (wind, player) in enumerate(self.game_state.players_by_wind):
       if player.ron >= 0:
-        player.send_packet(RonWindServerPacket(self.from_wind))
+        player.send_packet(RonWindServerPacket(self.from_wind, wind == Wind.EAST))
       else:
         player.send_packet(GameStateServerPacket(ClientGameState(
             index,
@@ -77,7 +77,7 @@ class GameRonServerState(BaseGameServerStateMixin):
       self.child = GameServerState(self.server, self.game_state)
       return
 
-    self.take_riichi_points(winners)
+    self.distribute_riichi_points(winners)
     from_player = self.game_state.player_for_wind(self.from_wind)
     honba_points = self.game_state.total_honba * RON_HONBA_POINTS
     for player in winners:

@@ -165,7 +165,7 @@ class GameState(Generic[PlayerType]):
     return (wind + self.hand) % len(Wind)
 
   def player_for_wind(self, wind: int) -> GamePlayerMixin:
-    return self.players[self.player_index_for_wind(wind) % len(Wind)]
+    return self.players[self.player_index_for_wind(wind)]
 
   def __repr__(self):
     return f'{self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'

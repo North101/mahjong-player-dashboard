@@ -41,7 +41,7 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
     except StopIteration:
       return None
 
-  def take_riichi_points(self, winners: list[GamePlayerType]):
+  def distribute_riichi_points(self, winners: list[GamePlayerType]):
     winner = next((
         player
         for _, player in self.game_state.players_by_wind

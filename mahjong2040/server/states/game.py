@@ -53,25 +53,26 @@ class GameServerState(BaseGameServerStateMixin):
     self.update_player_states()
 
   def on_player_tsumo(self, player: GamePlayerType, packet: TsumoClientPacket):
-    self.take_riichi_points([player])
+    self.distribute_riichi_points([player])
 
-    from_dealer = self.game_state.player_wind(player) == Wind.EAST
-    for other_player in self.game_state.players:
+    tsumo_wind = self.game_state.player_wind(player)
+    dealer_tsumo = tsumo_wind == Wind.EAST
+    for wind, other_player in self.game_state.players_by_wind:
       if other_player == player:
         continue
 
-      if from_dealer:
+      other_player_is_dealer = wind == Wind.EAST
+      if dealer_tsumo or other_player_is_dealer:
         points = packet.dealer_points
       else:
         points = packet.points
       points += self.game_state.total_honba * TSUMO_HONBA_POINTS
       player.take_points(other_player, points)
 
-    tsumo_wind = self.game_state.player_wind(player)
     tsumo_hand = self.game_state.hand
     total_honba = self.game_state.total_honba
 
-    if self.game_state.player_wind(player) == 0:
+    if tsumo_wind == Wind.EAST:
       self.repeat_hand()
     else:
       self.next_hand()
