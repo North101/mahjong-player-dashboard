@@ -16,7 +16,7 @@ Direction = DirectionState()
 class ArrowWidget(Widget):
   size = Size(60, 40)
 
-  def __init__(self, arrow: Direction, lines: int):
+  def __init__(self, arrow: int, lines: int):
     self.arrow = arrow
     self.lines = lines
   
@@ -33,7 +33,7 @@ class ArrowWidget(Widget):
       offset.y + y2,
     )
   
-  def draw_line(self, app: 'App', size: Size, offset: Offset, direction: Direction):
+  def draw_line(self, app: 'App', size: Size, offset: Offset, direction: int):
       half_width = size.width // 2
       half_height = size.height // 2
       x = offset.x + half_width

@@ -62,6 +62,7 @@ class GameSetupServerState(ServerState):
                     GamePlayer(self.players[2], STARTING_POINTS),
                     GamePlayer(self.players[3], STARTING_POINTS),
                 ),
+                starting_points=STARTING_POINTS,
             ),
         )
       else:

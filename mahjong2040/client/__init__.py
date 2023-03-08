@@ -2,6 +2,7 @@ import select
 import socket
 
 from badger_ui import App
+from mahjong2040.client.shared import ClientSettings
 from mahjong2040.packets import Packet, read_packet, read_packet_from, send_packet
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
@@ -101,6 +102,7 @@ class Client(App):
     self.socket: socket.socket | None = None
     self.server: ClientServer | None = None
     self.events: list[Packet] = []
+    self.settings = ClientSettings(absolute_scores=True)
   
   @property
   def child(self):

@@ -68,13 +68,14 @@ class PlayerStruct(Struct, GamePlayerMixin):
 
 
 class GameStateStruct(Struct):
-  fmt = 'HHHHB'
+  fmt = 'HHHHHB'
 
   def __init__(self, game_state: ClientGameState) -> None:
     self.game_state = game_state
 
   def pack_data(self) -> tuple:
     return (
+        self.game_state.starting_points,
         self.game_state.hand,
         self.game_state.repeat,
         self.game_state.bonus_honba,
@@ -90,7 +91,7 @@ class GameStateStruct(Struct):
 
   @classmethod
   def unpack(cls, buffer: bytes, offset=0):
-    hand, repeat, bonus_honba, bonus_riichi, player_index = super()._unpack(cls, buffer, offset)
+    starting_points, hand, repeat, bonus_honba, bonus_riichi, player_index = super()._unpack(cls, buffer, offset)
     offset += super()._size(cls)
 
     player_size = PlayerStruct.size()
@@ -101,6 +102,7 @@ class GameStateStruct(Struct):
     return ClientGameState(
       player_index,
       players,
+      starting_points,
       hand,
       repeat,
       bonus_honba,
@@ -239,7 +241,7 @@ class GameStateServerPacket(Packet):
     return super()._size(cls) + GameStateStruct.size()
 
 
-class DrawServerPacket(Packet):
+class DrawTenpaiServerPacket(Packet):
   fmt = 'H'
   id = 102
 
@@ -348,32 +350,26 @@ class GameReconnectStatusServerPacket(Packet):
 
 
 class TsumoServerPacket(Packet):
-  fmt = 'BHHH'
+  fmt = 'BHhhhh'
   id = 111
 
-  def __init__(self, tsumo_wind: int, tsumo_hand: int, dealer_points: int, nondealer_points: int, game_state: ClientGameState):
+  def __init__(self, tsumo_wind: int, tsumo_hand: int, points: tuple[int, int, int, int], game_state: ClientGameState):
     self.game_state = game_state
     self.tsumo_wind = tsumo_wind
     self.tsumo_hand = tsumo_hand
-    self.dealer_points = dealer_points
-    self.nondealer_points = nondealer_points
+    self.points = points
 
   def pack_data(self) -> tuple:
-    return (
-      self.tsumo_wind,
-      self.tsumo_hand,
-      self.dealer_points,
-      self.nondealer_points,
-    )
+    return (self.tsumo_wind, self.tsumo_hand) + self.points
 
   def pack(self):
     return super().pack() + GameStateStruct(self.game_state).pack()
 
   @staticmethod
   def _unpack(cls, buffer: bytes, offset=0):
-    data = super()._unpack(cls, buffer, offset)
+    tsumo_wind, tsumo_hand, *points = super()._unpack(cls, buffer, offset)
     offset += super()._size(cls)
-    return data + GameStateStruct.unpack(buffer, offset=offset)
+    return (tsumo_wind, tsumo_hand, points) + GameStateStruct.unpack(buffer, offset=offset)
 
   @staticmethod
   def _size(cls):
@@ -381,25 +377,48 @@ class TsumoServerPacket(Packet):
 
 
 class RonServerPacket(Packet):
-  fmt = 'BHHHH'
+  fmt = 'BHhhhh'
   id = 112
 
-  def __init__(self, ron_wind: int, ron_hand: int, player1_points: int, player2_points: int, player3_points: int, game_state: ClientGameState):
+  def __init__(self, ron_wind: int, ron_hand: int, points: tuple[int, int, int, int], game_state: ClientGameState):
     self.game_state = game_state
     self.ron_wind = ron_wind
     self.ron_hand = ron_hand
-    self.player1_points = player1_points
-    self.player2_points = player2_points
-    self.player3_points = player3_points
+    self.points = points
 
   def pack_data(self) -> tuple:
-    return (
-      self.ron_wind,
-      self.ron_hand,
-      self.player1_points,
-      self.player2_points,
-      self.player3_points,
-    )
+    return (self.ron_wind, self.ron_hand) + self.points
+
+  def pack(self):
+    return super().pack() + GameStateStruct(self.game_state).pack()
+
+  @staticmethod
+  def _unpack(cls, buffer: bytes, offset=0):
+    ron_wind, ron_hand, *points = super()._unpack(cls, buffer, offset)
+    offset += super()._size(cls)
+    return (ron_wind, ron_hand, points) + GameStateStruct.unpack(buffer, offset=offset)
+
+  @staticmethod
+  def _size(cls):
+    return super()._size(cls) + GameStateStruct.size()
+
+
+class DrawServerPacket(Packet):
+  fmt = 'HBBBBhhhh'
+  id = 113
+
+  def __init__(self, draw_hand: int, tenpai: tuple[bool, bool, bool, bool], points: tuple[int, int, int, int], game_state: ClientGameState):
+    self.draw_hand = draw_hand
+    self.tenpai = tenpai
+    self.points = points
+    self.game_state = game_state
+
+  def pack_data(self) -> tuple:
+    tenpai = tuple((
+      1 if tenpai else 0
+      for tenpai in self.tenpai
+    ))
+    return (self.draw_hand,) + tenpai + self.points
 
   def pack(self):
     return super().pack() + GameStateStruct(self.game_state).pack()
@@ -407,8 +426,14 @@ class RonServerPacket(Packet):
   @staticmethod
   def _unpack(cls, buffer: bytes, offset=0):
     data = super()._unpack(cls, buffer, offset)
+    draw_hand = data[0]
+    tenpai = tuple((
+      tenpai != 0
+      for tenpai in data[1:5]
+    ))
+    points = tuple(data[5:9])
     offset += super()._size(cls)
-    return data + GameStateStruct.unpack(buffer, offset=offset)
+    return (draw_hand, tenpai, points) + GameStateStruct.unpack(buffer, offset=offset)
 
   @staticmethod
   def _size(cls):
@@ -431,12 +456,13 @@ packets: set = {
     ConfirmWindServerPacket,
     SetupPlayerCountErrorServerPacket,
     GameStateServerPacket,
-    DrawServerPacket,
+    DrawTenpaiServerPacket,
     RonWindServerPacket,
     RonScoreServerPacket,
     GameReconnectStatusServerPacket,
     TsumoServerPacket,
     RonServerPacket,
+    DrawServerPacket,
 }
 assert(len({
     packet.id

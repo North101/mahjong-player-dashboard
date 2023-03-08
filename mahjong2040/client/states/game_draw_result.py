@@ -4,7 +4,7 @@ from badger_ui.padding import EdgeOffsets, Padding
 
 import badger2040w
 from mahjong2040.client import Client
-from mahjong2040.packets import GameStateServerPacket, Packet, RonServerPacket
+from mahjong2040.packets import DrawServerPacket, GameStateServerPacket, Packet
 from mahjong2040.shared import Wind
 
 from .shared import GameReconnectClientState
@@ -12,23 +12,20 @@ from .widgets.arrow import ArrowWidget, Direction
 from .widgets.player import PlayerWidget
 
 
-class RonResultClientState(GameReconnectClientState):
-  def __init__(self, client: 'Client', packet: RonServerPacket):
+class DrawResultClientState(GameReconnectClientState):
+  def __init__(self, client: Client, packet: DrawServerPacket):
     super().__init__(client)
 
     self.packet = packet
     self.game_state = packet.game_state
 
   @property
-  def from_player(self):
-    return (self.packet.ron_wind - self.game_state.player_index + self.packet.ron_hand) % len(Wind)
-
-  @property
   def players_from_me(self):
     for i in range(len(Wind)):
-      player_wind = (i + self.game_state.player_index - self.packet.ron_hand) % len(Wind)
+      player_wind = (i + self.game_state.player_index - self.packet.draw_hand) % len(Wind)
+      tenpai = self.packet.tenpai[(i + self.game_state.player_index) % len(Wind)]
       points = self.packet.points[(i + self.game_state.player_index) % len(Wind)]
-      yield player_wind, points
+      yield player_wind, tenpai, points
 
   def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, GameStateServerPacket):
@@ -48,36 +45,31 @@ class RonResultClientState(GameReconnectClientState):
   def render(self, app: App, size: Size, offset: Offset):
     super().render(app, size, offset)
 
-    (wind0, player0), (wind1, player1), (wind2, player2), (wind3, player3) = self.players_from_me
+    (wind0, tenpai0, player0), (wind1, tenpai1, player1), (wind2, tenpai2, player2), (wind3, tenpai3, player3) = self.players_from_me
 
-    if player0 != 0:
-      Bottom(child=Center(child=PlayerWidget(
-          points=player0,
-          wind=wind0,
-          absolute=False,
-      ))).render(app, size, offset)
-    if player1 != 0:
-      Right(child=Center(child=PlayerWidget(
-          points=player1,
-          wind=wind1,
-          absolute=False,
-      ))).render(app, size, offset)
-    if player2 != 0:
-      Top(child=Center(child=PlayerWidget(
-          points=player2,
-          wind=wind2,
-          absolute=False,
-      ))).render(app, size, offset)
-    if player3 != 0:
-      Left(child=Center(child=PlayerWidget(
-          points=player3,
-          wind=wind3,
-          absolute=False,
-      ))).render(app, size, offset)
+    Bottom(child=Center(child=PlayerWidget(
+        points=player0,
+        wind=wind0,
+        absolute=False,
+    ))).render(app, size, offset)
+    Right(child=Center(child=PlayerWidget(
+        points=player1,
+        wind=wind1,
+        absolute=False,
+    ))).render(app, size, offset)
+    Top(child=Center(child=PlayerWidget(
+        points=player2,
+        wind=wind2,
+        absolute=False,
+    ))).render(app, size, offset)
+    Left(child=Center(child=PlayerWidget(
+        points=player3,
+        wind=wind3,
+        absolute=False,
+    ))).render(app, size, offset)
 
-    from_player = self.from_player
-    if from_player == 0:
-      if player1 != 0:
+    if not tenpai0:
+      if tenpai1:
         Bottom(child=Right(child=Padding(
           padding=EdgeOffsets(right=20),
           child=ArrowWidget(
@@ -85,12 +77,12 @@ class RonResultClientState(GameReconnectClientState):
             lines=Direction.UP | Direction.LEFT,
           ),
         ))).render(app, size, offset)
-      if player2 != 0:
+      if tenpai2:
         Center(child=ArrowWidget(
           arrow=Direction.UP,
           lines=Direction.UP | Direction.DOWN,
         )).render(app, size, offset)
-      if player3 != 0:
+      if tenpai3:
         Bottom(child=Left(child=Padding(
           padding=EdgeOffsets(left=20),
           child=ArrowWidget(
@@ -99,8 +91,8 @@ class RonResultClientState(GameReconnectClientState):
           ),
         ))).render(app, size, offset)
 
-    elif from_player == 1:
-      if player2 != 0:
+    if not tenpai1:
+      if tenpai2:
         Top(child=Right(child=Padding(
           padding=EdgeOffsets(right=20),
           child=ArrowWidget(
@@ -108,12 +100,12 @@ class RonResultClientState(GameReconnectClientState):
             lines=Direction.LEFT | Direction.DOWN,
           ),
         ))).render(app, size, offset)
-      if player3 != 0:
+      if tenpai3:
         Center(child=ArrowWidget(
           arrow=Direction.LEFT,
           lines=Direction.LEFT | Direction.RIGHT,
         )).render(app, size, offset)
-      if player0 != 0:
+      if tenpai0:
         Bottom(child=Right(child=Padding(
           padding=EdgeOffsets(right=20),
           child=ArrowWidget(
@@ -122,8 +114,8 @@ class RonResultClientState(GameReconnectClientState):
           ),
         ))).render(app, size, offset)
 
-    elif from_player == 2:
-      if player3 != 0:
+    if not tenpai2:
+      if tenpai3:
         Top(child=Left(child=Padding(
           padding=EdgeOffsets(left=20),
           child=ArrowWidget(
@@ -131,12 +123,12 @@ class RonResultClientState(GameReconnectClientState):
             lines=Direction.DOWN | Direction.RIGHT,
           ),
         ))).render(app, size, offset)
-      if player0 != 0:
+      if tenpai0:
         Center(child=ArrowWidget(
           arrow=Direction.DOWN,
           lines=Direction.DOWN | Direction.UP,
         )).render(app, size, offset)
-      if player1 != 0:
+      if tenpai1:
         Top(child=Right(child=Padding(
           padding=EdgeOffsets(right=20),
           child=ArrowWidget(
@@ -145,8 +137,8 @@ class RonResultClientState(GameReconnectClientState):
           ),
         ))).render(app, size, offset)
 
-    elif from_player == 3:
-      if player0 != 0:
+    if not tenpai3:
+      if tenpai0:
         Bottom(child=Left(child=Padding(
           padding=EdgeOffsets(left=20),
           child=ArrowWidget(
@@ -154,12 +146,12 @@ class RonResultClientState(GameReconnectClientState):
             lines=Direction.RIGHT | Direction.UP,
           ),
         ))).render(app, size, offset)
-      if player1 != 0:
+      if tenpai1:
         Center(child=ArrowWidget(
           arrow=Direction.RIGHT,
           lines=Direction.RIGHT | Direction.LEFT,
         )).render(app, size, offset)
-      if player2 != 0:
+      if tenpai2:
         Top(child=Left(child=Padding(
           padding=EdgeOffsets(left=20),
           child=ArrowWidget(

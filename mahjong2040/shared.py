@@ -4,7 +4,7 @@ Address: TypeAlias = Tuple[str, int]
 
 
 STARTING_POINTS = 250
-DRAW_POINTS = 10
+DRAW_POINTS = 30
 RIICHI_POINTS = 10
 TSUMO_HONBA_POINTS = 1
 RON_HONBA_POINTS = 3
@@ -130,12 +130,14 @@ class GameState(Generic[PlayerType]):
   def __init__(
       self,
       players: GamePlayerTuple[PlayerType],
+      starting_points: int,
       hand: int = 0,
       repeat: int = 0,
       bonus_honba: int = 0,
       bonus_riichi: int = 0,
   ):
     self.players = players
+    self.starting_points = starting_points
     self.hand = hand
     self.repeat = repeat
     self.bonus_honba = bonus_honba
@@ -176,12 +178,13 @@ class ClientGameState(GameState):
       self,
       player_index: int,
       players: 'GamePlayerTuple',
+      starting_points: int,
       hand: int = 0,
       repeat: int = 0,
       bonus_honba: int = 0,
       bonus_riichi: int = 0,
   ):
-    super().__init__(players, hand, repeat, bonus_honba, bonus_riichi)
+    super().__init__(players, starting_points, hand, repeat, bonus_honba, bonus_riichi)
 
     self.player_index = player_index
 

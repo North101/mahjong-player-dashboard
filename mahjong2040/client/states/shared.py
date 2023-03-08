@@ -1,5 +1,6 @@
 from mahjong2040.packets import (
     DrawServerPacket,
+    DrawTenpaiServerPacket,
     GameStateServerPacket,
     Packet,
     RonServerPacket,
@@ -22,12 +23,17 @@ class GameReconnectClientState(ClientState):
       self.child = RonResultClientState(self.client, packet)
       return True
 
+    if isinstance(packet, DrawServerPacket):
+      from .game_draw_result import DrawResultClientState
+      self.child = DrawResultClientState(self.client, packet)
+      return True
+
     elif isinstance(packet, GameStateServerPacket):
       from .game import GameClientState
       self.child = GameClientState(self.client, packet.game_state)
       return True
 
-    elif isinstance(packet, DrawServerPacket):
+    elif isinstance(packet, DrawTenpaiServerPacket):
       from .game_draw import GameDrawClientState
       self.child = GameDrawClientState(self.client, packet.tenpai)
       return True

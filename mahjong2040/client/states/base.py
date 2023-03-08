@@ -26,6 +26,10 @@ class ClientState(Widget):
   def child(self, child: 'ClientState'):
     self.client.child = child
   
+  @property
+  def settings(self):
+    return self.client.settings
+  
   def on_broadcast_packet(self, packet: Packet, address: Address):
     pass
 

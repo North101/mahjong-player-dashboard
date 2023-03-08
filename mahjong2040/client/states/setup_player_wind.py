@@ -32,9 +32,8 @@ class SetupPlayerWindClientState(ClientState):
 
   def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, SetupPlayerWindServerPacket):
-      if self.next_wind != packet.wind:
-        self.next_wind = packet.wind
-        self.init()
+      self.next_wind = packet.wind
+      self.init()
 
       return True
 

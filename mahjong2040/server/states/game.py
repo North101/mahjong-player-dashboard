@@ -50,6 +50,11 @@ class GameServerState(BaseGameServerStateMixin):
   def on_player_tsumo(self, player: GamePlayerType, packet: TsumoClientPacket):
     self.distribute_riichi_points([player])
 
+    player_points = tuple((
+      player.points
+      for player in self.game_state.players
+    ))
+
     tsumo_wind = self.game_state.player_wind(player)
     dealer_tsumo = tsumo_wind == Wind.EAST
     for wind, other_player in self.game_state.players_by_wind:
@@ -77,6 +82,7 @@ class GameServerState(BaseGameServerStateMixin):
         game_state=ClientGameState(
           index,
           players=self.game_state.players,
+          starting_points=self.game_state.starting_points,
           hand=self.game_state.hand,
           repeat=self.game_state.repeat,
           bonus_honba=self.game_state.bonus_honba,
@@ -84,8 +90,10 @@ class GameServerState(BaseGameServerStateMixin):
         ),
         tsumo_wind=tsumo_wind,
         tsumo_hand=tsumo_hand,
-        dealer_points=packet.dealer_points + (total_honba * TSUMO_HONBA_POINTS),
-        nondealer_points=packet.points + (total_honba * TSUMO_HONBA_POINTS),
+        points=tuple((
+          player.points - player_points[i]
+          for i, player in enumerate(self.game_state.players)
+        )),
       ))
 
   def on_player_ron(self, player: GamePlayerType, packet: RonWindClientPacket):
@@ -117,6 +125,7 @@ class GameServerState(BaseGameServerStateMixin):
                 ron_player(player3),
                 ron_player(player4),
             ),
+            starting_points=self.game_state.starting_points,
             hand=self.game_state.hand,
             repeat=self.game_state.repeat,
             bonus_honba=self.game_state.bonus_honba,
@@ -142,6 +151,7 @@ class GameServerState(BaseGameServerStateMixin):
                 draw_player(player3),
                 draw_player(player4),
             ),
+            starting_points=self.game_state.starting_points,
             hand=self.game_state.hand,
             repeat=self.game_state.repeat,
             bonus_honba=self.game_state.bonus_honba,
@@ -158,6 +168,7 @@ class GameServerState(BaseGameServerStateMixin):
       player.send_packet(GameStateServerPacket(ClientGameState(
           index,
           players=self.game_state.players,
+          starting_points=self.game_state.starting_points,
           hand=self.game_state.hand,
           repeat=self.game_state.repeat,
           bonus_honba=self.game_state.bonus_honba,

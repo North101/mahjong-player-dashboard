@@ -27,20 +27,7 @@ class TsumoResultClientState(GameReconnectClientState):
   def players_from_me(self):
     for i in range(len(Wind)):
       player_wind = (i + self.game_state.player_index - self.packet.tsumo_hand) % len(Wind)
-      dealer_tsumo = self.packet.tsumo_wind == Wind.EAST
-      player_is_dealer = player_wind == Wind.EAST
-      player_is_winner = player_wind == self.packet.tsumo_wind
-      if player_is_winner:
-        if player_is_dealer:
-          points = self.packet.dealer_points * 3
-        else:
-          points = self.packet.dealer_points + (self.packet.nondealer_points * 2)
-      else:
-        if dealer_tsumo or player_is_dealer:
-          points = -self.packet.dealer_points
-        else:
-          points = -self.packet.nondealer_points
-
+      points = self.packet.points[(i + self.game_state.player_index) % len(Wind)]
       yield player_wind, points
 
   def on_server_packet(self, packet: Packet) -> bool:

@@ -52,6 +52,11 @@ class GameRonServerState(BaseGameServerStateMixin):
     if any((player.ron < 0 for player in self.game_state.players)):
       return
 
+    player_points = tuple((
+      player.points
+      for player in self.game_state.players
+    ))
+
     winners = [
         player
         for player in self.game_state.players
@@ -69,10 +74,6 @@ class GameRonServerState(BaseGameServerStateMixin):
       player.take_points(from_player, points)
 
     hand = self.game_state.hand
-    player1_points = self.game_state.player_for_wind(self.from_wind + 1).ron + honba_points
-    player2_points = self.game_state.player_for_wind(self.from_wind + 2).ron + honba_points
-    player3_points = self.game_state.player_for_wind(self.from_wind + 3).ron + honba_points
-
     if self.game_state.player_for_wind(Wind.EAST) in winners:
       self.repeat_hand()
     else:
@@ -83,6 +84,7 @@ class GameRonServerState(BaseGameServerStateMixin):
         game_state=ClientGameState(
           index,
           players=self.game_state.players,
+          starting_points=self.game_state.starting_points,
           hand=self.game_state.hand,
           repeat=self.game_state.repeat,
           bonus_honba=self.game_state.bonus_honba,
@@ -90,9 +92,10 @@ class GameRonServerState(BaseGameServerStateMixin):
         ),
         ron_wind=self.from_wind,
         ron_hand=hand,
-        player1_points=player1_points,
-        player2_points=player2_points,
-        player3_points=player3_points,
+        points=tuple((
+          player.points - player_points[i]
+          for i, player in enumerate(self.game_state.players)
+        )),
       ))
 
     self.child = GameServerState(self.server, self.game_state)

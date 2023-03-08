@@ -8,7 +8,7 @@ from badger_ui.text import TextWidget
 
 import badger2040w
 from mahjong2040.client import Client
-from mahjong2040.packets import DrawClientPacket, DrawServerPacket, Packet
+from mahjong2040.packets import DrawClientPacket, DrawTenpaiServerPacket, Packet
 from mahjong2040.shared import Tenpai
 
 from .shared import GameReconnectClientState
@@ -40,7 +40,7 @@ class GameDrawClientState(GameReconnectClientState):
     return True
 
   def on_server_packet(self,packet: Packet) -> bool:
-    if isinstance(packet, DrawServerPacket):
+    if isinstance(packet, DrawTenpaiServerPacket):
       self.tenpai = packet.tenpai
       return True
 

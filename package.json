@@ -83,6 +83,10 @@
       "file:./mahjong2040/client/__init__.py"
     ],
     [
+      "mahjong2040/client/shared.py",
+      "file:./mahjong2040/client/shared.py"
+    ],
+    [
       "mahjong2040/client/states/setup_player_wind.py",
       "file:./mahjong2040/client/states/setup_player_wind.py"
     ],
@@ -133,6 +137,10 @@
     [
       "mahjong2040/client/states/base.py",
       "file:./mahjong2040/client/states/base.py"
+    ],
+    [
+      "mahjong2040/client/states/game_draw_result.py",
+      "file:./mahjong2040/client/states/game_draw_result.py"
     ],
     [
       "mahjong2040/client/states/game_menu.py",
