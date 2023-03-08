@@ -4,7 +4,7 @@ from mahjong2040.packets import (
     GameStateServerPacket,
     Packet,
 )
-from mahjong2040.shared import DRAW_POINTS, ClientGameState, GameState, Tenpai, Wind
+from mahjong2040.shared import DRAW_POINTS, GameState, Tenpai, Wind
 
 from .shared import BaseGameServerStateMixin, GamePlayer, ServerClient
 
@@ -22,20 +22,6 @@ class GameDrawServerState(BaseGameServerStateMixin):
 
   def init(self):
     for player in self.game_state.players:
-      player.send_packet(DrawServerPacket(player.tenpai))
-
-  def on_players_reconnect(self, clients: list[ServerClient]):
-    super().on_players_reconnect(clients)
-
-    for index, player in enumerate(self.game_state.players):
-      player.send_packet(GameStateServerPacket(ClientGameState(
-          index,
-          self.game_state.players,
-          self.game_state.hand,
-          self.game_state.repeat,
-          self.game_state.bonus_honba,
-          self.game_state.bonus_riichi,
-      )))
       player.send_packet(DrawServerPacket(player.tenpai))
 
   def on_client_packet(self, client: ServerClient, packet: Packet):

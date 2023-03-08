@@ -6,6 +6,7 @@ from badger_ui.row import Row
 from badger_ui.text import TextWidget
 
 import badger2040w
+from mahjong2040.client import Client
 from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
 from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
 
@@ -17,7 +18,7 @@ class GameClientState(GameReconnectClientState):
   player_size = Size(115, 30)
   round_size = Size(40, 8)
 
-  def __init__(self, client, game_state: ClientGameState):
+  def __init__(self, client: Client, game_state: ClientGameState):
     super().__init__(client)
 
     self.game_state = game_state

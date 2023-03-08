@@ -5,6 +5,7 @@ from badger_ui.text import TextWidget
 import badger2040w
 from badger_ui import App, Offset, Size
 from mahjong2040 import config
+from mahjong2040.client import Client
 from mahjong2040.packets import (
     ConfirmWindServerPacket,
     GameStateServerPacket,
@@ -19,7 +20,7 @@ from .base import ClientState
 
 
 class SetupPlayerWindClientState(ClientState):
-  def __init__(self, client, wind: int):
+  def __init__(self, client: Client, wind: int):
     super().__init__(client)
 
     self.next_wind = wind
@@ -27,7 +28,7 @@ class SetupPlayerWindClientState(ClientState):
 
   def init(self):
     if config.select_wind == self.next_wind and self.confirmed_wind is None:
-      self.send_packet(SetupPlayerWindClientPacket(config.select_wind))
+      self.send_packet(SetupPlayerWindClientPacket(self.next_wind))
 
   def on_server_packet(self, packet: Packet) -> bool:
     if isinstance(packet, SetupPlayerWindServerPacket):

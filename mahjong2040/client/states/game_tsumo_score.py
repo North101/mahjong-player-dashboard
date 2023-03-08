@@ -3,10 +3,10 @@ from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
 
 import badger2040w
-from mahjong2040.client.widgets.han_input import HanInputWidget
 from mahjong2040.packets import TsumoClientPacket
 
 from .shared import GameReconnectClientState
+from .widgets.han_input import HanInputWidget
 
 
 class GameTsumoScoreClientState(GameReconnectClientState):

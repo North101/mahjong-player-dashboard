@@ -34,22 +34,6 @@ class GameRonServerState(BaseGameServerStateMixin):
         continue
       player.send_packet(RonWindServerPacket(self.from_wind, wind == Wind.EAST))
 
-  def on_players_reconnect(self, clients: list[ServerClient]):
-    super().on_players_reconnect(clients)
-
-    for index, (wind, player) in enumerate(self.game_state.players_by_wind):
-      if player.ron >= 0:
-        player.send_packet(RonWindServerPacket(self.from_wind, wind == Wind.EAST))
-      else:
-        player.send_packet(GameStateServerPacket(ClientGameState(
-            index,
-            self.game_state.players,
-            self.game_state.hand,
-            self.game_state.repeat,
-            self.game_state.bonus_honba,
-            self.game_state.bonus_riichi,
-        )))
-
   def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
     if not player:

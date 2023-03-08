@@ -13,25 +13,28 @@ from mahjong2040.poll import Poll
 
 from .shared import RemoteServerClient, ServerClient
 
+try:
+  from .states.base import ServerState
+except:
+  pass
 
 class Server:
   def __init__(self, poll: Poll):
-    from .states.base import ServerState
     from .states.lobby import LobbyServerState
 
     self.poll = poll
-    self.broadcast: socket.socket = None
-    self.socket: socket.socket = None
+    self.broadcast: socket.socket | None = None
+    self.socket: socket.socket | None = None
     self.clients: list[ServerClient] = []
-    self._child = None
-    self.child: ServerState = LobbyServerState(self)
+    self._child: ServerState | None = None
+    self.child = LobbyServerState(self)
   
   @property
   def child(self):
     return self._child
   
   @child.setter
-  def child(self, value):
+  def child(self, value: 'ServerState'):
     if self._child is value:
       return
     
@@ -62,7 +65,7 @@ class Server:
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:
       packet, address = read_packet_from(_socket)
-      if isinstance(packet, BroadcastClientPacket):
+      if isinstance(packet, BroadcastClientPacket) and address:
         send_packet_to(_socket, BroadcastServerPacket(), address)
   
   def client_from_socket(self, _socket: socket.socket):
@@ -77,11 +80,13 @@ class Server:
   
   def add_client(self, client: ServerClient):
     self.clients.append(client)
-    self.child.on_client_join(client)
+    if self.child:
+      self.child.on_client_join(client)
 
   def remove_client(self, client: ServerClient):
     self.clients.remove(client)
-    self.child.on_client_leave(client)
+    if self.child:
+      self.child.on_client_leave(client)
 
   def on_server_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:
@@ -118,4 +123,5 @@ class Server:
     _socket.close()
 
   def on_client_packet(self, client: ServerClient, packet: Packet):
-    self.child.on_client_packet(client, packet)
+    if self.child:
+      self.child.on_client_packet(client, packet)

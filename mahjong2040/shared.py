@@ -21,7 +21,7 @@ class IntEnum:
         if isinstance(value, int)
     ]
   
-  def by_name(self, value):
+  def by_name(self, value: str):
     return next((
       item[1]
       for item in self.__items__
@@ -164,7 +164,7 @@ class GameState(Generic[PlayerType]):
   def player_index_for_wind(self, wind: int):
     return (wind + self.hand) % len(Wind)
 
-  def player_for_wind(self, wind: int) -> GamePlayerMixin:
+  def player_for_wind(self, wind: int) -> PlayerType:
     return self.players[self.player_index_for_wind(wind)]
 
   def __repr__(self):

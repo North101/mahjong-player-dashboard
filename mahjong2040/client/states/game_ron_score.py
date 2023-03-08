@@ -3,7 +3,7 @@ from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
 
 import badger2040w
-from mahjong2040.client.widgets.han_input import HanInputWidget
+from mahjong2040.client import Client
 from mahjong2040.packets import (
     Packet,
     RonScoreClientPacket,
@@ -13,10 +13,11 @@ from mahjong2040.packets import (
 from mahjong2040.shared import Wind
 
 from .shared import GameReconnectClientState
+from .widgets.han_input import HanInputWidget
 
 
 class GameRonScoreClientState(GameReconnectClientState):
-  def __init__(self, client, from_wind: int, is_dealer: bool):
+  def __init__(self, client: Client, from_wind: int, is_dealer: bool):
     super().__init__(client)
 
     self.from_wind = from_wind

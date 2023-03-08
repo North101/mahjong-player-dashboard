@@ -2,20 +2,21 @@ import network
 from badger_ui.align import Bottom, Center
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
+
+from badger_ui import App, Offset, Size
+from mahjong2040.client import Client
 from mahjong2040.packets import (
     LobbyPlayersServerPacket,
     Packet,
     SetupPlayerWindServerPacket,
 )
 
-from badger_ui import App, Offset, Size
-
 from .base import ClientState
 from .setup_player_wind import SetupPlayerWindClientState
 
 
 class LobbyClientState(ClientState):
-  def __init__(self, client, count: tuple[int, int] | None = None):
+  def __init__(self, client: Client, count: tuple[int, int] | None = None):
     super().__init__(client)
 
     self.count = count

@@ -2,17 +2,18 @@ from badger_ui.align import Center
 from badger_ui.row import Row
 from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
-from mahjong2040.packets import RonWindClientPacket
-from mahjong2040.shared import Wind
 
 import badger2040w
 from badger_ui import App, Offset, Size
+from mahjong2040.client import Client
+from mahjong2040.packets import RonWindClientPacket
+from mahjong2040.shared import Wind
 
 from .shared import GameReconnectClientState
 
 
 class GameRonWindClientState(GameReconnectClientState):
-  def __init__(self, client, players: list[int]):
+  def __init__(self, client: 'Client', players: list[int]):
     super().__init__(client)
 
     self.players = players

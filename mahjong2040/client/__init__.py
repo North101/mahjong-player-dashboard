@@ -7,8 +7,8 @@ from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 
 try:
+  from mahjong2040.client.states.base import ClientState
   from mahjong2040.server import Server
-  from mahjong2040.server.shared import LocalServerClient
 except:
   pass
 
@@ -28,11 +28,12 @@ class ClientServer:
 
 
 class RemoteClientServer(ClientServer):
+  socket: 'socket.socket'
+
   def __init__(self, client: 'Client', poll: Poll, address: Address):
     self.client: 'Client' = client
     self.poll = poll
     self.address = address
-    self.socket: socket.socket = None
   
   def connect(self):
     host, port = self.address
@@ -44,7 +45,7 @@ class RemoteClientServer(ClientServer):
     print(f'Client connecting to {addrinfo}')
     self.socket.connect(addrinfo)
 
-  def on_server_data(self, server: socket.socket, event: int):
+  def on_server_data(self, server: 'socket.socket', event: int):
     if event & (select.POLLHUP | select.POLLERR | 32):
       self.on_server_disconnect(server)
     elif event & select.POLLIN:
@@ -57,7 +58,7 @@ class RemoteClientServer(ClientServer):
     else:
       print(event)
 
-  def on_server_disconnect(self, server: socket.socket):
+  def on_server_disconnect(self, server: 'socket.socket'):
     self.dirty = True
     self.poll.unregister(server)
     server.close()
@@ -68,14 +69,16 @@ class RemoteClientServer(ClientServer):
     send_packet(self.socket, packet)
 
   def close(self):
-    if self.socket is None:
+    if not hasattr(self, 'socket'):
       return
     
     self.socket.close()
+    delattr(self, 'socket')
 
 
 class LocalClientServer(ClientServer):
   def __init__(self, client: 'Client', server: 'Server'):
+    from mahjong2040.server.shared import LocalServerClient
     self.client = LocalServerClient(client)
     self.server = server
   
@@ -91,14 +94,12 @@ class LocalClientServer(ClientServer):
 
 class Client(App):
   def __init__(self, poll: Poll):
-    from mahjong2040.client.states.base import ClientState
-
     super().__init__()
 
     self.poll = poll
-    self._child: ClientState = None
-    self.socket: socket.socket = None
-    self.server: ClientServer = None
+    self._child: ClientState | None = None
+    self.socket: socket.socket | None = None
+    self.server: ClientServer | None = None
     self.events: list[Packet] = []
   
   @property
@@ -106,7 +107,7 @@ class Client(App):
     return self._child
 
   @child.setter
-  def child(self, value):
+  def child(self, value: 'ClientState'):
     if self._child is value:
       return
 
@@ -127,11 +128,12 @@ class Client(App):
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:
       packet, address = read_packet_from(_socket)
-      if not packet:
+      if not packet or not address:
         return
 
       self.dirty = True
-      self.child.on_broadcast_packet(packet, address)
+      if self.child:
+        self.child.on_broadcast_packet(packet, address)
 
   def connect(self, server: ClientServer):
     from mahjong2040.client.states.lobby import LobbyClientState
@@ -157,11 +159,12 @@ class Client(App):
     self.events.append(packet)
 
   def send_packet(self, packet: Packet):
-    self.server.send_packet(packet)
+    if self.server:
+      self.server.send_packet(packet)
   
   def update(self):
     self.poll.poll()
-    while self.events:
+    while self.events and self.child:
       self.child.on_server_packet(self.events.pop(0))
       self.dirty = True
     return super().update()

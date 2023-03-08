@@ -11,7 +11,7 @@ class Struct:
   def from_data(cls, buffer: bytes, offset=0):
     return cls(*cls.unpack(buffer, offset))
   
-  def pack_data(self):
+  def pack_data(self) -> tuple:
     return ()
 
   def pack(self) -> bytes:
@@ -47,7 +47,7 @@ class LengthStruct(Struct):
   def __init__(self, length: int) -> None:
     self.length = length
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.length,)
 
 
@@ -58,7 +58,7 @@ class PlayerStruct(Struct, GamePlayerMixin):
     self.points = points
     self.riichi = riichi
 
-  def pack_data(self):
+  def pack_data(self) -> tuple:
     return (self.points, 1 if self.riichi else 0,)
 
   @classmethod
@@ -73,7 +73,7 @@ class GameStateStruct(Struct):
   def __init__(self, game_state: ClientGameState) -> None:
     self.game_state = game_state
 
-  def pack_data(self):
+  def pack_data(self) -> tuple:
     return (
         self.game_state.hand,
         self.game_state.repeat,
@@ -118,7 +118,7 @@ class PacketIdStruct(Struct):
   def __init__(self, id: int):
     self.id = id
 
-  def pack_data(self):
+  def pack_data(self) -> tuple:
     return self.id,
 
 
@@ -160,7 +160,7 @@ class TsumoClientPacket(Packet):
     self.dealer_points = dealer_points
     self.points = points
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.dealer_points, self.points,)
 
 
@@ -171,7 +171,7 @@ class RonWindClientPacket(Packet):
   def __init__(self, from_wind: int):
     self.from_wind = from_wind
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.from_wind,)
 
 
@@ -182,7 +182,7 @@ class RonScoreClientPacket(Packet):
   def __init__(self, points: int):
     self.points = points
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.points,)
 
 
@@ -193,7 +193,7 @@ class DrawClientPacket(Packet):
   def __init__(self, tenpai: int):
     self.tenpai = tenpai
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.tenpai,)
 
 
@@ -209,7 +209,7 @@ class SetupPlayerWindClientPacket(Packet):
   def __init__(self, wind: int):
     self.wind = wind
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.wind,)
 
 
@@ -246,7 +246,7 @@ class DrawServerPacket(Packet):
   def __init__(self, tenpai: int):
     self.tenpai = tenpai
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.tenpai,)
 
 
@@ -263,7 +263,7 @@ class RonWindServerPacket(Packet):
     self.from_wind = from_wind
     self.is_dealer = is_dealer
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.from_wind, 1 if self.is_dealer else 0)
   
   @staticmethod
@@ -280,7 +280,7 @@ class RonScoreServerPacket(Packet):
     self.from_wind = from_wind
     self.points = points
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.from_wind, self.points,)
 
 
@@ -291,7 +291,7 @@ class SetupPlayerWindServerPacket(Packet):
   def __init__(self, wind: int):
     self.wind = wind
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.wind,)
 
 
@@ -302,7 +302,7 @@ class ConfirmWindServerPacket(Packet):
   def __init__(self, wind: int):
     self.wind = wind
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.wind,)
 
 
@@ -319,7 +319,7 @@ class LobbyPlayersServerPacket(Packet):
     self.count = count
     self.max_players = max_players
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (self.count, self.max_players,)
 
 
@@ -330,7 +330,7 @@ class GameReconnectStatusServerPacket(Packet):
   def __init__(self, missing_winds: set[int]):
     self.missing_winds = missing_winds
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     value = 0
     for wind in self.missing_winds:
       value |= (1 << wind)
@@ -358,7 +358,7 @@ class TsumoServerPacket(Packet):
     self.dealer_points = dealer_points
     self.nondealer_points = nondealer_points
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (
       self.tsumo_wind,
       self.tsumo_hand,
@@ -392,7 +392,7 @@ class RonServerPacket(Packet):
     self.player2_points = player2_points
     self.player3_points = player3_points
 
-  def pack_data(self) -> bytes:
+  def pack_data(self) -> tuple:
     return (
       self.ron_wind,
       self.ron_hand,

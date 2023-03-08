@@ -9,13 +9,13 @@ from badger_ui.text import TextWidget
 import badger2040w
 from mahjong2040.client import Client
 from mahjong2040.packets import DrawClientPacket, RedrawClientPacket
-from mahjong2040.shared import GameState, Tenpai
+from mahjong2040.shared import ClientGameState, Tenpai
 
 from .shared import GameReconnectClientState
 
 
 class GameMenuClientState(GameReconnectClientState):
-  def __init__(self, client: Client, game_state: GameState):
+  def __init__(self, client: Client, game_state: ClientGameState):
     super().__init__(client)
 
     self.game_state = game_state

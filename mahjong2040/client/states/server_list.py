@@ -7,6 +7,7 @@ from machine import Timer
 import badger2040w
 from badger_ui import App, Offset, Size
 from mahjong2040 import config
+from mahjong2040.client import Client
 from mahjong2040.packets import (
     BroadcastClientPacket,
     BroadcastServerPacket,
@@ -19,7 +20,7 @@ from .base import ClientState
 
 
 class ServerListClientState(ClientState):
-  def __init__(self, client, port: int):
+  def __init__(self, client: Client, port: int):
     super().__init__(client)
 
     self.address = ('255.255.255.255', port)

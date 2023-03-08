@@ -139,8 +139,16 @@
       "file:./mahjong2040/client/states/game_menu.py"
     ],
     [
-      "mahjong2040/client/widgets/han_input.py",
-      "file:./mahjong2040/client/widgets/han_input.py"
+      "mahjong2040/client/states/widgets/arrow.py",
+      "file:./mahjong2040/client/states/widgets/arrow.py"
+    ],
+    [
+      "mahjong2040/client/states/widgets/player.py",
+      "file:./mahjong2040/client/states/widgets/player.py"
+    ],
+    [
+      "mahjong2040/client/states/widgets/han_input.py",
+      "file:./mahjong2040/client/states/widgets/han_input.py"
     ]
   ],
   "deps": [

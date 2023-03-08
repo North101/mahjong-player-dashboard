@@ -28,11 +28,6 @@ class GameServerState(BaseGameServerStateMixin):
   def init(self):
     self.update_player_states()
 
-  def on_players_reconnect(self, players):
-    super().on_players_reconnect(players)
-
-    self.update_player_states()
-
   def on_client_packet(self, client: ServerClient, packet: Packet):
     player = self.player_for_client(client)
     if not player:

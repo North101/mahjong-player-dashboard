@@ -29,7 +29,7 @@ def parse_wind(value: str):
     print(e)
     return None
 
-def parse_config() -> tuple[int, bool, int]:
+def parse_config() -> tuple[int | None, bool | None, int | None]:
   try:
     with open('/config.ini', 'r') as f:
       config = {
@@ -41,9 +41,9 @@ def parse_config() -> tuple[int, bool, int]:
         )
       }
 
-    mode = parse_mode(config.get('mode'))
-    autoconnect = parse_autoconnect(config.get('autoconnect'))
-    select_wind = parse_wind(config.get('wind'))
+    mode = parse_mode(config.get('mode', ''))
+    autoconnect = parse_autoconnect(config.get('autoconnect', ''))
+    select_wind = parse_wind(config.get('wind', ''))
     return mode, autoconnect, select_wind
   except:
     return None, None, None

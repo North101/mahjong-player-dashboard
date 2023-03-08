@@ -1,8 +1,9 @@
 import select
+from typing import Any, Callable
 
 
 class EventCallback:
-  def __init__(self, fd, callback):
+  def __init__(self, fd: Any, callback: Callable[[Any, int], None]):
     self.fd = fd
     self.callback = callback
 
@@ -16,11 +17,11 @@ class Poll:
   def __init__(self):
     self._poll = select.poll()
 
-  def register(self, fd, eventmask: int, callback):
+  def register(self, fd: Any, eventmask: int, callback: Callable[[Any, int], None]):
     self._poll.register(fd, eventmask)
     self.lookup[id(fd)] = EventCallback(fd, callback)
 
-  def unregister(self, fd):
+  def unregister(self, fd: Any):
     self._poll.unregister(fd)
     del self.lookup[id(fd)]
 

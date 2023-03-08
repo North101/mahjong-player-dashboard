@@ -23,7 +23,7 @@ class GamePlayer(GamePlayerMixin):
       self.riichi = True
       self.points -= RIICHI_POINTS
 
-  def take_points(self, other: 'GamePlayer', points: int):
+  def take_points(self, other: 'GamePlayerMixin', points: int):
     self.points += points
     other.points -= points
 

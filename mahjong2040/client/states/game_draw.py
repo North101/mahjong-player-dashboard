@@ -5,17 +5,17 @@ from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.stack import Stack
 from badger_ui.text import TextWidget
+
+import badger2040w
 from mahjong2040.client import Client
 from mahjong2040.packets import DrawClientPacket, DrawServerPacket, Packet
 from mahjong2040.shared import Tenpai
-
-import badger2040w
 
 from .shared import GameReconnectClientState
 
 
 class GameDrawClientState(GameReconnectClientState):
-  def __init__(self, client: Client, tenpai: int):
+  def __init__(self, client: 'Client', tenpai: int):
     super().__init__(client)
 
     self.tenpai = tenpai
