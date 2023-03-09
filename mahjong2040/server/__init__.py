@@ -92,18 +92,19 @@ class Server:
     if event & select.POLLIN:
       client, _ = _socket.accept()
       self.on_client_connect(client)
-      self.poll.register(client, select.POLLIN, self.on_client_data)
+      self.poll.register(client, select.POLLIN | select.POLLERR | select.POLLHUP | 32, self.on_client_data)
 
   def on_client_data(self, _socket: socket.socket, event: int):
     if event & (select.POLLHUP | select.POLLERR | 32):
       self.on_client_disconnect(_socket)
     elif event & select.POLLIN:
       packet = read_packet(_socket)
-      if packet is None:
-        return
-
       client = self.client_from_socket(_socket)
       if client is None:
+        return
+
+      if packet is None:
+        self.remove_client(client)
         return
 
       print(self.__class__.__name__, repr(packet))

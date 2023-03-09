@@ -482,7 +482,7 @@ def find_packet(id):
 
 
 def unpack_packet(buffer: bytes, offset=0) -> Packet:
-  offset, (id,) = PacketIdStruct.unpack(buffer)
+  offset, (id,) = PacketIdStruct.unpack(buffer, offset)
   return find_packet(id).from_data(buffer, offset)
 
 
@@ -557,8 +557,6 @@ def read_packet_from(_socket: socket.socket):
 
 
 def recv_data_from(socket: socket.socket):
-  start = LengthStruct.size()
-  data, addr = socket.recvfrom(start + PacketIdStruct.size() + BroadcastClientPacket.size())
-  _, (length,) = LengthStruct.unpack(data)
-  end = start + length
-  return data[start:end], addr
+  length_size = LengthStruct.size()
+  data, addr = socket.recvfrom(length_size + PacketIdStruct.size())
+  return data[length_size:], addr
