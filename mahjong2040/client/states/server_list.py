@@ -72,7 +72,7 @@ class ServerListClientState(ClientState):
     self.client.connect(RemoteClientServer(self.client, self.client.poll, item.address))
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
-    if self.list is not None:
+    if self.list:
       return self.list.on_button(app, pressed)
 
     return super().on_button(app, pressed)
