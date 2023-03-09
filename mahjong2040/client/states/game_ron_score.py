@@ -1,5 +1,6 @@
 from badger_ui.align import Bottom, Center, Top
 from badger_ui.base import App, Offset, Size
+from badger_ui.column import Column
 from badger_ui.text import TextWidget
 
 import badger2040w
@@ -41,7 +42,7 @@ class GameRonScoreClientState(GameReconnectClientState):
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_B] and self.points is None:
-      self.send_packet(RonScoreClientPacket(self.score.ron(self.is_dealer)))
+      self.send_packet(RonScoreClientPacket(self.score.han_index, self.score.fu_index))
       return True
 
     return self.score.on_button(app, pressed)
@@ -50,23 +51,29 @@ class GameRonScoreClientState(GameReconnectClientState):
     super().render(app, size, offset)
 
     Top(child=Center(child=TextWidget(
-        text=f'Ron: {Wind.name(self.from_wind)}',
-        line_height=24,
-        thickness=2,
-        scale=0.8,
+      text=f'Ron: {Wind.name(self.from_wind)}',
+      line_height=24,
+      thickness=2,
+      scale=0.8,
     ))).render(app, size, offset)
     if self.points is not None:
       Center(child=TextWidget(
         text=f'{self.points * 100}',
-          line_height=60,
-          thickness=2,
-          scale=2,
+        line_height=60,
+        thickness=2,
+        scale=2,
       )).render(app, size, offset)
       Bottom(child=Center(child=TextWidget(
-          text=f'Waiting...',
-          line_height=24,
-          thickness=2,
-          scale=0.8,
+        text=f'Waiting...',
+        line_height=24,
+        thickness=2,
+        scale=0.8,
       ))).render(app, size, offset)
     else:
       self.score.render(app, size, offset)
+      Bottom(child=Center(child=TextWidget(
+        text=f'{self.score.ron(self.is_dealer) * 100}',
+        line_height=30,
+        thickness=2,
+        scale=1,
+      ))).render(app, size, offset)

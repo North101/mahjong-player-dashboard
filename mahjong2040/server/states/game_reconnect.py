@@ -9,11 +9,11 @@ from mahjong2040.packets import (
 from mahjong2040.shared import ClientGameState, GameState, Wind
 
 from .base import ServerState
-from .shared import GamePlayerType, ServerClient
+from .shared import ServerClient
 
 
 class GameReconnectServerState(ServerState):
-  def __init__(self, server, game_state: GameState[GamePlayerType], callback):
+  def __init__(self, server, game_state: GameState, callback):
     self.server = server
     self.game_state = game_state
 

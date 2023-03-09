@@ -1,6 +1,8 @@
 from badger_ui.align import Center
 from badger_ui.base import Widget
+from badger_ui.column import Column
 from badger_ui.list import ListWidget
+from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
 from machine import Timer
 
@@ -39,9 +41,9 @@ class ServerListClientState(ClientState):
   def on_broadcast_packet(self, packet: Packet, address: Address):
     if isinstance(packet, BroadcastServerPacket):
       if address not in self.servers:
-        if config.autoconnect:
-          AddressItem(address, self.on_item_selected)()
-          return
+        #if config.autoconnect:
+        #  AddressItem(address, self.on_item_selected)()
+        #  return
   
         self.servers.append(address)
         self.update_list()
@@ -52,7 +54,7 @@ class ServerListClientState(ClientState):
         item_height=24,
         item_count=len(self.servers),
         item_builder=self.item_builder,
-        page_item_count=min(len(self.servers), 6),
+        page_item_count=min(len(self.servers), 5),
         selected_index=0,
       )
     else:
@@ -78,8 +80,14 @@ class ServerListClientState(ClientState):
   def render(self, app: 'App', size: Size, offset: Offset):
     super().render(app, size, offset)
 
-    if self.list is not None:
-      Center(child=self.list).render(app, size, offset)
+    Column(children=[
+      TextWidget(
+        text='Servers',
+        line_height=30,
+        thickness=2,
+      ),
+      self.list or Widget(),
+    ]).render(app, size, offset)
   
 
 class AddressItem:

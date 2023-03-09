@@ -13,11 +13,14 @@ class HanInputWidget(Widget):
     self.fu_index = 0
     self.selected = 0
 
+  def measure(self, app: 'App', size: Size) -> Size:
+    return Size(size.width, 30)
+
   def tsumo(self, dealer: bool):
-    return score_calculator.tsumo(self.han_index, self.fu_index, dealer) // 100
+    return score_calculator.tsumo(self.han_index, self.fu_index, dealer)
 
   def ron(self, dealer: bool):
-    return score_calculator.ron(self.han_index, self.fu_index, dealer) // 100
+    return score_calculator.ron(self.han_index, self.fu_index, dealer)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
     if pressed[badger2040w.BUTTON_A]:

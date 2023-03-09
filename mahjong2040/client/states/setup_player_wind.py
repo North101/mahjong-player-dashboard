@@ -31,6 +31,7 @@ class SetupPlayerWindClientState(ClientState):
       self.send_packet(SetupPlayerWindClientPacket(self.next_wind))
 
   def on_server_packet(self, packet: Packet) -> bool:
+    print(packet)
     if isinstance(packet, SetupPlayerWindServerPacket):
       self.next_wind = packet.wind
       self.init()
@@ -78,7 +79,11 @@ class SetupPlayerWindClientState(ClientState):
               thickness=2,
           ),
           TextWidget(
-              text=f'Waiting for: {Wind.name((self.next_wind + 1) % len(Wind))}',
+              text=(
+                f'Waiting for: {Wind.name((self.next_wind + 1) % len(Wind))}'
+                if (self.next_wind + 1) < len(Wind) else
+                f'Starting...'
+              ),
               line_height=21,
               thickness=2,
               scale=0.7,

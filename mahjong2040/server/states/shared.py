@@ -5,11 +5,11 @@ from mahjong2040.shared import RIICHI_POINTS, GameState
 
 from .base import GamePlayer, ServerState
 
-GamePlayerType = TypeVar('GamePlayerType', bound=GamePlayer)
+_GamePlayer = TypeVar('_GamePlayer', bound=GamePlayer)
 
 
-class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
-  def __init__(self, server, game_state: GameState[GamePlayerType]):
+class BaseGameServerStateMixin(Generic[_GamePlayer], ServerState):
+  def __init__(self, server, game_state: GameState[_GamePlayer]):
     self.server = server
     self.game_state = game_state
 
@@ -21,7 +21,7 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
 
     self.on_player_leave(player)
 
-  def on_player_leave(self, player: GamePlayerType):
+  def on_player_leave(self, player: _GamePlayer):
     from .game_reconnect import GameReconnectServerState
 
     self.child = GameReconnectServerState(self.server, self.game_state, self.on_players_rejoin)
@@ -41,7 +41,7 @@ class BaseGameServerStateMixin(Generic[GamePlayerType], ServerState):
     except StopIteration:
       return None
 
-  def distribute_riichi_points(self, winners: list[GamePlayerType]):
+  def distribute_riichi_points(self, winners: list[_GamePlayer]):
     winner = next((
         player
         for _, player in self.game_state.players_by_wind

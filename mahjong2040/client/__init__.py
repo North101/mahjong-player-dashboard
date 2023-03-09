@@ -60,7 +60,7 @@ class RemoteClientServer(ClientServer):
       print(event)
 
   def on_server_disconnect(self, server: 'socket.socket'):
-    self.dirty = True
+    self.dirty = 2
     self.poll.unregister(server)
     server.close()
 
@@ -133,7 +133,7 @@ class Client(App):
       if not packet or not address:
         return
 
-      self.dirty = True
+      self.dirty = 2
       if self.child:
         self.child.on_broadcast_packet(packet, address)
 
@@ -167,6 +167,6 @@ class Client(App):
   def update(self):
     self.poll.poll()
     while self.events and self.child:
-      self.child.on_server_packet(self.events.pop(0))
-      self.dirty = True
+      dirty = self.child.on_server_packet(self.events.pop(0))
+      self.dirty = dirty or self.dirty
     return super().update()

@@ -1,4 +1,4 @@
-from typing import Generic, Tuple, TypeAlias, TypeVar
+from typing import Generator, Generic, Tuple, TypeAlias, TypeVar
 
 Address: TypeAlias = Tuple[str, int]
 
@@ -74,62 +74,12 @@ class GamePlayerMixin:
     return f'{self.__class__.__name__}({args})'
 
 
-PlayerType = TypeVar('PlayerType', bound=GamePlayerMixin)
+_PlayerType = TypeVar('_PlayerType', bound=GamePlayerMixin)
 
-
-class GamePlayerTuple(Generic[PlayerType]):
+class GameState(Generic[_PlayerType]):
   def __init__(
       self,
-      player1: PlayerType,
-      player2: PlayerType,
-      player3: PlayerType,
-      player4: PlayerType,
-  ):
-    self.player1 = player1
-    self.player2 = player2
-    self.player3 = player3
-    self.player4 = player4
-
-  def __iter__(self):
-    yield self.player1
-    yield self.player2
-    yield self.player3
-    yield self.player4
-
-  def __getitem__(self, index: int):
-    if index == 0:
-      return self.player1
-    elif index == 1:
-      return self.player2
-    elif index == 2:
-      return self.player3
-    elif index == 3:
-      return self.player4
-    raise IndexError(index)
-
-  def index(self, item: PlayerType):
-    if item == self.player1:
-      return 0
-    elif item == self.player2:
-      return 1
-    elif item == self.player3:
-      return 2
-    elif item == self.player4:
-      return 3
-    raise ValueError(item)
-
-  def __repr__(self) -> str:
-    args = ', '.join([
-      f'{key}={value}'
-      for key, value in self.__dict__.items()
-    ])
-    return f'{self.__class__.__name__}({args})'
-
-
-class GameState(Generic[PlayerType]):
-  def __init__(
-      self,
-      players: GamePlayerTuple[PlayerType],
+      players: tuple[_PlayerType, _PlayerType, _PlayerType, _PlayerType],
       starting_points: int,
       hand: int = 0,
       repeat: int = 0,
@@ -148,7 +98,7 @@ class GameState(Generic[PlayerType]):
     return self.hand // len(Wind)
 
   @property
-  def players_by_wind(self):
+  def players_by_wind(self) -> Generator[tuple[int, _PlayerType], None, None]:
     for wind in range(len(Wind)):
       yield wind, self.player_for_wind(wind)
 
@@ -160,24 +110,24 @@ class GameState(Generic[PlayerType]):
   def total_riichi(self):
     return self.bonus_riichi + sum(1 for player in self.players if player.riichi)
 
-  def player_wind(self, player: PlayerType):
+  def player_wind(self, player: _PlayerType) -> int:
     return (self.players.index(player) - self.hand) % len(Wind)
 
   def player_index_for_wind(self, wind: int):
     return (wind + self.hand) % len(Wind)
 
-  def player_for_wind(self, wind: int) -> PlayerType:
+  def player_for_wind(self, wind: int) -> _PlayerType:
     return self.players[self.player_index_for_wind(wind)]
 
   def __repr__(self):
     return f'{self.__class__.__name__}({self.hand}, {self.repeat}, {self.bonus_honba}, {self.bonus_riichi})'
 
 
-class ClientGameState(GameState):
+class ClientGameState(GameState, Generic[_PlayerType]):
   def __init__(
       self,
       player_index: int,
-      players: 'GamePlayerTuple',
+      players: tuple[_PlayerType, _PlayerType, _PlayerType, _PlayerType],
       starting_points: int,
       hand: int = 0,
       repeat: int = 0,

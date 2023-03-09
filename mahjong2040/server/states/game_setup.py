@@ -5,7 +5,7 @@ from mahjong2040.packets import (
     SetupPlayerWindClientPacket,
     SetupPlayerWindServerPacket,
 )
-from mahjong2040.shared import STARTING_POINTS, GamePlayerTuple, GameState, Wind
+from mahjong2040.shared import STARTING_POINTS, GameState, Wind
 
 from .base import ServerState
 from .game import GameServerState
@@ -25,8 +25,7 @@ class GameSetupServerState(ServerState):
     wind = len(self.players)
     packet = SetupPlayerWindServerPacket(wind)
     for client in self.clients:
-      if client not in self.players:
-        client.send_packet(packet)
+      client.send_packet(packet)
 
   def on_client_leave(self, client: ServerClient):
     super().on_client_leave(client)
@@ -56,12 +55,10 @@ class GameSetupServerState(ServerState):
         self.child = GameServerState(
             server=self.server,
             game_state=GameState(
-                players=GamePlayerTuple(
-                    GamePlayer(self.players[0], STARTING_POINTS),
-                    GamePlayer(self.players[1], STARTING_POINTS),
-                    GamePlayer(self.players[2], STARTING_POINTS),
-                    GamePlayer(self.players[3], STARTING_POINTS),
-                ),
+                players=tuple((
+                    GamePlayer(player, STARTING_POINTS)
+                    for player in self.players
+                )),
                 starting_points=STARTING_POINTS,
             ),
         )

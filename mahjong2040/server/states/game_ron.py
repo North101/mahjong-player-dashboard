@@ -1,5 +1,5 @@
+from mahjong2040 import score_calculator
 from mahjong2040.packets import (
-    GameStateServerPacket,
     Packet,
     RonScoreClientPacket,
     RonScoreServerPacket,
@@ -42,8 +42,9 @@ class GameRonServerState(BaseGameServerStateMixin):
       self.on_player_ron(player, packet)
 
   def on_player_ron(self, player: GameRonPlayer, packet: RonScoreClientPacket):
-    player.ron = packet.points
-    player.send_packet(RonScoreServerPacket(self.from_wind, packet.points))
+    is_dealer = self.game_state.player_wind(player) == Wind.EAST
+    player.ron = score_calculator.ron(packet.han, packet.fu_index, is_dealer)
+    player.send_packet(RonScoreServerPacket(self.from_wind, player.ron))
     self.on_player_ron_complete()
 
   def on_player_ron_complete(self):
