@@ -1,9 +1,9 @@
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
 
-import badger2040w
 from mahjong2040 import score_calculator
 
 
@@ -55,16 +55,16 @@ class HanInputWidget(Widget):
 
   def render(self, app: App, size: Size, offset: Offset):
     Center(child=Row(children=[
-      TextWidget(
-        text=f'{self.han_index}H ',
-        line_height=30,
-        thickness=2,
-        underline=self.selected == 0,
-      ),
-      TextWidget(
-        text=f' {self.fu()}F',
-        line_height=30,
-        thickness=2,
-        underline=self.selected == 1,
-      ),
+        TextWidget(
+            text=f'{self.han_index}H ',
+            line_height=30,
+            thickness=2,
+            underline=self.selected == 0,
+        ),
+        TextWidget(
+            text=f' {self.fu()}F',
+            line_height=30,
+            thickness=2,
+            underline=self.selected == 1,
+        ),
     ])).render(app, size, offset)

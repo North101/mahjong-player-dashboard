@@ -17,7 +17,7 @@ class GameSetupServerState(ServerState):
     super().__init__(server)
 
     self.players: list[ServerClient] = []
-  
+
   def init(self):
     self.ask_next_wind()
 

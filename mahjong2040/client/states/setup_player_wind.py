@@ -64,10 +64,10 @@ class SetupPlayerWindClientState(ClientState):
     super().render(app, size, offset)
 
     Top(child=Center(child=TextWidget(
-      text='Player Wind',
-      line_height=24,
-      thickness=2,
-      scale=0.8,
+        text='Player Wind',
+        line_height=24,
+        thickness=2,
+        scale=0.8,
     ))).render(app, size, offset)
 
     if self.confirmed_wind is not None:
@@ -79,9 +79,9 @@ class SetupPlayerWindClientState(ClientState):
           ),
           TextWidget(
               text=(
-                f'Waiting for: {Wind.name((self.next_wind + 1) % len(Wind))}'
-                if (self.next_wind + 1) < len(Wind) else
-                f'Starting...'
+                  f'Waiting for: {Wind.name((self.next_wind + 1) % len(Wind))}'
+                  if (self.next_wind + 1) < len(Wind) else
+                  f'Starting...'
               ),
               line_height=21,
               thickness=2,

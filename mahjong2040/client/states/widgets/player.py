@@ -18,15 +18,15 @@ class PlayerWidget(Widget):
     self.points = points
     self.wind = wind
     self.absolute = absolute
-  
+
   def points_scale(self):
     return self.absolute_points_scale if self.absolute else self.relative_points_scale
-  
+
   def points_text(self):
     if self.absolute:
       return f'{self.points * 100}'
     return f'{"+" if self.points >= 0 else ""}{self.points * 100}'
-  
+
   def wind_text(self):
     return Wind.name(self.wind)[0].upper()
 
@@ -36,27 +36,27 @@ class PlayerWidget(Widget):
     points_width = app.display.measure_text(self.points_text(), scale=self.points_scale())
     wind_width = app.display.measure_text(self.wind_text(), scale=self.wind_scale)
     return points_width + wind_width
-  
+
   def measure(self, app: 'App', size: Size) -> Size:
     return Size(self.width(app), self.height)
-  
+
   def render(self, app: 'App', size: Size, offset: Offset):
     Padding(
-      padding=EdgeOffsets(bottom=1),
-      child=Row(children=[
-        TextWidget(
-            text=self.points_text(),
-            line_height=size.height,
-            font=self.font,
-            thickness=self.thickness,
-            scale=self.points_scale(),
-        ),
-        TextWidget(
-            text=self.wind_text(),
-            line_height=size.height,
-            font=self.font,
-            thickness=self.thickness,
-            scale=self.wind_scale,
-        ),
-      ]),
+        padding=EdgeOffsets(bottom=1),
+        child=Row(children=[
+            TextWidget(
+                text=self.points_text(),
+                line_height=size.height,
+                font=self.font,
+                thickness=self.thickness,
+                scale=self.points_scale(),
+            ),
+            TextWidget(
+                text=self.wind_text(),
+                line_height=size.height,
+                font=self.font,
+                thickness=self.thickness,
+                scale=self.wind_scale,
+            ),
+        ]),
     ).render(app, size, offset)

@@ -64,9 +64,9 @@ class LobbyClientState(ClientState):
     ])).render(app, size, offset)
 
     Bottom(child=Center(child=TextWidget(
-      text=f'IP: {self.ip_address()}',
-      line_height=15,
-      font='sans',
-      thickness=2,
-      scale=0.5,
+        text=f'IP: {self.ip_address()}',
+        line_height=15,
+        font='sans',
+        thickness=2,
+        scale=0.5,
     ))).render(app, size, offset)

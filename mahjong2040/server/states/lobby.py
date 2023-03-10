@@ -8,7 +8,7 @@ from .shared import ServerClient
 class LobbyServerState(ServerState):
   def __init__(self, server):
     self.server = server
-  
+
   def init(self):
     self.send_lobby_count()
 

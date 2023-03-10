@@ -11,7 +11,7 @@ class Struct:
   def from_data(cls, buffer: bytes, offset=0):
     offset, data = cls.unpack(buffer, offset)
     return cls(*data)
-  
+
   def pack_data(self):
     return ()
 
@@ -31,15 +31,15 @@ class Struct:
   @staticmethod
   def _size(cls):
     return struct.calcsize(cls.fmt)
-  
+
   @classmethod
   def size(cls):
     return cls._size(cls)
 
   def __repr__(self) -> str:
     args = ', '.join([
-      f'{key}={value}'
-      for key, value in self.__dict__.items()
+        f'{key}={value}'
+        for key, value in self.__dict__.items()
     ])
     return f'{self.__class__.__name__}({args})'
 
@@ -94,7 +94,14 @@ class GameStateStruct(Struct):
 
   @staticmethod
   def _unpack(cls, buffer: bytes, offset=0):
-    offset, (starting_points, hand, repeat, bonus_honba, bonus_riichi, player_index) = super()._unpack(cls, buffer, offset)
+    offset, (
+        starting_points,
+        hand,
+        repeat,
+        bonus_honba,
+        bonus_riichi,
+        player_index,
+    ) = super()._unpack(cls, buffer, offset)
 
     players: list[PlayerStruct] = []
     for _ in range(4):
@@ -102,15 +109,15 @@ class GameStateStruct(Struct):
       players.append(PlayerStruct(*data))
 
     return offset, (
-      ClientGameState(
-        player_index,
-        tuple(players),
-        starting_points,
-        hand,
-        repeat,
-        bonus_honba,
-        bonus_riichi,
-      ),
+        ClientGameState(
+            player_index,
+            tuple(players),
+            starting_points,
+            hand,
+            repeat,
+            bonus_honba,
+            bonus_riichi,
+        ),
     )
 
   @classmethod
@@ -258,7 +265,7 @@ class RonWindServerPacket(Packet):
 
   def pack_data(self) -> tuple:
     return (self.from_wind, 1 if self.is_dealer else 0)
-  
+
   @staticmethod
   def _unpack(cls, buffer: bytes, offset=0):
     offset, (from_wind, is_dealer) = super()._unpack(cls, buffer, offset)
@@ -402,7 +409,8 @@ class DrawServerPacket(Packet):
   fmt = 'BBBBBhhhh'
   id = 113
 
-  def __init__(self, draw_hand: int, tenpai: tuple[bool, bool, bool, bool], points: tuple[int, int, int, int], game_state: ClientGameState):
+  def __init__(self, draw_hand: int, tenpai: tuple[bool, bool, bool, bool],
+               points: tuple[int, int, int, int], game_state: ClientGameState):
     self.draw_hand = draw_hand
     self.tenpai = tenpai
     self.points = points
@@ -410,8 +418,8 @@ class DrawServerPacket(Packet):
 
   def pack_data(self) -> tuple:
     tenpai = tuple((
-      1 if tenpai else 0
-      for tenpai in self.tenpai
+        1 if tenpai else 0
+        for tenpai in self.tenpai
     ))
     return (self.draw_hand,) + tenpai + self.points
 
@@ -422,18 +430,19 @@ class DrawServerPacket(Packet):
 
   @staticmethod
   def _unpack(cls, buffer: bytes, offset=0):
-    offset, (draw_hand, tenpai0, tenpai1, tenpai2, tenpai3, points0, points1, points2, points3) = super()._unpack(cls, buffer, offset)
+    offset, (draw_hand, tenpai0, tenpai1, tenpai2, tenpai3, points0, points1,
+             points2, points3) = super()._unpack(cls, buffer, offset)
     tenpai = (
-      tenpai0 != 0,
-      tenpai1 != 0,
-      tenpai2 != 0,
-      tenpai3 != 0,
+        tenpai0 != 0,
+        tenpai1 != 0,
+        tenpai2 != 0,
+        tenpai3 != 0,
     )
     points = (
-      points0,
-      points1,
-      points2,
-      points3,
+        points0,
+        points1,
+        points2,
+        points3,
     )
     offset, game_state = GameStateStruct.unpack(buffer, offset)
     return offset, (draw_hand, tenpai, points) + game_state
@@ -467,7 +476,7 @@ packets: set = {
     RonServerPacket,
     DrawServerPacket,
 }
-assert(len({
+assert (len({
     packet.id
     for packet in packets
 }) == len(packets))

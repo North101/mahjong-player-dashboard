@@ -1,9 +1,9 @@
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.row import Row
 from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
 
-import badger2040w
 from badger_ui import App, Offset, Size
 from mahjong2040.client import Client
 from mahjong2040.packets import RonWindClientPacket

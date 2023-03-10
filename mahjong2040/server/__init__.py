@@ -17,6 +17,7 @@ from .shared import RemoteServerClient, ServerClient
 if typing.TYPE_CHECKING:
   from .states.base import ServerState
 
+
 class Server:
   def __init__(self, poll: Poll):
     from .states.lobby import LobbyServerState
@@ -27,16 +28,16 @@ class Server:
     self.clients: list[ServerClient] = []
     self._child: ServerState | None = None
     self.child = LobbyServerState(self)
-  
+
   @property
   def child(self):
     return self._child
-  
+
   @child.setter
   def child(self, value: ServerState):
     if self._child is value:
       return
-    
+
     self._child = value
     self._child.init()
 
@@ -53,30 +54,30 @@ class Server:
 
     print(f'Server is listing on port {port}...')
     self.socket.listen()
-  
+
   def close(self):
     if self.broadcast is not None:
       self.broadcast.close()
 
     if self.socket is not None:
       self.socket.close()
-  
+
   def on_broadcast_data(self, _socket: socket.socket, event: int):
     if event & select.POLLIN:
       packet, address = read_packet_from(_socket)
       if isinstance(packet, BroadcastClientPacket) and address:
         send_packet_to(_socket, BroadcastServerPacket(), address)
-  
+
   def client_from_socket(self, _socket: socket.socket):
     try:
       return next((
-        client
-        for client in self.clients
-        if isinstance(client, RemoteServerClient) and client._socket == _socket
+          client
+          for client in self.clients
+          if isinstance(client, RemoteServerClient) and client._socket == _socket
       ))
     except StopIteration:
       return None
-  
+
   def add_client(self, client: ServerClient):
     self.clients.append(client)
     if self.child:

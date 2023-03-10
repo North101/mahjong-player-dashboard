@@ -20,19 +20,19 @@ class IntEnum:
         )
         if isinstance(value, int)
     ]
-  
+
   def by_name(self, value: str):
     return next((
-      item[1]
-      for item in self.__items__
-      if item[0] == value
+        item[1]
+        for item in self.__items__
+        if item[0] == value
     ))
 
   def name(self, value: int):
     return next((
-      item[0]
-      for item in self.__items__
-      if item[1] == value
+        item[0]
+        for item in self.__items__
+        if item[1] == value
     ))
 
   def __iter__(self):
@@ -68,13 +68,14 @@ class GamePlayerMixin:
 
   def __repr__(self) -> str:
     args = ', '.join([
-      f'{key}={value}'
-      for key, value in self.__dict__.items()
+        f'{key}={value}'
+        for key, value in self.__dict__.items()
     ])
     return f'{self.__class__.__name__}({args})'
 
 
 _PlayerType = TypeVar('_PlayerType', bound=GamePlayerMixin)
+
 
 class GameState(Generic[_PlayerType]):
   def __init__(
@@ -150,7 +151,7 @@ class ClientGameState(GameState, Generic[_PlayerType]):
 
   def __repr__(self) -> str:
     args = ', '.join([
-      f'{key}={value}'
-      for key, value in self.__dict__.items()
+        f'{key}={value}'
+        for key, value in self.__dict__.items()
     ])
     return f'{self.__class__.__name__}({args})'

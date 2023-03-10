@@ -8,6 +8,7 @@ if typing.TYPE_CHECKING:
 
   from .shared import ServerClient
 
+
 class GamePlayer(GamePlayerMixin):
   def __init__(self, client: ServerClient, points: int, riichi: bool = False):
     self.client = client
@@ -31,7 +32,7 @@ class ServerState:
   def __init__(self, server: Server):
     print(self.__class__.__name__)
     self.server = server
-  
+
   def init(self):
     pass
 

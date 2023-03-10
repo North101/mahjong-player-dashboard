@@ -1,22 +1,23 @@
 import gc
 
+import badger2040w
 import network
 import uasyncio
 from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size, Widget, app_runner
 from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
+from network_manager import NetworkManager
 
-import badger2040w
 import WIFI_CONFIG
 from mahjong2040 import config
-from network_manager import NetworkManager
 
 from .poll import Poll
 
 
 def isconnected():
   return network.WLAN(network.STA_IF).isconnected()
+
 
 def ip_address():
   return network.WLAN(network.STA_IF).ifconfig()[0]
@@ -28,7 +29,7 @@ class MyApp(App):
 
     self.port = port
     self.child = ConnectingScreen()
-  
+
   def init(self):
     self.connect()
 
@@ -46,7 +47,7 @@ class MyApp(App):
     network_manager = NetworkManager(WIFI_CONFIG.COUNTRY, status_handler=self.status_handler)
     uasyncio.get_event_loop().run_until_complete(network_manager.client(WIFI_CONFIG.SSID, WIFI_CONFIG.PSK))
     gc.collect()
-  
+
   def render(self, app: 'App', size: Size, offset: Offset):
     return super().render(app, size, offset)
 
@@ -67,18 +68,18 @@ class SelectScreen(Widget):
 
     self.port = port
     self.items = [
-      MenuItem('Connect', self.open_client),
-      MenuItem('Host', self.open_server),
+        MenuItem('Connect', self.open_client),
+        MenuItem('Host', self.open_server),
     ]
     self.child = ListWidget(
-      item_height=21,
-      item_count=len(self.items),
-      item_builder=self.item_builder,
-      page_item_count=2,
-      selected_index=0,
+        item_height=21,
+        item_count=len(self.items),
+        item_builder=self.item_builder,
+        page_item_count=2,
+        selected_index=0,
     )
     self.first_render = True
-  
+
   def init(self):
     if config.mode == config.Mode.HOST:
       self.open_server()
@@ -92,7 +93,7 @@ class SelectScreen(Widget):
     client = Client(poll)
     client.broadcast(self.port)
     app_runner.app = client
-  
+
   def open_server(self):
     from .client import Client, LocalClientServer
     from .server import Server
@@ -106,8 +107,8 @@ class SelectScreen(Widget):
 
   def item_builder(self, index: int, selected: bool):
     return MenuItemWidget(
-      item=self.items[index],
-      selected=selected,
+        item=self.items[index],
+        selected=selected,
     )
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
@@ -123,11 +124,11 @@ class SelectScreen(Widget):
     Center(child=self.child).render(app, size, offset)
 
     Bottom(child=Center(child=TextWidget(
-      text=f'IP: {ip_address()}',
-      line_height=15,
-      font='sans',
-      thickness=2,
-      scale=0.5,
+        text=f'IP: {ip_address()}',
+        line_height=15,
+        font='sans',
+        thickness=2,
+        scale=0.5,
     ))).render(app, size, offset)
 
 
@@ -135,7 +136,7 @@ class MenuItem:
   def __init__(self, name, callable):
     self.name = name
     self.callable = callable
-  
+
   def __call__(self, *args, **kwargs):
     self.callable(*args, **kwargs)
 
@@ -156,17 +157,17 @@ class MenuItemWidget(Widget):
     if self.selected:
       app.display.set_pen(0)
       app.display.rectangle(
-        offset.x,
-        offset.y,
-        size.width,
-        size.height,
+          offset.x,
+          offset.y,
+          size.width,
+          size.height,
       )
 
     Center(child=TextWidget(
-      text=self.item.name,
-      line_height=24,
-      font='sans',
-      thickness=2,
-      color=15 if self.selected else 0,
-      scale=0.8,
+        text=self.item.name,
+        line_height=24,
+        font='sans',
+        thickness=2,
+        color=15 if self.selected else 0,
+        scale=0.8,
     )).render(app, size, offset)

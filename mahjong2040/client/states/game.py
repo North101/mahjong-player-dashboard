@@ -1,3 +1,4 @@
+import badger2040w
 from badger_ui.align import Bottom, Center, Left, Right, Top
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.column import Column
@@ -5,7 +6,6 @@ from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
 
-import badger2040w
 from mahjong2040.client import Client
 from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
 from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
@@ -22,7 +22,7 @@ class GameClientState(GameReconnectClientState):
     super().__init__(client)
 
     self.game_state = game_state
-  
+
   @property
   def round_text(self):
     return f'{Wind.name(self.game_state.round)[0].upper()}{self.game_state.hand + 1}'
@@ -80,22 +80,22 @@ class GameClientState(GameReconnectClientState):
     ))).render(app, size, offset)
 
     Center(child=TextWidget(
-      text=self.round_text,
-      line_height=30,
-      thickness=2,
+        text=self.round_text,
+        line_height=30,
+        thickness=2,
     )).render(app, size, offset)
-    
+
     Left(child=TextWidget(
-      text=f'R: {self.game_state.total_riichi}',
-      line_height=18,
-      thickness=2,
-      scale=0.6,
+        text=f'R: {self.game_state.total_riichi}',
+        line_height=18,
+        thickness=2,
+        scale=0.6,
     )).render(app, size, offset)
     Right(child=TextWidget(
-      text=f'H: {self.game_state.total_honba}',
-      line_height=18,
-      thickness=2,
-      scale=0.6,
+        text=f'H: {self.game_state.total_honba}',
+        line_height=18,
+        thickness=2,
+        scale=0.6,
     )).render(app, size, offset)
 
 
@@ -105,7 +105,7 @@ class RiichiWidget(Widget):
 
   def __init__(self, riichi):
     self.riichi = riichi
-  
+
   def measure(self, app: 'App', size: Size) -> Size:
     return self.size
 
@@ -169,11 +169,11 @@ class PlayerWidget(Widget):
     self.wind = wind
     self.starting_points = starting_points
     self.absolute = absolute
-  
+
   @property
   def points_scale(self):
     return self.absolute_points_scale if self.absolute else self.relative_points_scale
-  
+
   def points_text(self):
     points = self.player.points
     if self.absolute:
@@ -181,7 +181,7 @@ class PlayerWidget(Widget):
     else:
       points -= self.starting_points
       return f'{"+" if points >= 0 else ""}{points * 100}'
-  
+
   def wind_text(self):
     return Wind.name(self.wind)[0].upper()
 
@@ -194,27 +194,27 @@ class PlayerWidget(Widget):
 
   def measure(self, app: App, size: Size) -> Size:
     return Size(self.width(app), int(self.height * self.points_scale) + RiichiWidget.size.height)
-  
+
   def render(self, app: 'App', size: Size, offset: Offset):
     Padding(
-      padding=EdgeOffsets(bottom=1),
-      child=Column(children=[
-        Row(children=[
-          TextWidget(
-              text=self.points_text(),
-              line_height=int(self.height * self.points_scale),
-              font=self.font,
-              thickness=self.thickness,
-              scale=self.points_scale,
-          ),
-          TextWidget(
-              text=self.wind_text(),
-              line_height=int(self.height * self.points_scale),
-              font=self.font,
-              thickness=self.thickness,
-              scale=self.wind_scale,
-          ),
+        padding=EdgeOffsets(bottom=1),
+        child=Column(children=[
+            Row(children=[
+                TextWidget(
+                    text=self.points_text(),
+                    line_height=int(self.height * self.points_scale),
+                    font=self.font,
+                    thickness=self.thickness,
+                    scale=self.points_scale,
+                ),
+                TextWidget(
+                    text=self.wind_text(),
+                    line_height=int(self.height * self.points_scale),
+                    font=self.font,
+                    thickness=self.thickness,
+                    scale=self.wind_scale,
+                ),
+            ]),
+            RiichiWidget(self.player.riichi),
         ]),
-        RiichiWidget(self.player.riichi),
-      ]),
     ).render(app, size, offset)

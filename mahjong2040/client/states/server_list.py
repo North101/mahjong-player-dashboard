@@ -35,7 +35,7 @@ class ServerListClientState(ClientState):
   def broadcast(self, *args, **kwargs):
     if not self.client.socket:
       return
-    
+
     send_packet_to(self.client.socket, BroadcastClientPacket(), self.address)
 
   def on_broadcast_packet(self, packet: Packet, address: Address):
@@ -43,27 +43,27 @@ class ServerListClientState(ClientState):
       if address not in self.servers:
         if config.autoconnect:
           AddressItem(address, self.on_item_selected)()
-        return
-  
+          return
+
         self.servers.append(address)
         self.update_list()
-  
+
   def update_list(self):
     if len(self.servers) > 0:
       self.list = ListWidget(
-        item_height=24,
-        item_count=len(self.servers),
-        item_builder=self.item_builder,
-        page_item_count=min(len(self.servers), 5),
-        selected_index=0,
+          item_height=24,
+          item_count=len(self.servers),
+          item_builder=self.item_builder,
+          page_item_count=min(len(self.servers), 5),
+          selected_index=0,
       )
     else:
       self.list = None
 
   def item_builder(self, index: int, selected: bool):
     return AddressItemWidget(
-      item=AddressItem(self.servers[index], self.on_item_selected),
-      selected=selected,
+        item=AddressItem(self.servers[index], self.on_item_selected),
+        selected=selected,
     )
 
   def on_item_selected(self, item: 'AddressItem'):
@@ -76,26 +76,26 @@ class ServerListClientState(ClientState):
       return self.list.on_button(app, pressed)
 
     return super().on_button(app, pressed)
-  
+
   def render(self, app: 'App', size: Size, offset: Offset):
     super().render(app, size, offset)
 
     Column(children=[
-      TextWidget(
-        text='Hosts',
-        line_height=24,
-        thickness=2,
-        scale=0.8,
-      ),
-      self.list or Widget(),
+        TextWidget(
+            text='Hosts',
+            line_height=24,
+            thickness=2,
+            scale=0.8,
+        ),
+        self.list or Widget(),
     ]).render(app, size, offset)
-  
+
 
 class AddressItem:
   def __init__(self, address: Address, callable):
     self.address = address
     self.callable = callable
-  
+
   def __call__(self):
     self.callable(self)
 
@@ -116,17 +116,17 @@ class AddressItemWidget(Widget):
     if self.selected:
       app.display.set_pen(0)
       app.display.rectangle(
-        offset.x,
-        offset.y,
-        size.width,
-        size.height,
+          offset.x,
+          offset.y,
+          size.width,
+          size.height,
       )
 
     Center(child=TextWidget(
-      text=self.item.address[0],
-      line_height=24,
-      font='sans',
-      thickness=2,
-      color=15 if self.selected else 0,
-      scale=0.8,
+        text=self.item.address[0],
+        line_height=24,
+        font='sans',
+        thickness=2,
+        color=15 if self.selected else 0,
+        scale=0.8,
     )).render(app, size, offset)

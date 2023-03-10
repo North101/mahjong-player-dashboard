@@ -1,8 +1,8 @@
+import badger2040w
 from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
 
-import badger2040w
 from mahjong2040.packets import TsumoClientPacket
 
 from .shared import GameReconnectClientState
@@ -33,8 +33,8 @@ class GameTsumoScoreClientState(GameReconnectClientState):
     )).render(app, Size(size.width, 24), offset)
     self.score.render(app, size, offset)
     Bottom(child=Center(child=TextWidget(
-      text=f'{self.score.tsumo(False) * 100} / {self.score.tsumo(True) * 100}',
-      line_height=30,
-      thickness=2,
-      scale=1,
+        text=f'{self.score.tsumo(False) * 100} / {self.score.tsumo(True) * 100}',
+        line_height=30,
+        thickness=2,
+        scale=1,
     ))).render(app, size, offset)

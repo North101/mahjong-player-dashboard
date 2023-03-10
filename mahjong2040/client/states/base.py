@@ -15,7 +15,7 @@ class ClientState(Widget):
     print(self.__class__.__name__)
     self.client = client
     self.first_render = True
-  
+
   def init(self):
     pass
 
@@ -26,11 +26,11 @@ class ClientState(Widget):
   @child.setter
   def child(self, child: 'ClientState'):
     self.client.child = child
-  
+
   @property
   def settings(self):
     return self.client.settings
-  
+
   def on_broadcast_packet(self, packet: Packet, address: Address):
     pass
 

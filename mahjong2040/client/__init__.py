@@ -18,13 +18,14 @@ if typing.TYPE_CHECKING:
 class ServerDisconnectedError(Exception):
   pass
 
+
 class ClientServer:
   def connect(self):
     pass
 
   def send_packet(self, packet: Packet):
     pass
-  
+
   def close(self):
     pass
 
@@ -36,7 +37,7 @@ class RemoteClientServer(ClientServer):
     self.client: 'Client' = client
     self.poll = poll
     self.address = address
-  
+
   def connect(self):
     host, port = self.address
     addrinfo = socket.getaddrinfo(host, port)[0][-1]
@@ -73,7 +74,7 @@ class RemoteClientServer(ClientServer):
   def close(self):
     if not hasattr(self, 'socket'):
       return
-    
+
     self.socket.close()
     delattr(self, 'socket')
 
@@ -83,7 +84,7 @@ class LocalClientServer(ClientServer):
     from mahjong2040.server.shared import LocalServerClient
     self.client = LocalServerClient(client)
     self.server = server
-  
+
   def connect(self):
     self.server.add_client(self.client)
 
@@ -104,7 +105,7 @@ class Client(App):
     self.server: ClientServer | None = None
     self.events: list[Packet] = []
     self.settings = ClientSettings(absolute_scores=True)
-  
+
   @property
   def child(self):
     return self._child
@@ -116,12 +117,12 @@ class Client(App):
 
     self._child = value
     self._child.init()
-  
+
   def broadcast(self, port: int):
     from .states.server_list import ServerListClientState
 
     self.close()
-  
+
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     self.socket.setsockopt(socket.SOL_SOCKET, 32, 1)
     self.poll.register(self.socket, select.POLLIN, self.on_broadcast_data)
@@ -147,7 +148,7 @@ class Client(App):
     self.child = LobbyClientState(self)
 
     self.server.connect()
-  
+
   def close(self):
     if self.socket is not None:
       self.poll.unregister(self.socket)
@@ -164,7 +165,7 @@ class Client(App):
   def send_packet(self, packet: Packet):
     if self.server:
       self.server.send_packet(packet)
-  
+
   def update(self):
     self.poll.poll()
     while self.events and self.child:

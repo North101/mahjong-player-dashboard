@@ -1,12 +1,12 @@
 from typing import Callable
 
+import badger2040w
 from badger_ui.align import Center
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.stack import Stack
 from badger_ui.text import TextWidget
 
-import badger2040w
 from mahjong2040.client import Client
 from mahjong2040.packets import DrawClientPacket, RedrawClientPacket
 from mahjong2040.shared import ClientGameState, Tenpai
@@ -20,18 +20,18 @@ class GameMenuClientState(GameReconnectClientState):
 
     self.game_state = game_state
     self.items = [
-      MenuItem('Tsumo', self.select_tsumo),
-      MenuItem('Ron', self.select_ron),
-      MenuItem('Draw: Tenpai', self.select_tenpai),
-      MenuItem('Draw: Noten', self.select_noten),
-      MenuItem('Redraw', self.select_redraw),
+        MenuItem('Tsumo', self.select_tsumo),
+        MenuItem('Ron', self.select_ron),
+        MenuItem('Draw: Tenpai', self.select_tenpai),
+        MenuItem('Draw: Noten', self.select_noten),
+        MenuItem('Redraw', self.select_redraw),
     ]
     self.list = ListWidget(
-      item_height=24,
-      item_count=len(self.items),
-      item_builder=self.item_builder,
-      page_item_count=len(self.items),
-      selected_index=0,
+        item_height=24,
+        item_count=len(self.items),
+        item_builder=self.item_builder,
+        page_item_count=len(self.items),
+        selected_index=0,
     )
 
   def select_tsumo(self) -> bool:
@@ -99,14 +99,14 @@ class MenuItemWidget(Widget):
 
   def render(self, app: 'App', size: Size, offset: Offset):
     Stack(children=[
-      Background(color=0 if self.selected else 15),
-      Center(child=TextWidget(
-        text=self.item.name,
-        line_height=24,
-        thickness=2,
-        scale=0.8,
-        color=15 if self.selected else 0,
-      )),
+        Background(color=0 if self.selected else 15),
+        Center(child=TextWidget(
+          text=self.item.name,
+          line_height=24,
+          thickness=2,
+          scale=0.8,
+          color=15 if self.selected else 0,
+          )),
     ]).render(app, size, offset)
 
 
@@ -119,8 +119,8 @@ class Background(Widget):
   def render(self, app: 'App', size: Size, offset: Offset):
     app.display.set_pen(self.color)
     app.display.rectangle(
-      offset.x,
-      offset.y,
-      size.width,
-      size.height,
+        offset.x,
+        offset.y,
+        size.width,
+        size.height,
     )

@@ -11,6 +11,6 @@ def start():
   finally:
     app_runner.app.close()
 
+
 if __name__ == '__main__':
   start()
-

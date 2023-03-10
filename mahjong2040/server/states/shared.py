@@ -54,7 +54,7 @@ class BaseGameServerStateMixin(Generic[_GamePlayer], ServerState):
   def reset_player_riichi(self):
     for player in self.game_state.players:
       player.riichi = False
-  
+
   def redraw(self):
     self.game_state.bonus_honba += 1
     self.game_state.bonus_riichi = self.game_state.total_riichi
