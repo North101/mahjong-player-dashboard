@@ -3,17 +3,13 @@ import typing
 from mahjong2040.packets import Packet
 from mahjong2040.shared import RIICHI_POINTS, GamePlayerMixin
 
-try:
-  if typing.TYPE_CHECKING:
-    from mahjong2040.server import Server
+if typing.TYPE_CHECKING:
+  from mahjong2040.server import Server
 
-    from .shared import ServerClient
-except:
-  pass
-
+  from .shared import ServerClient
 
 class GamePlayer(GamePlayerMixin):
-  def __init__(self, client: 'ServerClient', points: int, riichi: bool = False):
+  def __init__(self, client: ServerClient, points: int, riichi: bool = False):
     self.client = client
     self.points = points
     self.riichi = riichi
@@ -32,7 +28,7 @@ class GamePlayer(GamePlayerMixin):
 
 
 class ServerState:
-  def __init__(self, server: 'Server'):
+  def __init__(self, server: Server):
     print(self.__class__.__name__)
     self.server = server
   
@@ -51,11 +47,11 @@ class ServerState:
   def child(self, child: 'ServerState'):
     self.server.child = child
 
-  def on_client_join(self, client: 'ServerClient'):
+  def on_client_join(self, client: ServerClient):
     pass
 
-  def on_client_leave(self, client: 'ServerClient'):
+  def on_client_leave(self, client: ServerClient):
     pass
 
-  def on_client_packet(self, client: 'ServerClient', packet: Packet):
+  def on_client_packet(self, client: ServerClient, packet: Packet):
     print(repr(packet))

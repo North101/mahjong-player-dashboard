@@ -1,11 +1,10 @@
 import socket
+import typing
 
 from mahjong2040.packets import Packet, send_packet
 
-try:
+if typing.TYPE_CHECKING:
   from mahjong2040.client import Client
-except:
-  pass
 
 class ServerClient:
   def send_packet(self, packet: Packet):
@@ -23,7 +22,7 @@ class RemoteServerClient(ServerClient):
 
 
 class LocalServerClient(ServerClient):
-  def __init__(self, client: 'Client'):
+  def __init__(self, client: Client):
     self.client = client
   
   def send_packet(self, packet: Packet):

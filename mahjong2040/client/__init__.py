@@ -1,17 +1,18 @@
 import select
 import socket
+import typing
 
 from badger_ui import App
-from mahjong2040.client.shared import ClientSettings
 from mahjong2040.packets import Packet, read_packet, read_packet_from, send_packet
 from mahjong2040.poll import Poll
 from mahjong2040.shared import Address
 
-try:
-  from mahjong2040.client.states.base import ClientState
+from .shared import ClientSettings
+
+if typing.TYPE_CHECKING:
   from mahjong2040.server import Server
-except:
-  pass
+
+  from .states.base import ClientState
 
 
 class ServerDisconnectedError(Exception):
@@ -78,7 +79,7 @@ class RemoteClientServer(ClientServer):
 
 
 class LocalClientServer(ClientServer):
-  def __init__(self, client: 'Client', server: 'Server'):
+  def __init__(self, client: 'Client', server: Server):
     from mahjong2040.server.shared import LocalServerClient
     self.client = LocalServerClient(client)
     self.server = server
@@ -109,7 +110,7 @@ class Client(App):
     return self._child
 
   @child.setter
-  def child(self, value: 'ClientState'):
+  def child(self, value: ClientState):
     if self._child is value:
       return
 

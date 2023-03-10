@@ -1,5 +1,6 @@
 import select
 import socket
+import typing
 
 from mahjong2040.packets import (
     BroadcastClientPacket,
@@ -13,10 +14,8 @@ from mahjong2040.poll import Poll
 
 from .shared import RemoteServerClient, ServerClient
 
-try:
+if typing.TYPE_CHECKING:
   from .states.base import ServerState
-except:
-  pass
 
 class Server:
   def __init__(self, poll: Poll):
@@ -34,7 +33,7 @@ class Server:
     return self._child
   
   @child.setter
-  def child(self, value: 'ServerState'):
+  def child(self, value: ServerState):
     if self._child is value:
       return
     

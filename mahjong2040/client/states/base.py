@@ -1,16 +1,17 @@
+import typing
+
 import badger2040w
+
 from badger_ui import App, Offset, Size, Widget
 from mahjong2040.packets import Packet
 from mahjong2040.shared import Address
 
-try:
+if typing.TYPE_CHECKING:
   from mahjong2040.client import Client
-except:
-  pass
 
 
 class ClientState(Widget):
-  def __init__(self, client: 'Client'):
+  def __init__(self, client: Client):
     print(self.__class__.__name__)
     self.client = client
     self.first_render = True

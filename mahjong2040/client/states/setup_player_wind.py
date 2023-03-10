@@ -1,8 +1,8 @@
+import badger2040w
 from badger_ui.align import Center, Top
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
 
-import badger2040w
 from badger_ui import App, Offset, Size
 from mahjong2040 import config
 from mahjong2040.client import Client
@@ -31,7 +31,6 @@ class SetupPlayerWindClientState(ClientState):
       self.send_packet(SetupPlayerWindClientPacket(self.next_wind))
 
   def on_server_packet(self, packet: Packet) -> bool:
-    print(packet)
     if isinstance(packet, SetupPlayerWindServerPacket):
       self.next_wind = packet.wind
       self.init()
