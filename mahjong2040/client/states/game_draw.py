@@ -1,12 +1,12 @@
 from typing import Callable
 
-import badger2040w
 from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.list import ListWidget
 from badger_ui.stack import Stack
 from badger_ui.text import TextWidget
 
+import badger2040
 from mahjong2040.client import Client
 from mahjong2040.packets import DrawClientPacket, DrawTenpaiServerPacket, Packet
 from mahjong2040.shared import Tenpai
@@ -93,7 +93,7 @@ class MenuItemWidget(Widget):
     self.selected = selected
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       return self.item()
 
     return super().on_button(app, pressed)

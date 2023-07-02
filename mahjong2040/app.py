@@ -1,6 +1,5 @@
 import gc
 
-import badger2040w
 import network
 import uasyncio
 from badger_ui.align import Bottom, Center
@@ -9,8 +8,10 @@ from badger_ui.list import ListWidget
 from badger_ui.text import TextWidget
 from network_manager import NetworkManager
 
+import badger2040
 import WIFI_CONFIG
 from mahjong2040 import config
+from mahjong2040.packets import GameStateStruct
 
 from .poll import Poll
 
@@ -69,7 +70,8 @@ class SelectScreen(Widget):
     self.port = port
     self.items = [
         MenuItem('Connect', self.open_client),
-        MenuItem('Host', self.open_server),
+        MenuItem('Host: New', self.open_server),
+        MenuItem('Host: Resume', self.open_server),
     ]
     self.child = ListWidget(
         item_height=21,
@@ -98,8 +100,16 @@ class SelectScreen(Widget):
     from .client import Client, LocalClientServer
     from .server import Server
 
+    try:
+      raise ValueError()
+      with open('/game_state.bin', 'rb') as f:
+        game_state = GameStateStruct.from_data(f.read()).game_state
+    except BaseException as e:
+      print(e)
+      game_state = None
+
     poll = Poll()
-    server = Server(poll)
+    server = Server(poll, game_state)
     server.start(self.port)
     client = Client(poll)
     client.connect(LocalClientServer(client, server))
@@ -116,10 +126,10 @@ class SelectScreen(Widget):
 
   def render(self, app: App, size: Size, offset: Offset):
     if self.first_render:
-      app.display.set_update_speed(badger2040w.UPDATE_FAST)
+      app.display.set_update_speed(badger2040.UPDATE_FAST)
       self.first_render = False
     else:
-      app.display.set_update_speed(badger2040w.UPDATE_TURBO)
+      app.display.set_update_speed(badger2040.UPDATE_TURBO)
 
     Center(child=self.child).render(app, size, offset)
 
@@ -147,7 +157,7 @@ class MenuItemWidget(Widget):
     self.selected = selected
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       self.item()
       return True
 

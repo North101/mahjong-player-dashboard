@@ -1,9 +1,9 @@
-import badger2040w
 from badger_ui.align import Center
 from badger_ui.row import Row
 from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
 
+import badger2040
 from badger_ui import App, Offset, Size
 from mahjong2040.client import Client
 from mahjong2040.packets import RonWindClientPacket
@@ -19,15 +19,15 @@ class GameRonWindClientState(GameReconnectClientState):
     self.players = players
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_A]:
+    if pressed[badger2040.BUTTON_A]:
       self.send_packet(RonWindClientPacket(self.players[-1]))
       return True
 
-    elif pressed[badger2040w.BUTTON_B]:
+    elif pressed[badger2040.BUTTON_B]:
       self.send_packet(RonWindClientPacket(self.players[-2]))
       return True
 
-    elif pressed[badger2040w.BUTTON_C]:
+    elif pressed[badger2040.BUTTON_C]:
       self.send_packet(RonWindClientPacket(self.players[-3]))
       return True
 

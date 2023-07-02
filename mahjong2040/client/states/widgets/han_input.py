@@ -1,9 +1,9 @@
-import badger2040w
 from badger_ui.align import Center
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
 
+import badger2040
 from mahjong2040 import score_calculator
 
 
@@ -23,22 +23,22 @@ class HanInputWidget(Widget):
     return score_calculator.ron(self.han_index, self.fu_index, dealer)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_A]:
+    if pressed[badger2040.BUTTON_A]:
       self.selected = (self.selected - 1) % 2
       return True
 
-    elif pressed[badger2040w.BUTTON_C]:
+    elif pressed[badger2040.BUTTON_C]:
       self.selected = (self.selected + 1) % 2
       return True
 
-    elif pressed[badger2040w.BUTTON_UP]:
+    elif pressed[badger2040.BUTTON_UP]:
       if self.selected == 0:
         self.han_index = (self.han_index + 1) % len(score_calculator.han_lookup)
       elif self.selected == 1:
         self.fu_index = (self.fu_index + 1) % len(score_calculator.fu_lookup)
       return True
 
-    elif pressed[badger2040w.BUTTON_DOWN]:
+    elif pressed[badger2040.BUTTON_DOWN]:
       if self.selected == 0:
         self.han_index = (self.han_index - 1) % len(score_calculator.han_lookup)
       elif self.selected == 1:

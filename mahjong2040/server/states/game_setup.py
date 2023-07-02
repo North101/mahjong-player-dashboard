@@ -1,3 +1,5 @@
+import typing
+
 from mahjong2040.packets import (
     ConfirmWindServerPacket,
     Packet,
@@ -5,18 +7,22 @@ from mahjong2040.packets import (
     SetupPlayerWindClientPacket,
     SetupPlayerWindServerPacket,
 )
-from mahjong2040.shared import STARTING_POINTS, GameState, Wind
+from mahjong2040.shared import STARTING_POINTS, GamePlayerMixin, GameState, Wind
 
 from .base import ServerState
 from .game import GameServerState
 from .shared import GamePlayer, ServerClient
 
+if typing.TYPE_CHECKING:
+  from mahjong2040.server import Server
+
 
 class GameSetupServerState(ServerState):
-  def __init__(self, server):
+  def __init__(self, server: Server, game_state: GameState[GamePlayerMixin] | None = None):
     super().__init__(server)
 
     self.players: list[ServerClient] = []
+    self.game_state = game_state
 
   def init(self):
     self.ask_next_wind()
@@ -52,15 +58,24 @@ class GameSetupServerState(ServerState):
       client.send_packet(ConfirmWindServerPacket(packet.wind))
 
       if len(self.players) == len(Wind):
+        game_state = self.game_state
         self.child = GameServerState(
             server=self.server,
             game_state=GameState(
-                players=tuple((
-                    GamePlayer(player, STARTING_POINTS)
-                    for player in self.players
-                )),
-                starting_points=STARTING_POINTS,
-            ),
+              players=tuple((
+                  GamePlayer(
+                    player,
+                    game_state.players[i].points if game_state else STARTING_POINTS,
+                    game_state.players[i].riichi if game_state else False,
+                  )
+                  for i, player in enumerate(self.players)
+              )),
+              starting_points=game_state.starting_points if game_state else STARTING_POINTS,
+              hand=game_state.hand if game_state else 0,
+              repeat=game_state.starting_points if game_state else 0,
+              bonus_honba=game_state.bonus_honba if game_state else 0,
+              bonus_riichi=game_state.bonus_riichi if game_state else 0,
+          ),
         )
       else:
         self.ask_next_wind()

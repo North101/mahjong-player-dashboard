@@ -1,8 +1,8 @@
-import badger2040w
 from badger_ui.align import Center, Top
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
 
+import badger2040
 from badger_ui import App, Offset, Size
 from mahjong2040 import config
 from mahjong2040.client import Client
@@ -54,7 +54,7 @@ class SetupPlayerWindClientState(ClientState):
     return super().on_server_packet(packet)
 
   def on_button(self, app: 'App', pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B] and self.confirmed_wind is None:
+    if pressed[badger2040.BUTTON_B] and self.confirmed_wind is None:
       self.send_packet(SetupPlayerWindClientPacket(self.next_wind))
       return True
 

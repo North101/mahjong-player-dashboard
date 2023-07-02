@@ -2,6 +2,7 @@ from mahjong2040 import score_calculator
 from mahjong2040.packets import (
     DrawClientPacket,
     GameStateServerPacket,
+    GameStateStruct,
     Packet,
     RedrawClientPacket,
     RiichiClientPacket,
@@ -57,6 +58,7 @@ class GameServerState(BaseGameServerStateMixin):
     ))
 
     tsumo_wind = self.game_state.player_wind(player)
+    tsumo_hand = self.game_state.hand
     dealer_tsumo = tsumo_wind == Wind.EAST
     for wind, other_player in self.game_state.players_by_wind:
       if other_player == player:
@@ -66,9 +68,6 @@ class GameServerState(BaseGameServerStateMixin):
       points = score_calculator.tsumo(packet.han, packet.fu_index, dealer_tsumo or is_dealer)
       points += self.game_state.total_honba * TSUMO_HONBA_POINTS
       player.take_points(other_player, points)
-
-    tsumo_hand = self.game_state.hand
-    total_honba = self.game_state.total_honba
 
     if tsumo_wind == Wind.EAST:
       self.repeat_hand()
@@ -155,7 +154,18 @@ class GameServerState(BaseGameServerStateMixin):
     self.redraw()
     self.update_player_states()
 
+  def save_game_state(self):
+    return
+    try:
+      with open('/game_state.bin', 'wb') as f:
+        buffer = bytearray(GameStateStruct.size())
+        GameStateStruct(self.game_state).pack(buffer)
+        f.write(buffer)
+    except BaseException as e:
+      print(e)
+
   def update_player_states(self):
+    self.save_game_state()
     for index, player in enumerate(self.game_state.players):
       player.send_packet(GameStateServerPacket(ClientGameState(
           index,

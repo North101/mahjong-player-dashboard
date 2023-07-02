@@ -1,4 +1,3 @@
-import badger2040w
 from badger_ui.align import Center
 from badger_ui.base import Widget
 from badger_ui.column import Column
@@ -7,6 +6,7 @@ from badger_ui.sized import SizedBox
 from badger_ui.text import TextWidget
 from machine import Timer
 
+import badger2040
 from badger_ui import App, Offset, Size
 from mahjong2040 import config
 from mahjong2040.client import Client
@@ -106,7 +106,7 @@ class AddressItemWidget(Widget):
     self.selected = selected
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       self.item()
       return True
 

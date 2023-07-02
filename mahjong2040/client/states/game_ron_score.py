@@ -1,9 +1,9 @@
-import badger2040w
 from badger_ui.align import Bottom, Center, Top
 from badger_ui.base import App, Offset, Size
 from badger_ui.column import Column
 from badger_ui.text import TextWidget
 
+import badger2040
 from mahjong2040.client import Client
 from mahjong2040.packets import (
     Packet,
@@ -41,7 +41,7 @@ class GameRonScoreClientState(GameReconnectClientState):
     return super().on_server_packet(packet)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B] and self.points is None:
+    if pressed[badger2040.BUTTON_B] and self.points is None:
       self.send_packet(RonScoreClientPacket(self.score.han_index, self.score.fu_index))
       return True
 

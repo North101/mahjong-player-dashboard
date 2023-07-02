@@ -1,8 +1,8 @@
-import badger2040w
 from badger_ui.align import Bottom, Center, Left, Right, Top
 from badger_ui.base import App, Offset, Size
 from badger_ui.padding import EdgeOffsets, Padding
 
+import badger2040
 from mahjong2040.client import Client
 from mahjong2040.packets import GameStateServerPacket, Packet, RonServerPacket
 from mahjong2040.shared import Wind
@@ -38,7 +38,7 @@ class RonResultClientState(GameReconnectClientState):
     return super().on_server_packet(packet)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       from .game import GameClientState
       self.child = GameClientState(self.client, self.game_state)
       return True

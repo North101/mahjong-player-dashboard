@@ -1,4 +1,3 @@
-import badger2040w
 from badger_ui.align import Bottom, Center, Left, Right, Top
 from badger_ui.base import App, Offset, Size, Widget
 from badger_ui.column import Column
@@ -6,6 +5,7 @@ from badger_ui.padding import EdgeOffsets, Padding
 from badger_ui.row import Row
 from badger_ui.text import TextWidget
 
+import badger2040
 from mahjong2040.client import Client
 from mahjong2040.packets import GameStateServerPacket, Packet, RiichiClientPacket
 from mahjong2040.shared import ClientGameState, GamePlayerMixin, Wind
@@ -35,15 +35,15 @@ class GameClientState(GameReconnectClientState):
     return super().on_server_packet(packet)
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       app.child = GameMenuClientState(self.client, self.game_state)
       return True
 
-    elif pressed[badger2040w.BUTTON_UP]:
+    elif pressed[badger2040.BUTTON_UP]:
       self.send_packet(RiichiClientPacket())
       return True
 
-    elif pressed[badger2040w.BUTTON_DOWN]:
+    elif pressed[badger2040.BUTTON_DOWN]:
       self.settings.absolute_scores = not self.settings.absolute_scores
       return True
 

@@ -11,6 +11,7 @@ from mahjong2040.packets import (
     send_packet_to,
 )
 from mahjong2040.poll import Poll
+from mahjong2040.shared import GamePlayerMixin, GameState
 
 from .shared import RemoteServerClient, ServerClient
 
@@ -19,7 +20,7 @@ if typing.TYPE_CHECKING:
 
 
 class Server:
-  def __init__(self, poll: Poll):
+  def __init__(self, poll: Poll, game_state: GameState[GamePlayerMixin] | None = None):
     from .states.lobby import LobbyServerState
 
     self.poll = poll
@@ -27,7 +28,7 @@ class Server:
     self.socket: socket.socket | None = None
     self.clients: list[ServerClient] = []
     self._child: ServerState | None = None
-    self.child = LobbyServerState(self)
+    self.child = LobbyServerState(self, game_state)
 
   @property
   def child(self):

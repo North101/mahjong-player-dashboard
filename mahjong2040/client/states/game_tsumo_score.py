@@ -1,8 +1,8 @@
-import badger2040w
 from badger_ui.align import Bottom, Center
 from badger_ui.base import App, Offset, Size
 from badger_ui.text import TextWidget
 
+import badger2040
 from mahjong2040.packets import TsumoClientPacket
 
 from .shared import GameReconnectClientState
@@ -16,7 +16,7 @@ class GameTsumoScoreClientState(GameReconnectClientState):
     self.score = HanInputWidget()
 
   def on_button(self, app: App, pressed: dict[int, bool]) -> bool:
-    if pressed[badger2040w.BUTTON_B]:
+    if pressed[badger2040.BUTTON_B]:
       self.send_packet(TsumoClientPacket(self.score.han_index, self.score.fu_index))
       return True
 

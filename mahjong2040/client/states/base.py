@@ -1,7 +1,6 @@
 import typing
 
-import badger2040w
-
+import badger2040
 from badger_ui import App, Offset, Size, Widget
 from mahjong2040.packets import Packet
 from mahjong2040.shared import Address
@@ -45,7 +44,7 @@ class ClientState(Widget):
 
   def render(self, app: App, size: Size, offset: Offset):
     if self.first_render:
-      app.display.set_update_speed(badger2040w.UPDATE_FAST)
+      app.display.set_update_speed(badger2040.UPDATE_FAST)
       self.first_render = False
     else:
-      app.display.set_update_speed(badger2040w.UPDATE_TURBO)
+      app.display.set_update_speed(badger2040.UPDATE_TURBO)

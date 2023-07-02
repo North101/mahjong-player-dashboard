@@ -1,162 +1,162 @@
 {
   "name": "mahjong2040",
   "version": "0.1",
-  "repository": "file:.",
+  "repository": "mahjong2040",
   "exclude": [
     "main.py"
   ],
   "urls": [
     [
       "mahjong2040/config.py",
-      "file:./mahjong2040/config.py"
+      "mahjong2040/config.py"
     ],
     [
       "mahjong2040/__init__.py",
-      "file:./mahjong2040/__init__.py"
+      "mahjong2040/__init__.py"
     ],
     [
       "mahjong2040/score_calculator.py",
-      "file:./mahjong2040/score_calculator.py"
+      "mahjong2040/score_calculator.py"
     ],
     [
       "mahjong2040/shared.py",
-      "file:./mahjong2040/shared.py"
+      "mahjong2040/shared.py"
     ],
     [
       "mahjong2040/app.py",
-      "file:./mahjong2040/app.py"
+      "mahjong2040/app.py"
     ],
     [
       "mahjong2040/poll.py",
-      "file:./mahjong2040/poll.py"
+      "mahjong2040/poll.py"
     ],
     [
       "mahjong2040/packets.py",
-      "file:./mahjong2040/packets.py"
+      "mahjong2040/packets.py"
     ],
     [
       "mahjong2040/server/__init__.py",
-      "file:./mahjong2040/server/__init__.py"
+      "mahjong2040/server/__init__.py"
     ],
     [
       "mahjong2040/server/shared.py",
-      "file:./mahjong2040/server/shared.py"
+      "mahjong2040/server/shared.py"
     ],
     [
       "mahjong2040/server/states/game.py",
-      "file:./mahjong2040/server/states/game.py"
+      "mahjong2040/server/states/game.py"
     ],
     [
       "mahjong2040/server/states/__init__.py",
-      "file:./mahjong2040/server/states/__init__.py"
+      "mahjong2040/server/states/__init__.py"
     ],
     [
       "mahjong2040/server/states/game_setup.py",
-      "file:./mahjong2040/server/states/game_setup.py"
+      "mahjong2040/server/states/game_setup.py"
     ],
     [
       "mahjong2040/server/states/shared.py",
-      "file:./mahjong2040/server/states/shared.py"
+      "mahjong2040/server/states/shared.py"
     ],
     [
       "mahjong2040/server/states/game_reconnect.py",
-      "file:./mahjong2040/server/states/game_reconnect.py"
+      "mahjong2040/server/states/game_reconnect.py"
     ],
     [
       "mahjong2040/server/states/game_draw.py",
-      "file:./mahjong2040/server/states/game_draw.py"
+      "mahjong2040/server/states/game_draw.py"
     ],
     [
       "mahjong2040/server/states/game_ron.py",
-      "file:./mahjong2040/server/states/game_ron.py"
+      "mahjong2040/server/states/game_ron.py"
     ],
     [
       "mahjong2040/server/states/lobby.py",
-      "file:./mahjong2040/server/states/lobby.py"
+      "mahjong2040/server/states/lobby.py"
     ],
     [
       "mahjong2040/server/states/base.py",
-      "file:./mahjong2040/server/states/base.py"
+      "mahjong2040/server/states/base.py"
     ],
     [
       "mahjong2040/client/__init__.py",
-      "file:./mahjong2040/client/__init__.py"
+      "mahjong2040/client/__init__.py"
     ],
     [
       "mahjong2040/client/shared.py",
-      "file:./mahjong2040/client/shared.py"
+      "mahjong2040/client/shared.py"
     ],
     [
       "mahjong2040/client/states/setup_player_wind.py",
-      "file:./mahjong2040/client/states/setup_player_wind.py"
+      "mahjong2040/client/states/setup_player_wind.py"
     ],
     [
       "mahjong2040/client/states/game_ron_score.py",
-      "file:./mahjong2040/client/states/game_ron_score.py"
+      "mahjong2040/client/states/game_ron_score.py"
     ],
     [
       "mahjong2040/client/states/game_ron_wind.py",
-      "file:./mahjong2040/client/states/game_ron_wind.py"
+      "mahjong2040/client/states/game_ron_wind.py"
     ],
     [
       "mahjong2040/client/states/game.py",
-      "file:./mahjong2040/client/states/game.py"
+      "mahjong2040/client/states/game.py"
     ],
     [
       "mahjong2040/client/states/__init__.py",
-      "file:./mahjong2040/client/states/__init__.py"
+      "mahjong2040/client/states/__init__.py"
     ],
     [
       "mahjong2040/client/states/game_tsumo_result.py",
-      "file:./mahjong2040/client/states/game_tsumo_result.py"
+      "mahjong2040/client/states/game_tsumo_result.py"
     ],
     [
       "mahjong2040/client/states/shared.py",
-      "file:./mahjong2040/client/states/shared.py"
+      "mahjong2040/client/states/shared.py"
     ],
     [
       "mahjong2040/client/states/server_list.py",
-      "file:./mahjong2040/client/states/server_list.py"
+      "mahjong2040/client/states/server_list.py"
     ],
     [
       "mahjong2040/client/states/game_tsumo_score.py",
-      "file:./mahjong2040/client/states/game_tsumo_score.py"
+      "mahjong2040/client/states/game_tsumo_score.py"
     ],
     [
       "mahjong2040/client/states/game_draw.py",
-      "file:./mahjong2040/client/states/game_draw.py"
+      "mahjong2040/client/states/game_draw.py"
     ],
     [
       "mahjong2040/client/states/game_ron_result.py",
-      "file:./mahjong2040/client/states/game_ron_result.py"
+      "mahjong2040/client/states/game_ron_result.py"
     ],
     [
       "mahjong2040/client/states/lobby.py",
-      "file:./mahjong2040/client/states/lobby.py"
+      "mahjong2040/client/states/lobby.py"
     ],
     [
       "mahjong2040/client/states/base.py",
-      "file:./mahjong2040/client/states/base.py"
+      "mahjong2040/client/states/base.py"
     ],
     [
       "mahjong2040/client/states/game_draw_result.py",
-      "file:./mahjong2040/client/states/game_draw_result.py"
+      "mahjong2040/client/states/game_draw_result.py"
     ],
     [
       "mahjong2040/client/states/game_menu.py",
-      "file:./mahjong2040/client/states/game_menu.py"
+      "mahjong2040/client/states/game_menu.py"
     ],
     [
       "mahjong2040/client/states/widgets/arrow.py",
-      "file:./mahjong2040/client/states/widgets/arrow.py"
+      "mahjong2040/client/states/widgets/arrow.py"
     ],
     [
       "mahjong2040/client/states/widgets/player.py",
-      "file:./mahjong2040/client/states/widgets/player.py"
+      "mahjong2040/client/states/widgets/player.py"
     ],
     [
       "mahjong2040/client/states/widgets/han_input.py",
-      "file:./mahjong2040/client/states/widgets/han_input.py"
+      "mahjong2040/client/states/widgets/han_input.py"
     ]
   ],
   "deps": [
@@ -165,15 +165,15 @@
       "master"
     ],
     [
-      "file:../badger_ui",
+      "github:North101/badger_ui",
       "master"
     ],
     [
-      "github:pimoroni/pimoroni-pico/micropython/examples/badger2040w/lib/network_manager.py",
+      "github:pimoroni/pimoroni-pico/micropython/examples/badger2040/lib/network_manager.py",
       "main"
     ],
     [
-      "github:pimoroni/pimoroni-pico/micropython/examples/badger2040w/lib/badger2040w.py",
+      "github:pimoroni/pimoroni-pico/micropython/examples/badger2040/lib/badger2040.py",
       "main"
     ]
   ]
