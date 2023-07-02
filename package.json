@@ -1,7 +1,7 @@
 {
   "name": "mahjong2040",
   "version": "0.1",
-  "repository": "mahjong2040",
+  "repository": "North101/mahjong2040",
   "exclude": [
     "main.py"
   ],
